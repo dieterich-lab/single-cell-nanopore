@@ -198,7 +198,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	// setLongCopyright(parser, "");
 
 	addDescription(parser, getFlexbarDescription());
-	setShortDescription(parser, "Nanopore read assigment");
+	setShortDescription(parser, "Nanopore read assignment");
 
 // 	addUsageLine(parser, "\\fB-r\\fP reads [\\fB-b\\fP barcodes] [\\fB-a\\fP adapters] [options]");
 

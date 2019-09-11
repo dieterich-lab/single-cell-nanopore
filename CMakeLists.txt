@@ -6,9 +6,6 @@ set( SEQAN_APP_VERSION "3.5.0" )
 
 include_directories( ${FLEXBAR_SOURCE_DIR}/include )
 # link_directories( ${FLEXBAR_SOURCE_DIR}/lib )
-#
-include_directories(/home/linuxbrew/.linuxbrew/Cellar/tbb/2019_U8/include)
-link_directories(/home/linuxbrew/.linuxbrew/Cellar/tbb/2019_U8/lib)
 
 # file( MAKE_DIRECTORY build )
 
