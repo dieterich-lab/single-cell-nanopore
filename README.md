@@ -51,7 +51,7 @@ Refer to the help screen `singleCellPipe -h` for more information.
 
 Specify further option such as the number of cores (-n), multimapper removal (-rm) and outputting sequence qualites (-fq).
 ```
-        singleCellPipe -r nanoporeAlignmentFile -w CellbarcodeWhitelist -rf regionsOfInterest -t Target -as "Primer Sequence" -n 40 -rm -fq
+        singleCellPipe -r nanoporeAlignmentFile -w CellbarcodeWhitelist -rf regionsOfInterest -t Target -as "Primer Sequence" -n 40 -bg -2 -rm -fq
 ```
 
 ### Input Examples
