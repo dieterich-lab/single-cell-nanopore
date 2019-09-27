@@ -1,4 +1,4 @@
-# Ad hoc analysis of Flexbar barcode alignment
+# Post hoc analysis of Flexbar barcode alignment
 ## Command line wrapper
 Parameter estimation 
 ```sh
