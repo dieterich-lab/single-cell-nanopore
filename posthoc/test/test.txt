@@ -1,0 +1,19 @@
+## JACUSA2 Version: 2.0.0-RC8 call-1 -R /home/qwang/tmp/nanopore/single-cell-nanopore/posthoc/test/ref.fa -p 2 -c 1 -m 2 -q 2 -P UNSTRANDED -r /home/qwang/tmp/nanopore/single-cell-nanopore/posthoc/test/test.txt /home/qwang/tmp/nanopore/single-cell-nanopore/posthoc/test/nanopore.bam
+#contig	start	end	name	score	strand	bases11	info	filter_info	ref_base
+1	11564	11565	call-1	1.283650718845493	.	0,0,0,1	*	*	G
+1	11638	11639	call-1	1.3283917320007457	.	0,0,0,1	*	*	G
+1	11680	11681	call-1	0.9507571354361346	.	1,0,0,0	*	*	T
+1	11781	11782	call-1	1.1479482853150245	.	1,0,0,0	*	*	G
+1	11818	11819	call-1	1.2531872683922138	.	0,0,1,0	*	*	A
+1	11827	11828	call-1	1.3242448457125429	.	1,0,0,0	*	*	G
+1	11833	11834	call-1	1.1812324713053926	.	1,0,0,0	*	*	G
+1	11883	11884	call-1	1.0109663144243655	.	1,0,0,0	*	*	G
+1	11973	11974	call-1	0.950757135435623	.	1,0,0,0	*	*	G
+1	12016	12017	call-1	1.1479482853040963	.	0,0,1,0	*	*	A
+1	12029	12030	call-1	1.063489631322355	.	1,0,0,0	*	*	G
+1	12051	12052	call-1	1.010966314424138	.	0,1,0,0	*	*	G
+1	16855	16856	call-1	0.9507571354344861	.	0,0,1,0	*	*	A
+1	17049	17050	call-1	1.063489631323165	.	0,1,0,0	*	*	T
+1	17246	17247	call-1	1.0109663144243655	.	1,0,0,0	*	*	G
+1	17351	17352	call-1	1.3128407975050793	.	0,0,1,0	*	*	A
+1	17357	17358	call-1	1.0109663144207843	.	0,0,1,0	*	*	A
