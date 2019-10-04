@@ -1,20 +1,20 @@
 # Post hoc analysis of Flexbar barcode alignment
 ## Command line wrapper
+Please find the required sample files from the "test" folder under the repository. 
 Parameter estimation 
 ```sh
-f="$1"
-java -cp bk.jar:JACUSA2-ONT.jar qw.Train call-1 -R GRCh38_90.fa -p 2 -c 1 -m 0 -q 2 -P UNSTRANDED -r model.txt $f
+java -cp bk.jar:JACUSA2-ONT.jar qw.Train -R ref.fa -p 2 -c 1 -m 2 -q 2 -r model.txt nanopore.bam
+java -cp bk.jar:JACUSA2-ONT.jar qw.CB -R ref.fa -p 2 -c 1 -m 2 -q 2 -r model.txt illumina.bam
 ```
 Filter barcode alignment
 ```sh
-f="$1"
-java -cp bk.jar:JACUSA2-ONT.jar qw.Predict -m model.txt -i $f -o ${f%.*}.barcodelist
+java -cp bk.jar:JACUSA2-ONT.jar qw.Predict -m model.txt -i alignment.txt -o output.txt
 ```
-where *.barcodelist contains the filtered barcodes. 
+where "output.txt" contains the filtered barcodes. 
 
 ## Model file specification
 A model file contains six blocks as the following example:
-```r
+```
 #Base substitutions
 AA      129806227
 AC      507845
@@ -54,7 +54,7 @@ AAAGAACGTTCTCCTG        979
 
 ## Output file format
 The output contains three columns: read id, assigned barcode, bayes factor (log)
-```r
+```
 b617bd33-d719-4525-b975-c3f7e7213e53    CGGAACCGTGTACATC        7.0648233761436
 beccdc96-900a-475e-a1e9-6c6c29e5fe68    TTGCTGCAGGCGTCCT        21.783081000863707
 ed454751-bde8-4817-83b2-35a2ffffe8b7    CCGGTGACACTTACAG        11.953714653236243
