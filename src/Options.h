@@ -525,7 +525,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addText(parser._toolDoc, "\\fBRTAIL:\\fP use only last n bases, see tail-length options",       false);*/
 
  	addTextSection(parser, "EXAMPLES");
- 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-t\\fP target \\fB-w\\fP whitelist.fasta \\fB-rf\\fP coding_proteins", false);
+ 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-t\\fP target \\fB-w\\fP whitelist.fasta \\fB-as\\fP CTACACGACGCTCTTCCGATCT \\fB-rf\\fP coding_proteins", false);
 // 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-b\\fP barcodes.fa \\fB", false);
 // 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-a\\fP adapters.fa \\fB-ao\\fP 3 \\fB-ae\\fP 0.1", false);
 }
