@@ -25,10 +25,11 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     int threshold = -1;
     int step = 1;
     int overlap = 0;
-    bool verbose = false;
-    bool overlapping = false;
+    bool verbose = true;
+//     bool overlapping = false;
     bool rmDup = true;
     int threads = o.nThreads;
+    int mergeRegionsDis = 1000;
 
 
     //Read gtf file
@@ -66,7 +67,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
 //         std::cout << "Finished reading\n";
 
 //         for (unsigned i = 0; i < table.size(); i++){
-//                 std::cout << std::get<0>(table[i]) << "\t" << std::get<1>(table[i]) << "\t" << std::get<2>(table[i]) << "\n";
+//             std::cout << std::get<0>(table[i]) << "\t" << std::get<1>(table[i]) << "\t" << std::get<2>(table[i]) << "\n";
 //         }
 //         std::cout << "\n";
         inputFile.close();
@@ -75,6 +76,26 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     {
         std::cout << "Could not open file: " << o.regionsFile << "\n";
     }
+
+    // merge close regions
+    if(o.rmMulti){
+        for(int i = 0; i < table.size() - 1; ++i){
+            if(get<0>(table[i]) == get<0>(table[i + 1])){
+                if(get<2>(table[i]) > get<1>(table[i + 1]) - mergeRegionsDis)
+                {
+                    get<2>(table[i]) = (get<2>(table[i]) > get<2>(table[i + 1])) ? get<2>(table[i]) : get<2>(table[i + 1]);
+                    table.erase(table.begin() + i + 1);
+                    --i;
+                }
+            }
+        }
+    }
+
+
+//     for (unsigned i = 0; i < table.size(); i++){
+//         std::cout << std::get<0>(table[i]) << "\t" << std::get<1>(table[i]) << "\t" << std::get<2>(table[i]) << "\n";
+//     }
+//     std::cout << "\n";
 
 
     // Open input file, BamFileIn can read SAM and BAM files.
@@ -128,6 +149,8 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 readRecord(record, bamFileIn);
                 //use map to jump to correct chromosom //use start pos and length
                 if(hasFlagUnmapped(record))
+                    continue;
+                if(hasFlagSecondary(record) && !o.rmMulti)
                     continue;
                 string recordContig = toCString(getContigName(record, bamFileIn));
                 uint32_t recordBegin = record.beginPos;
@@ -184,6 +207,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     end = table.size();
                     continue;
                 }
+
                 //TODO assume sorted
                 #pragma omp parallel for num_threads(threads) schedule(static)
                 for(int i = st; i < end; ++i){
@@ -192,11 +216,14 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     uint32_t rowBegin = std::get<1>(table[i]);
                     uint32_t rowEnd = std::get<2>(table[i]);
 
+//                     std::cout << "rBegin: " << recordBegin  << "\t" << rowBegin << "\t" << recordEnd << "\n";
                     // check in nanopore read ends or starts inside annotated region
                     if((recordBegin >= rowBegin && recordBegin <= rowEnd) || (recordEnd >= rowBegin && recordEnd <= rowEnd))
                     {
+//                         std::cout << "accepted" << "\n";
                         recordtable[i].push_back(record);
                     }
+                    /*
                     // check if nanopore reads is overlapping
                     else if (overlapping && recordBegin <= rowBegin && recordEnd >= rowEnd)
                     {
@@ -207,7 +234,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                         {
                                 recordtable[i].push_back(record);
                         }
-                    }
+                    }*/
                 }
             }
 
