@@ -78,15 +78,13 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     }
 
     // merge close regions
-    if(o.rmMulti){
-        for(int i = 0; i < table.size() - 1; ++i){
-            if(get<0>(table[i]) == get<0>(table[i + 1])){
-                if(get<2>(table[i]) > get<1>(table[i + 1]) - mergeRegionsDis)
-                {
-                    get<2>(table[i]) = (get<2>(table[i]) > get<2>(table[i + 1])) ? get<2>(table[i]) : get<2>(table[i + 1]);
-                    table.erase(table.begin() + i + 1);
-                    --i;
-                }
+    for(int i = 0; i < table.size() - 1; ++i){
+        if(get<0>(table[i]) == get<0>(table[i + 1])){
+            if(get<2>(table[i]) > get<1>(table[i + 1]) - mergeRegionsDis)
+            {
+                get<2>(table[i]) = (get<2>(table[i]) > get<2>(table[i + 1])) ? get<2>(table[i]) : get<2>(table[i + 1]);
+                table.erase(table.begin() + i + 1);
+                --i;
             }
         }
     }
@@ -238,50 +236,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 }
             }
 
-/*
-            std::cout << "Writing\n";
-            string prefix = toCString(outputPathPrefix);
-    //         #pragma omp parallel for schedule(dynamic) num_threads(threads)
-            for(int b = 0; b < recordtable.size(); b += step)
-            {
-                int cumLength = 0;
-                for(int j = 0; j < step && (b + j) < recordtable.size(); ++j){
-                    cumLength += recordtable[b + j].size();
-                }
-                if(cumLength <= min)
-                    continue;
 
-                ofstream mybamstream;
-                string bamName = prefix + to_string(b + p) + toCString(suffix) + ".bam";
-                mybamstream.open(bamName);
-                // Open output file, BamFileOut accepts also an ostream and a format tag.
-
-                BamFileOut bamFileOut(context(bamFileIn), mybamstream, Bam());
-                writeHeader(bamFileOut, header);
-                for(int j = 0; j < step && (b + j) < recordtable.size(); ++j){
-                    for(int i = 0; i < recordtable[b + j].size(); ++i){
-                        BamAlignmentRecord & record = recordtable[b + j][i];
-                        if(rmDup){
-                            auto search = readIDs.find(record.qName);
-                            if(search == readIDs.end()){
-                                writeRecord(bamFileOut, recordtable[b + j][i]);
-                                readIDs[record.qName] = 1;
-                            }
-                            else
-                            {
-                                ++search->second;
-                            }
-                        }
-                        else
-                        {
-                            writeRecord(bamFileOut, recordtable[b + j][i]);
-                        }
-                    }
-                }
-                close(bamFileOut);
-            }
-            p = p + interval;
-            */
         }
         catch (Exception const & e)
         {
