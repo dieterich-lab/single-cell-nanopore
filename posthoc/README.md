@@ -8,7 +8,7 @@ java -cp bk.jar:JACUSA2-ONT.jar qw.CB -R ref.fa -p 2 -c 1 -m 2 -q 2 -r model.txt
 ```
 Filter barcode alignment
 ```sh
-java -cp bk.jar:JACUSA2-ONT.jar qw.Predict -m model.txt -i alignment.txt -o output.txt
+java -cp bk.jar:JACUSA2-ONT.jar qw.Predict -m model.txt -i test_leftTail.log -o output.txt
 ```
 where "output.txt" contains the filtered barcodes. 
 
@@ -53,13 +53,13 @@ AAAGAACGTTCTCCTG        979
 ```
 
 ## Output file format
-The output contains three columns: read id, assigned barcode, bayes factor (log)
+The output contains three columns: read id, assigned barcode, bayes factor
 ```
-b617bd33-d719-4525-b975-c3f7e7213e53    CGGAACCGTGTACATC        7.0648233761436
-beccdc96-900a-475e-a1e9-6c6c29e5fe68    TTGCTGCAGGCGTCCT        21.783081000863707
-ed454751-bde8-4817-83b2-35a2ffffe8b7    CCGGTGACACTTACAG        11.953714653236243
-f345b646-98dc-48ae-aebf-33fd7fbf8c28    CAGATTGCATGAAAGT        7.077305491988227
-4d204b79-5f84-4e42-b358-2aa9de6e9252    GAGGGTATCGGCTGTG        17.75756713842614
-ad202c2f-830a-49c9-bc96-7837ac5c8430    GGGCTACGTATAGGGC        7.207479839616639
-1272c4a1-7d2a-4988-aa71-d0b4a69c3987    CAGAGCCTCTTGTTAC        17.8281203773929
+beccdc96-900a-475e-a1e9-6c6c29e5fe68    TTGCTGCAGGCGTCCT        2.828E9
+d67416fb-5580-47f4-9113-ef3a3b3a3010    CCCTGATCACCTTCCA        759.535
+2cbcce34-d43f-4182-ae30-f8c720fd8a2f    CCACTTGTCGTCAACA        5.36E7
+ed454751-bde8-4817-83b2-35a2ffffe8b7    CCGGTGACACTTACAG        387.59
+4d204b79-5f84-4e42-b358-2aa9de6e9252    GAGGGTATCGGCTGTG        5.15E7
+8b9d6c7c-4566-4ae9-b5d8-b4069a073d5a    TTCCGTGCACATGACT        2.824E9
+b25fc275-9eac-419b-b43e-a55a37cb9920    GAACACTCAACAAAGT        2.8E9
 ```

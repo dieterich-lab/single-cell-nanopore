@@ -1,0 +1,7 @@
+1	havana	gene	11869	14409	.	+	.	gene_id "ENSG00000223972"; gene_version "5"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";
+1	havana	gene	14404	29570	.	-	.	gene_id "ENSG00000227232"; gene_version "5"; gene_name "WASH7P"; gene_source "havana"; gene_biotype "unprocessed_pseudogene";
+1	havana	gene	52473	53312	.	+	.	gene_id "ENSG00000268020"; gene_version "3"; gene_name "AL627309.6"; gene_source "havana"; gene_biotype "unprocessed_pseudogene";
+1	havana	gene	57598	64116	.	+	.	gene_id "ENSG00000240361"; gene_version "2"; gene_name "OR4G11P"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";
+1	ensembl_havana	gene	65419	71585	.	+	.	gene_id "ENSG00000186092"; gene_version "5"; gene_name "OR4F5"; gene_source "ensembl_havana"; gene_biotype "protein_coding";
+1	havana	gene	182696	184174	.	+	.	gene_id "ENSG00000279928"; gene_version "2"; gene_name "FO538757.2"; gene_source "havana"; gene_biotype "unprocessed_pseudogene";
+1	havana	gene	185217	195411	.	-	.	gene_id "ENSG00000279457"; gene_version "4"; gene_name "FO538757.1"; gene_source "havana"; gene_biotype "unprocessed_pseudogene";
