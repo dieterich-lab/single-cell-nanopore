@@ -79,6 +79,7 @@ void splitReads(Options &o)
     int readLength = 25;
     bool checkOrigin = true;
     bool verbose = false;
+    CharString firstp = "_Flexbar_removal_";
 
     while (!atEnd(seqFileInFlex))
     {
@@ -94,7 +95,9 @@ void splitReads(Options &o)
                 readRecord(id, read, seqFileInFlex);
 
             Finder<CharString> finder(id);
-            Pattern<CharString, Horspool> pattern("_Flexbar_removal_");
+
+            Pattern<CharString, Horspool> pattern(firstp);
+            if(length(id) > length(firstp))
             find(finder, pattern);
             int found = beginPosition(finder);
             //flexbar aligned primer

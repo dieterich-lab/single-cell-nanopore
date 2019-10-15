@@ -59,8 +59,9 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 ++k;
             }
             CharString refid = tmprow[0];
-            uint32_t s = std::stoi(tmprow[1]) - overlap;
-            uint32_t e = std::stoi(tmprow[2]) + overlap;
+            // -1 to convert from bam start coordinate 1 to 0 coordinate system in seqan
+            uint32_t s = std::stoi(tmprow[1]) - overlap - 1;
+            uint32_t e = std::stoi(tmprow[2]) + overlap - 1;
             s = (s < 0) ? 0 : s;
             table.push_back(std::make_tuple(refid, s, e)); // completeTable
         }
@@ -152,7 +153,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     continue;
                 string recordContig = toCString(getContigName(record, bamFileIn));
                 uint32_t recordBegin = record.beginPos;
-                uint32_t recordEnd = recordBegin + length(record.seq);
+                uint32_t recordEnd = recordBegin + getAlignmentLengthInRef(record); //length(record.seq);
                 //determine search range
     //             bool same = true;
                 if(lastContig.compare(recordContig) != 0){
