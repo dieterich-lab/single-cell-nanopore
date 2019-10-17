@@ -11,6 +11,10 @@ Filter barcode alignment
 java -cp bk.jar:JACUSA2-ONT.jar qw.Predict -m model.txt -i test_leftTail.log -o output.txt
 ```
 where "output.txt" contains the filtered barcodes. 
+Simulate 5000 random reads from the model
+```sh
+java -cp bk.jar:JACUSA2-ONT.jar qw.Simulate -m model.txt -i cb.fa -o sim.sam
+```
 
 ## Model file specification
 A model file contains six blocks as the following example:
