@@ -138,7 +138,7 @@ struct Options{
 		adapRm    = AOFF;
 		rcMode    = RCOFF;
 		poMode    = POFF;
-		a_end     = RIGHT;
+		a_end     = ANY;
 		arc_end   = RIGHT;
 		b_end     = LTAIL;
 		aPreset   = APOFF;
@@ -211,9 +211,9 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("N", "bundle", "Number of (paired) reads per thread. Always use 256 primer alignment. Use N * whitelist Barcodes <= 6000.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("M", "bundles", "Process only certain number of bundles for testing.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("t", "target", "Prefix for output file names or paths.", ARG::OUTPUT_PREFIX));
-	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode.", ARG::INPUT_FILE));
+	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode needs to be sorted after sequence names (coordinate sorted works also) The important part is all reads mapping to the same sequence are together.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("w", "whitelist", "Cell Barcodes which were determined to be valid by chromium pipeline.", ARG::INPUT_FILE));
-    addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file.", ARG::INPUT_FILE));
+    addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file. Region must be sorted after sequence names (alphabetically or numberically)", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
 
     addOption(parser, ArgParseOption("rm", "rmMulti", "Remove all Mulimappers."));

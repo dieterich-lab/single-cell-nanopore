@@ -25,7 +25,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     int threshold = -1;
     int step = 1;
     int overlap = 0;
-    bool verbose = true;
+    bool verbose = false;
 //     bool overlapping = false;
     bool rmDup = true;
     int threads = o.nThreads;
@@ -37,6 +37,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     ifstream inputFile(toCString(o.regionsFile));
     string line;
     vector<std::tuple<CharString, uint32_t, uint32_t> > table/*completeTable*/;
+    vector<string> oldcontigs;
     if(inputFile.is_open()){
 //         bool head = true;
         while (getline(inputFile, line, '\n'))
@@ -78,6 +79,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
         std::cout << "Could not open file: " << o.regionsFile << "\n";
     }
 
+
     // merge close regions
     for(int i = 0; i < table.size() - 1; ++i){
         if(get<0>(table[i]) == get<0>(table[i + 1])){
@@ -87,6 +89,24 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 table.erase(table.begin() + i + 1);
                 --i;
             }
+        }
+    }
+
+    string lastContig = "";
+    vector<string> scannedContigs;
+    for(int i = 0; i < table.size(); ++i)
+    {
+        if(lastContig.compare(toCString(get<0>(table[i]))) != 0){
+            lastContig = toCString(get<0>(table[i]));
+
+            for(int j = 0; j < scannedContigs.size() && !scannedContigs.empty(); ++j){
+//                 std::cout << "l: " << lastContig << "\tscan\t" << scannedContigs[j] << "\n";
+                if(lastContig.compare(scannedContigs[j]) == 0){
+                    std::cerr << "Contigs in the gtf file are not sorted\n";
+                    exit(0);
+                }
+            }
+            scannedContigs.push_back(lastContig);
         }
     }
 
@@ -161,8 +181,10 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                         std::cout << "Calc new Range for: \n";
                     if(!skip)
                     {
+//                         table.erase(table.begin() + st, table.begin() + end);
                         for(int i = st; i < end; ++i)
                             table.erase(table.begin() + st);
+
                     }
     //                 same = false;
                     skip = false;
@@ -195,8 +217,22 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     // in case no element matches
                     if(stNew){
                         std::cout << "Skip not in gtf file: " << lastContig << "\n";
+
+//                         string finishedcontig = toCString(std::get<0>(table[st]));
+                        for(int i = 0; i < oldcontigs.size(); ++i){
+//                             std::cout << "Check: " << oldcontigs[i] << "\told: " << lastContig << "\n";
+                            if(lastContig.compare(oldcontigs[i]) == 0)
+                            {
+                                //TODO add option to ignore unsorted bamfile dont erase then
+                                std::cerr << "Error records in Bamfile are not sorted\n"; // read extraction will be slow
+                                exit(0);
+                            }
+                        }
+
+
                         skip = true;
                     }
+                    oldcontigs.push_back(lastContig);
 
                 }
                 ++k;
