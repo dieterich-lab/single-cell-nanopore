@@ -1,0 +1,14 @@
+Extract Reads
+Open regions file
+Open bam file
+Finished extraction. Found 882 unique reads. Removed 2 duplicates. Reads with no sequence: 0(due to being multimappers)
+Remove cDNA from Reads
+Finished removing cDNA!
+Primer Alignment
+Finished
+Discarded because aligned to wrong side: 6
+Left: 272
+Right: 272
+Finished Left Tail Barcode Alignment: ../single-cell-nanopore/test/EIF4A3_results/EIF4A3_leftTail.log
+Finished Right Tail Barcode Alignment: ../single-cell-nanopore/test/EIF4A3_results/EIF4A3_rightTail.log
+Total wall clock runtime 45s.

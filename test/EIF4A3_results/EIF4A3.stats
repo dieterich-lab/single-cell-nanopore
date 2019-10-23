@@ -1,0 +1,15 @@
+Finished extraction. Found 882 unique reads. Removed 2 duplicates. Reads with no sequence: 0(due to being multimappers)
+P1 aligned in forward direction on the left piece of the nanopore read (cDNA is located in the middle)
+272
+P1 aligned in reverse complement direction on the right piece of the nanopore read
+290
+Assigned Barcode in forward direction
+167
+Could not assign barcode in forward direction:
+105
+Assigned Barcode in reverse complement direction
+203
+Could not assign barcode in reverse complement direction:
+69
+Unique assinged reads: 
+370

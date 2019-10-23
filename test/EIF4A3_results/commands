@@ -1,0 +1,5 @@
+# executed from directory on the same level as source directory
+./singleCellPipe -r ../single-cell-nanopore/test/last_exon_EIF4A3_nanopore.bam -w ../single-cell-nanopore/test/cb.fa -rf ../single-cell-nanopore/test/EIF4A3.gtf -t ../single-cell-nanopore/test/EIF4A3_results/EIF4A3 -as "CTACACGACGCTCTTCCGATCT" -n 3 -N 3 -bg -2 -fq > ../single-cell-nanopore/test/EIF4A3_results/EIF4A3.log
+
+# executed from location of the script
+./do_stats.sh test/EIF4A3_results/EIF4A3_P1.log test/EIF4A3_results/EIF4A3_leftTail.log test/EIF4A3_results/EIF4A3_rightTail.log test/EIF4A3_results/EIF4A3.log > test/EIF4A3_results/EIF4A3.stats
