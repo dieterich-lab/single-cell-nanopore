@@ -207,13 +207,6 @@ public:
 			smallest_diff = amScore_bestScore - scores[1];
 		}
 
-		if(am_v.size() > 0){
-            if(amScore_bestScore != am_v.back().score){
-                std::cout << "Ohno\n";
-                exit(0);
-            }
-		}
-
 		string smallest_diff_to_best_score;
 		if(smallest_diff == -1){
 			smallest_diff_to_best_score = "";

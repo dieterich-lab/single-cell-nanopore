@@ -273,7 +273,7 @@ void startProcessing(Options &o){
 		}
 	}
 
-	outputFilter.printFileSummary();
+// 	outputFilter.printFileSummary();
 
 
 	// summary statistics of filtering
@@ -307,39 +307,41 @@ void startProcessing(Options &o){
 	}
 	else *out << alignValue(len, uncalled) << endl;
 
-	if(o.qTrim != QOFF && ! o.qtrimPostRm)
-	*out << "  trimmed due to low quality      " << alignValue(len, inputFilter.getNrLowPhredReads()) << endl;
+    if(o.a_end == flexbar::TrimEnd::ANY){
+        if(o.qTrim != QOFF && ! o.qtrimPostRm)
+        *out << "  trimmed due to low quality      " << alignValue(len, inputFilter.getNrLowPhredReads()) << endl;
 
-	if(o.barDetect != BOFF && ! o.writeUnassigned)
-	*out << "  skipped unassigned reads        " << alignValue(len, alignFilter.getNrUnassignedReads()) << endl;
+        if(o.barDetect != BOFF && ! o.writeUnassigned)
+        *out << "  skipped unassigned reads        " << alignValue(len, alignFilter.getNrUnassignedReads()) << endl;
 
-	if(o.adapRm != AOFF || o.poMode != POFF)
-	*out << "  short prior to adapter removal  " << alignValue(len, alignFilter.getNrPreShortReads()) << endl;
+        if(o.adapRm != AOFF || o.poMode != POFF)
+        *out << "  short prior to adapter removal  " << alignValue(len, alignFilter.getNrPreShortReads()) << endl;
 
-	if(o.qTrim != QOFF && o.qtrimPostRm)
-	*out << "  trimmed due to low quality      " << alignValue(len, outputFilter.getNrLowPhredReads()) << endl;
+        if(o.qTrim != QOFF && o.qtrimPostRm)
+        *out << "  trimmed due to low quality      " << alignValue(len, outputFilter.getNrLowPhredReads()) << endl;
 
-	*out << "  finally skipped short reads     " << alignValue(len, outputFilter.getNrShortReads()) << endl;
+        *out << "  finally skipped short reads     " << alignValue(len, outputFilter.getNrShortReads()) << endl;
 
-	if(o.isPaired && ! o.writeSingleReads && ! o.writeSingleReadsP)
-	*out << "  skipped paired single reads     " << alignValue(len, outputFilter.getNrSingleReads()) << endl;
+        if(o.isPaired && ! o.writeSingleReads && ! o.writeSingleReadsP)
+        *out << "  skipped paired single reads     " << alignValue(len, outputFilter.getNrSingleReads()) << endl;
 
-	*out << "Discarded reads overall           " << alignValue(len, nReads - nGoodReads) << endl;
-	*out << "Remaining reads                   " << alignValue(len, nGoodReads);
+        *out << "Discarded reads overall           " << alignValue(len, nReads - nGoodReads) << endl;
+        *out << "Remaining reads                   " << alignValue(len, nGoodReads);
 
-	if(nReads > 0)
-	*out << "   (" << fixed << setprecision(2) << 100 * nGoodReads / nReads << "%)";
+        if(nReads > 0)
+        *out << "   (" << fixed << setprecision(2) << 100 * nGoodReads / nReads << "%)";
 
-	stringstream schar; schar << inputFilter.getNrProcessedChars();
-	int clen = schar.str().length();
+        stringstream schar; schar << inputFilter.getNrProcessedChars();
+        int clen = schar.str().length();
 
-	*out << "\n" << endl;
+        *out << "\n" << endl;
 
-	*out << "Processed bases   " << alignValue(clen, nChars) << endl;
-	*out << "Remaining bases   " << alignValue(clen, nGoodChars);
+        *out << "Processed bases   " << alignValue(clen, nChars) << endl;
+        *out << "Remaining bases   " << alignValue(clen, nGoodChars);
 
-	if(nChars > 0)
-	*out << "   (" << fixed << setprecision(2) << 100 * nGoodChars / nChars << "% of input)";
+        if(nChars > 0)
+        *out << "   (" << fixed << setprecision(2) << 100 * nGoodChars / nChars << "% of input)";
+    }
 
 	*out << "\n\n" << endl;
 
