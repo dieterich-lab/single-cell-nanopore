@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 
+
 using namespace seqan;
 using namespace std;
 
@@ -21,6 +22,9 @@ using namespace std;
 
 std::vector<BamAlignmentRecord > extractReads(Options &o)
 {
+    bool logregions = true;
+    if(o.regionsLog.compare("") == 0)
+        logregions = false;
     //TODO add as parameters
     int threshold = -1;
     int step = 1;
@@ -36,7 +40,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     std::cout << "Open regions file\n";
     ifstream inputFile(toCString(o.regionsFile));
     string line;
-    vector<std::tuple<CharString, uint32_t, uint32_t> > table/*completeTable*/;
+    vector<std::tuple<CharString, uint32_t, uint32_t, CharString> > table/*completeTable*/;
     vector<string> oldcontigs;
     if(inputFile.is_open()){
 //         bool head = true;
@@ -48,15 +52,21 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
 //                 head = false;
 //                 continue;
 //             }
-            std::tuple<CharString, uint32_t, uint32_t> row;
             std::istringstream sline(line);
-            std::string element;
+            std::string rowelement;
             std::vector<string> tmprow;
             int k = 0;
-            while (getline(sline, element, '\t')){
-//                 std::cout << "k: " << k << "\t" << element << "\n";
+            while (getline(sline, rowelement, '\t')){
+//                 std::cout << "k: " << k << "\t" << rowelement << "\n";
                 if(k == 0 || k == 3 || k == 4)
-                    tmprow.push_back(element);
+                    tmprow.push_back(rowelement);
+                if(k == 8){
+                    std::istringstream sname(rowelement);
+                    std::string genename;
+                    if(getline(sname, genename, ';'))
+                        tmprow.push_back(genename);
+                    break;
+                }
                 ++k;
             }
             CharString refid = tmprow[0];
@@ -64,7 +74,8 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
             uint32_t s = std::stoi(tmprow[1]) - overlap - 1;
             uint32_t e = std::stoi(tmprow[2]) + overlap - 1;
             s = (s < 0) ? 0 : s;
-            table.push_back(std::make_tuple(refid, s, e)); // completeTable
+            CharString name = tmprow[3];
+            table.push_back(std::make_tuple(refid, s, e, name)); // completeTable
         }
 //         std::cout << "Finished reading\n";
 
@@ -86,12 +97,15 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
             if(get<2>(table[i]) > get<1>(table[i + 1]) - mergeRegionsDis)
             {
                 get<2>(table[i]) = (get<2>(table[i]) > get<2>(table[i + 1])) ? get<2>(table[i]) : get<2>(table[i + 1]);
+                get<3>(table[i]) += ", ";
+                get<3>(table[i]) += get<3>(table[i + 1]);
                 table.erase(table.begin() + i + 1);
                 --i;
             }
         }
     }
 
+    // check contigs are sorted in some order
     string lastContig = "";
     vector<string> scannedContigs;
     for(int i = 0; i < table.size(); ++i)
@@ -314,7 +328,18 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     uint32_t empty_dups = 0;
     uint32_t unique = 0;
 
+    ofstream regionsLog;
+    if(logregions || true)
+    {
+    regionsLog.open (o.regionsLog);
+    regionsLog << "@This file list merge regions ', ' separated and reads newline separated. \n@The next list separated by an additonal newline\n";
+    }
+
+
     for(int i = 0; i < recordtable.size(); ++i){
+        if(logregions)
+            regionsLog << toCString(std::get<3>(table[i])) << "\n";
+
         for(int j = 0; j < recordtable[i].size(); ++j){
             auto & record = recordtable[i][j];
             if(length(record.seq) == 0){
@@ -329,6 +354,9 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     if(it != idMap_occ.end()){
                         if(it->second == 1){
                             uniqueExtractedReads.push_back(std::move(recordtable[i][j]));
+                            if(logregions){
+                                regionsLog << toCString(recordtable[i][j].qName) << "\n";
+                            }
                         }else{
 //                             std::cout << "Dups: " << record.qName << "\n";
                             ++dups;
@@ -346,6 +374,9 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     {
                         idMap[record.qName] = 1;
                         uniqueExtractedReads.push_back(std::move(recordtable[i][j]));
+                        if(logregions){
+                            regionsLog << toCString(recordtable[i][j].qName) << "\n";
+                        }
                     }
                     else
                     {
@@ -355,7 +386,11 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 }
             }
         }
+        if(logregions)
+            regionsLog << "\n";
     }
+    if(logregions)
+        regionsLog.close();
 
     std::cout << "Finished extraction. Found " << uniqueExtractedReads.size() << " unique reads. Removed " << dups << " duplicates. Reads with no sequence: " << empty_dups << "(due to being multimappers)\n";
 
