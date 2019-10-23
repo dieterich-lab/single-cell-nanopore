@@ -16,7 +16,7 @@ struct Options{
 
 //     using seqan::CharString;
 //     using seqan::Dna5String;
-	std::string readsFile, readsFile2, barReadsFile, bamFile, whitelist, regionsFile;
+	std::string readsFile, readsFile2, barReadsFile, bamFile, whitelist, regionsFile, regionsLog;
 
 	std::string outReadsFile, outReadsFile2, outLogFile;
 	std::string barcodeFile, adapterFile, barcode2File, adapter2File;
@@ -84,6 +84,7 @@ struct Options{
 		outReadsFile2  = "";
 		outLogFile     = "";
 		outCompression = "";
+        regionsLog     = "";
 		htrimLeft      = "";
 		htrimRight     = "";
 
@@ -215,6 +216,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     addOption(parser, ArgParseOption("w", "whitelist", "Cell Barcodes which were determined to be valid by chromium pipeline.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file. Region must be sorted after sequence names (alphabetically or numberically)", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
+
+    addOption(parser, ArgParseOption("lr", "logRegions", "List to which region the nanopore reads mapped if they were selected for extraction.", ARG::OUTPUT_FILE));
 
     addOption(parser, ArgParseOption("rm", "rmMulti", "Remove all Mulimappers."));
     addOption(parser, ArgParseOption("fq", "qual", "Report Sequence quality."));
@@ -798,6 +801,10 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 // 		o.adapRm = NORMAL;
 // 		o.useAdapterFile = true;
 	}
+
+	if(isSet(parser, "logRegions")){
+        getOptionValue(o.regionsLog, parser, "logRegions");
+    }
 
 	if(isSet(parser, "adapter-seq")){
 		getOptionValue(o.adapterSeq, parser, "adapter-seq");

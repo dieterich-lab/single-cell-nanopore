@@ -26,7 +26,7 @@ echo "Could not assign barcode in reverse complement direction:"
 grep 'Unvalid alignment' $3 | wc -l
 
 
-echo "Unique assinged reads: "
+echo "Unique assigned reads: "
 cat $2 $3 | grep '  read id' | awk '{print $3}' | cut -d '_' -f 1 | sort -u | wc -l
 
 

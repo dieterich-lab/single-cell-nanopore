@@ -78,7 +78,7 @@ For the regions file only the first, fourth and fifth column are considered.
 ```
 ## Primer Sequence
 
-The primer sequence is given as a plain string in qutations:
+The primer sequence is given as a plain string in quotations:
 ```
  -as "CTACACGACGCTCTTCCGATCT"
 ```
