@@ -40,7 +40,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     std::cout << "Open regions file\n";
     ifstream inputFile(toCString(o.regionsFile));
     string line;
-    vector<std::tuple<CharString, uint32_t, uint32_t, CharString> > table/*completeTable*/;
+    vector<std::tuple<std::string, uint32_t, uint32_t, std::string> > table/*completeTable*/;
     vector<string> oldcontigs;
     if(inputFile.is_open()){
 //         bool head = true;
@@ -69,12 +69,12 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 }
                 ++k;
             }
-            CharString refid = tmprow[0];
+            std::string refid = tmprow[0];
             // -1 to convert from bam start coordinate 1 to 0 coordinate system in seqan
             uint32_t s = std::stoi(tmprow[1]) - overlap - 1;
             uint32_t e = std::stoi(tmprow[2]) + overlap - 1;
             s = (s < 0) ? 0 : s;
-            CharString name = tmprow[3];
+            std::string name = tmprow[3];
             table.push_back(std::make_tuple(refid, s, e, name)); // completeTable
         }
 //         std::cout << "Finished reading\n";
@@ -97,8 +97,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
             if(get<2>(table[i]) > get<1>(table[i + 1]) - mergeRegionsDis)
             {
                 get<2>(table[i]) = (get<2>(table[i]) > get<2>(table[i + 1])) ? get<2>(table[i]) : get<2>(table[i + 1]);
-                get<3>(table[i]) += ", ";
-                get<3>(table[i]) += get<3>(table[i + 1]);
+                get<3>(table[i]) += std::string(", ") + get<3>(table[i]) += get<3>(table[i + 1]);
                 table.erase(table.begin() + i + 1);
                 --i;
             }
@@ -110,8 +109,8 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     vector<string> scannedContigs;
     for(int i = 0; i < table.size(); ++i)
     {
-        if(lastContig.compare(toCString(get<0>(table[i]))) != 0){
-            lastContig = toCString(get<0>(table[i]));
+        if(lastContig.compare(get<0>(table[i])) != 0){
+            lastContig = get<0>(table[i]);
 
             for(int j = 0; j < scannedContigs.size() && !scannedContigs.empty(); ++j){
 //                 std::cout << "l: " << lastContig << "\tscan\t" << scannedContigs[j] << "\n";
@@ -205,7 +204,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     stNew = true;
                     string rowContig;
                     for(int i = 0; i < table.size(); ++i){
-                        rowContig = toCString(std::get<0>(table[i]));
+                        rowContig = std::get<0>(table[i]);
                         if(recordContig.compare(rowContig) == 0 && stNew){
                             stNew = false;
                             st = i;
@@ -261,7 +260,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                 #pragma omp parallel for num_threads(threads) schedule(static)
                 for(int i = st; i < end; ++i){
                     //check row
-                    string rowContig = toCString(std::get<0>(table[i]));
+                    string rowContig = std::get<0>(table[i]);
                     uint32_t rowBegin = std::get<1>(table[i]);
                     uint32_t rowEnd = std::get<2>(table[i]);
 
@@ -338,7 +337,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
 
     for(int i = 0; i < recordtable.size(); ++i){
         if(logregions)
-            regionsLog << toCString(std::get<3>(table[i])) << "\n";
+            regionsLog << std::get<3>(table[i]) << "\n";
 
         for(int j = 0; j < recordtable[i].size(); ++j){
             auto & record = recordtable[i][j];

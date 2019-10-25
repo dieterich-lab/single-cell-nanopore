@@ -39,7 +39,7 @@ struct Options{
     uint32_t readingPos = 0;
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
-	int maxUncalled, min_readLen, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
+	int maxUncalled, min_readLen, barcodeAlignmentLength, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
 
 	int a_match, a_mismatch, a_gapCost, b_match, b_mismatch, b_gapCost, barcode_match, barcode_mismatch, barcode_gapCost, a_cycles;
 
@@ -124,6 +124,7 @@ struct Options{
 		qtrimWinSize    = 0;
 		a_tail_len      = 0;
 		b_tail_len      = 0;
+        barcodeAlignmentLength = 25;
 		a_min_overlap   = 3;
 		b_min_overlap   = 0;
 		htrimMinLength2 = 0;
@@ -254,6 +255,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));
     addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
+
+    addOption(parser, ArgParseOption("bl", "barcodeAlignmentLength", "Length of read fragment considered for barcode alignment should be longer than the barcode default 25.", ARG::INTEGER));
 
 
     setAdvanced(parser, "barcodes2");
@@ -801,6 +804,8 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 // 		o.adapRm = NORMAL;
 // 		o.useAdapterFile = true;
 	}
+
+	getOptionValue(o.barcodeAlignmentLength, parser, "barcodeAlignmentLength");
 
 	if(isSet(parser, "logRegions")){
         getOptionValue(o.regionsLog, parser, "logRegions");

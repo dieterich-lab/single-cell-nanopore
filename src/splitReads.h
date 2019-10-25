@@ -76,7 +76,7 @@ void splitReads(Options &o)
 //     int readLength = 0;
 
     //TODO add as option
-    int readLength = 25;
+    int readLength = o.barcodeAlignmentLength;
     bool checkOrigin = true;
     bool verbose = false;
     CharString firstp = "_Flexbar_removal_";
