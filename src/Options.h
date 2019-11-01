@@ -39,7 +39,7 @@ struct Options{
     uint32_t readingPos = 0;
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
-	int maxUncalled, min_readLen, barcodeAlignmentLength, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
+	int maxUncalled, min_readLen, barcodeAlignmentLength, barcodeUmiLenth, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
 
 	int a_match, a_mismatch, a_gapCost, b_match, b_mismatch, b_gapCost, barcode_match, barcode_mismatch, barcode_gapCost, a_cycles;
 
@@ -125,6 +125,7 @@ struct Options{
 		a_tail_len      = 0;
 		b_tail_len      = 0;
         barcodeAlignmentLength = 25;
+        barcodeUmiLenth = 0;
 		a_min_overlap   = 3;
 		b_min_overlap   = 0;
 		htrimMinLength2 = 0;
@@ -258,6 +259,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
     addOption(parser, ArgParseOption("bl", "barcodeAlignmentLength", "Length of read fragment considered for barcode alignment should be longer than the barcode default 25.", ARG::INTEGER));
 
+    addOption(parser, ArgParseOption("ul", "barcodeUmiLenth", "Length of UMI + barcode needed for homopolymers removal.", ARG::INTEGER));
+
 
     setAdvanced(parser, "barcodes2");
     setAdvanced(parser, "barcode-reads");
@@ -336,9 +339,9 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     setAdvanced(parser, "qw");
     setAdvanced(parser, "qa");
 
-// 	addSection(parser, "Trimming of homopolymers");
-	addOption(parser, ArgParseOption("hl", "htrim-left", "Trim specific homopolymers on left read end after removal.", ARG::STRING));
-	addOption(parser, ArgParseOption("hr", "htrim-right", "Trim certain homopolymers on right read end after removal.", ARG::STRING));
+	addSection(parser, "Check for homopolymers before barcode assignment");
+	addOption(parser, ArgParseOption("hl", "htrim-left", "Check specific homopolymers on left read fragement end before barcode alignment.", ARG::STRING));
+	addOption(parser, ArgParseOption("hr", "htrim-right", "Check certain homopolymers right behind the Cellbarcode and Unique Molecular Identifier.", ARG::STRING));
 	addOption(parser, ArgParseOption("hi", "htrim-min-length", "Minimum length of homopolymers at read ends.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("h2", "htrim-min-length2", "Minimum length for homopolymers specified after first one.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("hx", "htrim-max-length", "Maximum length of homopolymers on left and right read end.", ARG::INTEGER));
@@ -347,12 +350,6 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("ha", "htrim-adapter", "Trim only in case of adapter removal on same side."));
 
     setAdvanced(parser, "hl");
-    setAdvanced(parser, "hr");
-    setAdvanced(parser, "hi");
-    setAdvanced(parser, "h2");
-    setAdvanced(parser, "hx");
-    setAdvanced(parser, "hf");
-    setAdvanced(parser, "he");
     setAdvanced(parser, "ha");
 
 	addSection(parser, "Output selection");
@@ -413,11 +410,11 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setAdvanced(parser, "post-trim-length");
 	setAdvanced(parser, "qtrim-win-size");
 	setAdvanced(parser, "qtrim-post-removal");
-	setAdvanced(parser, "htrim-left");
-	setAdvanced(parser, "htrim-min-length2");
-	setAdvanced(parser, "htrim-max-length");
-	setAdvanced(parser, "htrim-max-first");
-	setAdvanced(parser, "htrim-adapter");
+// 	setAdvanced(parser, "htrim-left");
+// 	setAdvanced(parser, "htrim-min-length2");
+// 	setAdvanced(parser, "htrim-max-length");
+// 	setAdvanced(parser, "htrim-max-first");
+// 	setAdvanced(parser, "htrim-adapter");
 
 	setAdvanced(parser, "version-check");
 	setAdvanced(parser, "man-help");
@@ -960,6 +957,12 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 		if(isSet(parser, "htrim-right")){
 			getOptionValue(o.htrimRight, parser, "htrim-right");
+            if(!isSet(parser, "barcodeUmiLenth"))
+            {
+                std::cout << "For homopolymers check the barcode + UMI length must be known, set it with -ul\n";
+                exit(0);
+            }
+            getOptionValue(o.barcodeUmiLenth, parser, "barcodeUmiLenth");
 			*out << "htrim-right:           " << o.htrimRight << endl;
 		}
 

@@ -67,6 +67,17 @@ int main(int argc, const char* argv[]){
         //TODO use output prefix // maybe target
         o.fstrmOut.close();
 
+        std::string homopolymersRighttmp = o.htrimRight;
+//         std::string homopolymersLefttmp = rc_string(homopolymersRighttmp);
+
+        o.htrimRight = "";
+
+        if(homopolymersRighttmp.size() > 0){
+            if(o.barcodeAlignmentLength != 25)
+                std::cout << "Warning barcode alignment length is set to 100 to detect homopolymers.\n";
+            o.barcodeAlignmentLength = 100;
+        }
+
         std::string targetName = o.targetName;
         o.targetName += "_P1";
         std::string logFileName = o.targetName + ".log";
@@ -129,6 +140,7 @@ int main(int argc, const char* argv[]){
         o.a_end = flexbar::TrimEnd::LTAIL;
         o.rcMode    = flexbar::RevCompMode::RCOFF;
         o.a_min_overlap = o.b_min_overlap;
+        o.htrimRight = homopolymersRighttmp;
 
         {
             startComputation(o);

@@ -17,10 +17,19 @@ private:
 	const flexbar::FileFormat  m_format;
 	const flexbar::PairOverlap m_poMode;
 
+	const bool m_htrimMaxFirstOnly;
+
+	const std::string m_htrimLeft, m_htrimRight;
+
+	const unsigned int m_htrimMinLength, m_htrimMinLength2, m_htrimMaxLength;
+
+	const float m_htrimErrorRate;
+
 	const bool m_isBarcoding, m_writeTag, m_umiTags, m_strictRegion, m_addBarcodeAdapter, m_logEverything;
 	const int m_minLength, m_minOverlap, m_tailLength;
 	const float m_errorRate;
 	const unsigned int m_bundleSize;
+    const int m_barcode_umi_length;
 
 	tbb::atomic<unsigned long> m_nPreShortReads, m_modified;
 	tbb::concurrent_vector<flexbar::TBar> *m_queries;
@@ -50,6 +59,13 @@ public:
 			m_out(o.out),
 			m_nPreShortReads(0),
 			m_modified(0),
+			m_barcode_umi_length(o.barcodeUmiLenth),
+            m_htrimRight(o.htrimRight),
+            m_htrimMinLength(o.htrimMinLength),
+            m_htrimMinLength2(o.htrimMinLength2),
+            m_htrimMaxLength(o.htrimMaxLength),
+            m_htrimMaxFirstOnly(o.htrimMaxFirstOnly),
+            m_htrimErrorRate(o.h_errorRate),
 			m_algo(TAlgorithm(o, match, mismatch, gapCost, ! isBarcoding)){
 
 		m_queries    = queries;
@@ -218,9 +234,66 @@ public:
 
 //		TAlignResults *am_p;  am_p = am_v.front(); am_p*
 
+        bool valid_read = true;
+        if(m_htrimRight != ""){
+
+            auto tmpseq = seqRead.seq;
+            if(trimEnd == TrimEnd::RTAIL || trimEnd == TrimEnd::RIGHT)
+                seqan::reverseComplement(tmpseq);
+            valid_read = false;
+
+            //TODO check from other side (barcode + UMI)
+//              std::cout << "Check homotrim\n";
+//             s << seqRead.seq << "\n";
+            for(unsigned int pos = 0; pos < m_htrimRight.length(); ++pos){
+
+                char nuc = m_htrimRight[pos];
+
+//                    unsigned int seqLen = length(seqRead->seq);
+                int cutPos = 0;
+                int notNuc = 0;
+
+                for(int i = m_barcode_umi_length; i < readLength; ++i){
+//                     s << seqRead.seq[i];
+//                     if(i <= m_barcode_umi_length)
+//                         break;
+                    if(tmpseq[i] != nuc){
+                        notNuc++;
+                    }
+                    else if((notNuc) <= m_htrimErrorRate * (i - m_barcode_umi_length)){
+
+                        if(m_htrimMaxLength != 0 && i - m_barcode_umi_length < readLength - m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0)) break;
+
+                        cutPos = i;
+                    }
+
+                }
+
+//                 s << "\ncutoff: " << (readLength - cutPos + m_barcode_umi_length) << "\n";
+                unsigned int htrimMinLength = m_htrimMinLength;
+                if(m_htrimMinLength2 > 0 && pos > 0) htrimMinLength = m_htrimMinLength2;
+
+
+//                 s << readLength << "\t" << htrimMinLength << "\t" << cutPos << "\t" << m_barcode_umi_length << "\n";
+                if(cutPos > 0 && cutPos - m_barcode_umi_length >= htrimMinLength){
+//                         erase(seqRead->seq, cutPos, length(seqRead->seq));
+                    valid_read = true;
+//                     std::cout << "Trim\n";
+
+                    if(m_format == FASTQ){
+//                            erase(seqRead->qual, cutPos, length(seqRead->qual));
+                    }
+                }
+            }
+        }
+
+
+
 		// valid alignment
-		if(qIndex_v.size() > 0){
+		if(qIndex_v.size() > 0 /*&& valid_read*/){
 			for(int i = 0; i < qIndex_v.size(); ++i){
+                if(!valid_read)
+                    s << "Not valid; No oligoT found\n";
 				TSeqRead seqReadTmp = seqRead;
                 TSeqRead barcode = seqRead;
 				if(!m_logEverything)

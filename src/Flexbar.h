@@ -67,7 +67,6 @@ void loadBarcodes(Options &o, const bool secondSet){
 	}
 }
 
-
 template <typename TSeqStr, typename TString>
 void loadAdapters(Options &o, const bool secondSet, const bool useAdapterFile){
 
