@@ -231,7 +231,6 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
     setRequired(parser, "reads");
     setRequired(parser, "whitelist");
-    setRequired(parser, "regionsFile");
     setRequired(parser, "adapter-seq");
     setRequired(parser, "target");
 

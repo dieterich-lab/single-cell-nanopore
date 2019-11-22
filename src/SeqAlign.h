@@ -232,8 +232,6 @@ public:
 
 		stringstream s;
 
-//		TAlignResults *am_p;  am_p = am_v.front(); am_p*
-
         bool valid_read = true;
         if(m_htrimRight != ""){
 
@@ -242,9 +240,6 @@ public:
                 seqan::reverseComplement(tmpseq);
             valid_read = false;
 
-            //TODO check from other side (barcode + UMI)
-//              std::cout << "Check homotrim\n";
-//             s << seqRead.seq << "\n";
             for(unsigned int pos = 0; pos < m_htrimRight.length(); ++pos){
 
                 char nuc = m_htrimRight[pos];
@@ -254,15 +249,12 @@ public:
                 int notNuc = 0;
 
                 for(int i = m_barcode_umi_length; i < readLength; ++i){
-//                     s << seqRead.seq[i];
-//                     if(i <= m_barcode_umi_length)
-//                         break;
                     if(tmpseq[i] != nuc){
                         notNuc++;
                     }
                     else if((notNuc) <= m_htrimErrorRate * (i - m_barcode_umi_length)){
 
-                        if(m_htrimMaxLength != 0 && i - m_barcode_umi_length < readLength - m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0)) break;
+                        if(m_htrimMaxLength != 0 && i - m_barcode_umi_length > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0)) break;
 
                         cutPos = i;
                     }

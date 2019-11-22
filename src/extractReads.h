@@ -22,6 +22,43 @@ using namespace std;
 
 std::vector<BamAlignmentRecord > extractReads(Options &o)
 {
+    std::vector<BamAlignmentRecord> uniqueExtractedReads;
+    if(o.regionsLog.compare("") == 0){
+
+        std::cout << "Open bam file\n";
+        BamFileIn bamFileIn;
+        if (!open(bamFileIn, toCString(o.readsFile)))
+        {
+            std::cerr << "ERROR: Could not open " << o.readsFile << std::endl;
+            exit(1);
+        }
+        BamHeader header;
+        std::vector<std::vector<BamAlignmentRecord > > recordtable;
+        try
+        {
+            // Copy header.
+            readHeader(header, bamFileIn);
+            // Copy records.
+            BamAlignmentRecord record;
+            while (!atEnd(bamFileIn))
+            {
+                readRecord(record, bamFileIn);
+                if(hasFlagUnmapped(record))
+                    continue;
+                if(hasFlagSecondary(record))
+                    continue;
+                uniqueExtractedReads.push_back(std::move(record));
+            }
+        }
+        catch (Exception const & e)
+        {
+            std::cerr << "ERROR: " << e.what() << std::endl;
+            exit(1);
+        }
+        close(bamFileIn);
+        return uniqueExtractedReads;
+    }
+
     bool logregions = true;
     if(o.regionsLog.compare("") == 0)
         logregions = false;
@@ -46,6 +83,10 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
 //         bool head = true;
         while (getline(inputFile, line, '\n'))
         {
+            //skip header
+           if(line[0] == '#' && line[1] == '!')
+               continue;
+            //skip empty lines
             if(line.length() < 10)
                 continue;
 //             if(head){
@@ -122,34 +163,6 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
             scannedContigs.push_back(lastContig);
         }
     }
-
-
-//     for (unsigned i = 0; i < table.size(); i++){
-//         std::cout << std::get<0>(table[i]) << "\t" << std::get<1>(table[i]) << "\t" << std::get<2>(table[i]) << "\n";
-//     }
-//     std::cout << "\n";
-
-
-    // Open input file, BamFileIn can read SAM and BAM files.
-
- /*
-    if(completeTable.size() < interval)
-        interval = completeTable.size();
-
-
-
-    int p = 0;
-    while(completeTable.size() > 0){
-        vector<std::tuple<CharString, uint32_t, uint32_t> > table(interval);
-        if(completeTable.size() > interval){
-            table.insert(table.begin(), completeTable.begin(), completeTable.begin() + interval);
-            completeTable.erase(completeTable.begin(), completeTable.begin() + interval);
-        }
-        else
-        {
-            table = completeTable;
-            completeTable.clear();
-        }*/
 
         std::cout << "Open bam file\n";
         BamFileIn bamFileIn;
@@ -320,7 +333,6 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
         }
     }
 
-    std::vector<BamAlignmentRecord> uniqueExtractedReads;
     //post processing making reads unique
     map<seqan::CharString, short> idMap;
     uint32_t dups = 0;
@@ -386,7 +398,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
             }
         }
         if(logregions)
-            regionsLog << "\n";
+            regionsLog << std::endl;
     }
     if(logregions)
         regionsLog.close();
