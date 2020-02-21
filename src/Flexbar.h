@@ -34,7 +34,6 @@
 #include "PairedOutput.h"
 #include "PairedAlign.h"
 
-
 template <typename TSeqStr, typename TString>
 void loadBarcodes(Options &o, const bool secondSet){
 
@@ -81,8 +80,10 @@ void loadAdapters(Options &o, const bool secondSet, const bool useAdapterFile){
 		if(secondSet) o.adapters2 = la.getAdapters();
 		else          o.adapters  = la.getAdapters();
 
-		if(secondSet) la.printAdapters("Adapter2");
-		else          la.printAdapters("Adapter");
+        if(!o.skipStatistics){
+            if(secondSet) la.printAdapters("Adapter2");
+            else          la.printAdapters("Adapter");
+        }
 	}
 	else{
 		LoadFasta<TSeqStr, TString> lf(o, true);
@@ -129,8 +130,10 @@ void loadAdapters(Options &o, const bool secondSet, const bool useAdapterFile){
 			lf.setBars(o.adapters);
 		}
 
-		if(secondSet) lf.printBars("Adapter2");
-		else          lf.printBars("Adapter");
+        if(!o.skipStatistics){
+            if(secondSet) lf.printBars("Adapter2");
+            else          lf.printBars("Adapter");
+        }
 	}
 }
 
@@ -221,7 +224,7 @@ void printMessage(Options &o){
 
 
 template <typename TSeqStr, typename TString>
-void startProcessing(Options &o){
+void startProcessing(Options &o, AlignmentResults & res){
 
 	using namespace std;
 	using namespace flexbar;
@@ -232,12 +235,13 @@ void startProcessing(Options &o){
 
 	ostream *out = o.out;
 
-	*out << "\nProcessing reads ..." << flush;
-
-	if(o.logAlign != NONE) *out << "\n\nAlignment " << o.logAlignStr << " logging:\n\n" << endl;
+    if(!o.skipStatistics){
+        *out << "\nProcessing reads ..." << flush;
+        if(o.logAlign != NONE) *out << "\n\nAlignment " << o.logAlignStr << " logging:\n\n" << endl;
+    }
 
 	PairedInput<TSeqStr, TString>  inputFilter(o);
-	PairedAlign<TSeqStr, TString>  alignFilter(o);
+	PairedAlign<TSeqStr, TString>  alignFilter(o, res);
     PairedOutput<TSeqStr, TString> outputFilter(o);
 	tbb::task_scheduler_init init_serial(o.nThreads);
 	tbb::pipeline pipe;
@@ -247,104 +251,113 @@ void startProcessing(Options &o){
     pipe.add_filter(outputFilter);
 	pipe.run(o.nThreads);
 
-	if(o.logAlign == TAB) *out << "\n";
-	*out << "done.\n" << endl;
+    const unsigned long nReads = inputFilter.getNrProcessedReads();
 
+    if(!o.skipStatistics){
+        if(o.logAlign == TAB) *out << "\n";
+        *out << "done.\n" << endl;
 
-	const unsigned long nReads = inputFilter.getNrProcessedReads();
+        printComputationTime(o, start, nReads);
 
-	printComputationTime(o, start, nReads);
+        // barcode and adapter removal statistics
 
+        if(o.writeLengthDist) outputFilter.writeLengthDist();
 
-	// barcode and adapter removal statistics
+        if(o.poMode != POFF) alignFilter.printPairOverlapStats();
 
-	if(o.writeLengthDist) outputFilter.writeLengthDist();
+        if(o.adapRm != AOFF){
+            outputFilter.printAdapterRemovalStats();
+            alignFilter.printAdapterOverlapStats();
 
-	if(o.poMode != POFF) alignFilter.printPairOverlapStats();
-
-	if(o.adapRm != AOFF){
-		outputFilter.printAdapterRemovalStats();
-		alignFilter.printAdapterOverlapStats();
-
-		if(o.adapRm == NORMAL2){
-			outputFilter.printAdapterRemovalStats2();
-			alignFilter.printAdapterOverlapStats2();
-		}
-	}
-
-// 	outputFilter.printFileSummary();
-
-
-	// summary statistics of filtering
-
-	const unsigned long nChars   = inputFilter.getNrProcessedChars();
-	const unsigned long uncalled = inputFilter.getNrUncalledReads();
-	const unsigned long uPairs   = inputFilter.getNrUncalledPairedReads();
-
-	unsigned long nGoodReads     = outputFilter.getNrGoodReads();
-	unsigned long nGoodChars     = outputFilter.getNrGoodChars();
-
-	if(o.isPaired && o.writeSingleReadsP){
-		nGoodReads -= outputFilter.getNrSingleReads();
-		nGoodChars -= outputFilter.getNrSingleReads();
-	}
-
-	stringstream s; s << nReads;
-	int len = s.str().length();
-
-	*out << "Filtering statistics\n";
-	*out << "====================\n";
-	*out << "Processed reads                   " << nReads << endl;
-	*out << "  skipped due to uncalled bases   ";
-
-	if(o.isPaired){
-		*out << alignValue(len, 2 * uPairs);
-
-		if(uncalled > 0)
-		*out << "   (" << uncalled << " uncalled in " << uPairs << " pairs)";
-		*out << endl;
-	}
-	else *out << alignValue(len, uncalled) << endl;
-
-    if(o.a_end == flexbar::TrimEnd::ANY){
-        if(o.qTrim != QOFF && ! o.qtrimPostRm)
-        *out << "  trimmed due to low quality      " << alignValue(len, inputFilter.getNrLowPhredReads()) << endl;
-
-        if(o.barDetect != BOFF && ! o.writeUnassigned)
-        *out << "  skipped unassigned reads        " << alignValue(len, alignFilter.getNrUnassignedReads()) << endl;
-
-        if(o.adapRm != AOFF || o.poMode != POFF)
-        *out << "  short prior to adapter removal  " << alignValue(len, alignFilter.getNrPreShortReads()) << endl;
-
-        if(o.qTrim != QOFF && o.qtrimPostRm)
-        *out << "  trimmed due to low quality      " << alignValue(len, outputFilter.getNrLowPhredReads()) << endl;
-
-        *out << "  finally skipped short reads     " << alignValue(len, outputFilter.getNrShortReads()) << endl;
-
-        if(o.isPaired && ! o.writeSingleReads && ! o.writeSingleReadsP)
-        *out << "  skipped paired single reads     " << alignValue(len, outputFilter.getNrSingleReads()) << endl;
-
-        *out << "Discarded reads overall           " << alignValue(len, nReads - nGoodReads) << endl;
-        *out << "Remaining reads                   " << alignValue(len, nGoodReads);
-
-        if(nReads > 0)
-        *out << "   (" << fixed << setprecision(2) << 100 * nGoodReads / nReads << "%)";
-
-        stringstream schar; schar << inputFilter.getNrProcessedChars();
-        int clen = schar.str().length();
-
-        *out << "\n" << endl;
-
-        *out << "Processed bases   " << alignValue(clen, nChars) << endl;
-        *out << "Remaining bases   " << alignValue(clen, nGoodChars);
-
-        if(nChars > 0)
-        *out << "   (" << fixed << setprecision(2) << 100 * nGoodChars / nChars << "% of input)";
+            if(o.adapRm == NORMAL2){
+                outputFilter.printAdapterRemovalStats2();
+                alignFilter.printAdapterOverlapStats2();
+            }
+        }
     }
 
-	*out << "\n\n" << endl;
+    // 	outputFilter.printFileSummary();
 
-	printMessage(o);
+
+        // summary statistics of filtering
+
+        const unsigned long nChars   = inputFilter.getNrProcessedChars();
+        const unsigned long uncalled = inputFilter.getNrUncalledReads();
+        const unsigned long uPairs   = inputFilter.getNrUncalledPairedReads();
+
+        unsigned long nGoodReads     = outputFilter.getNrGoodReads();
+        unsigned long nGoodChars     = outputFilter.getNrGoodChars();
+
+        if(o.isPaired && o.writeSingleReadsP){
+            nGoodReads -= outputFilter.getNrSingleReads();
+            nGoodChars -= outputFilter.getNrSingleReads();
+        }
+
+    if(!o.skipStatistics){
+        stringstream s; s << nReads;
+        int len = s.str().length();
+
+        *out << "Filtering statistics\n";
+        *out << "====================\n";
+        *out << "Processed reads                   " << nReads << endl;
+        *out << "  skipped due to uncalled bases   ";
+
+        if(o.isPaired){
+            *out << alignValue(len, 2 * uPairs);
+
+            if(uncalled > 0)
+            *out << "   (" << uncalled << " uncalled in " << uPairs << " pairs)";
+            *out << endl;
+        }
+        else *out << alignValue(len, uncalled) << endl;
+
+        if(o.a_end == flexbar::TrimEnd::ANY){
+            if(o.qTrim != QOFF && ! o.qtrimPostRm)
+            *out << "  trimmed due to low quality      " << alignValue(len, inputFilter.getNrLowPhredReads()) << endl;
+
+            if(o.barDetect != BOFF && ! o.writeUnassigned)
+            *out << "  skipped unassigned reads        " << alignValue(len, alignFilter.getNrUnassignedReads()) << endl;
+
+            if(o.adapRm != AOFF || o.poMode != POFF)
+            *out << "  short prior to adapter removal  " << alignValue(len, alignFilter.getNrPreShortReads()) << endl;
+
+            if(o.qTrim != QOFF && o.qtrimPostRm)
+            *out << "  trimmed due to low quality      " << alignValue(len, outputFilter.getNrLowPhredReads()) << endl;
+
+            *out << "  finally skipped short reads     " << alignValue(len, outputFilter.getNrShortReads()) << endl;
+
+            if(o.isPaired && ! o.writeSingleReads && ! o.writeSingleReadsP)
+            *out << "  skipped paired single reads     " << alignValue(len, outputFilter.getNrSingleReads()) << endl;
+
+            *out << "Discarded reads overall           " << alignValue(len, nReads - nGoodReads) << endl;
+            *out << "Remaining reads                   " << alignValue(len, nGoodReads);
+
+            if(nReads > 0)
+            *out << "   (" << fixed << setprecision(2) << 100 * nGoodReads / nReads << "%)";
+
+            stringstream schar; schar << inputFilter.getNrProcessedChars();
+            int clen = schar.str().length();
+
+            *out << "\n" << endl;
+
+            *out << "Processed bases   " << alignValue(clen, nChars) << endl;
+            *out << "Remaining bases   " << alignValue(clen, nGoodChars);
+
+            if(nChars > 0)
+            *out << "   (" << fixed << setprecision(2) << 100 * nGoodChars / nChars << "% of input)";
+        }
+
+        *out << "\n\n" << endl;
+        printMessage(o);
+    }
+    else
+    {
+        if(!o.logStdout)
+            closeFile(o.fstrmOut);
+    }
+
+
+
 }
 
 
@@ -356,7 +369,7 @@ void performTest(){
 }
 
 
-void startComputation(Options &o){
+void startComputation(Options &o, AlignmentResults & res){
 
 	// performTest();
 
@@ -368,7 +381,7 @@ void startComputation(Options &o){
 	if(o.cmprsType == GZ){
 
 		#if SEQAN_HAS_ZLIB
-			startProcessing<FSeqStr, FString>(o);
+			startProcessing<FSeqStr, FString>(o, res);
 		#else
 			o.outCompression = "";
 			o.cmprsType = UNCOMPRESSED;
@@ -380,7 +393,7 @@ void startComputation(Options &o){
 	else if(o.cmprsType == BZ2){
 
 		#if SEQAN_HAS_BZIP2
-			startProcessing<FSeqStr, FString>(o);
+			startProcessing<FSeqStr, FString>(o, res);
 		#else
 			o.outCompression = "";
 			o.cmprsType = UNCOMPRESSED;
@@ -390,7 +403,7 @@ void startComputation(Options &o){
 	}
 
 	if(o.cmprsType == UNCOMPRESSED){
-		startProcessing<FSeqStr, FString>(o);
+		startProcessing<FSeqStr, FString>(o, res);
 	}
 }
 

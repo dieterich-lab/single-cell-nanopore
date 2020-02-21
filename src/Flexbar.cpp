@@ -24,7 +24,6 @@
 #include "Flexbar.h"
 #include "extractReads.h"
 #include "removeCDNA.h"
-#include "splitReads.h"
 #include "FlexbarTypes.h"
 #include <chrono>
 
@@ -48,123 +47,115 @@ int main(int argc, const char* argv[]){
 	initOptions(o, parser);
     loadOptions(o, parser);
 
-        //TODO extract Reads
-        //additionally make sure they are unique
-        //TODO std::move??
-        {
-            std::cout << "Extract Reads\n";
-            std::vector<BamAlignmentRecord > recordstable = extractReads(o);
+    AlignmentResults res;
+
+    {
+        std::cout << "Extract Reads\n";
+        std::vector<BamAlignmentRecord > recordstable = extractReads(o);
 //             std::cout << recordstable.size() << " finished\n";
-            std::cout << "Remove cDNA from Reads\n";
-            removeCDNA(o,recordstable);
-        }
+        std::cout << "Remove cDNA from Reads\n";
+        removeCDNA(o,recordstable);
+    }
 
-//         for(int i = 0; i < 3; ++i){
-//             std::cout << o.fastaRecords[i].first << "\t" << o.fastaRecords[i].second << "\n";
-//         }
+    //TODO use output prefix // maybe target
+    o.fstrmOut.close();
 
-//         o.fastaRecords.erase(o.fastaRecords.begin() + 15, o.fastaRecords.end());
-        //TODO use output prefix // maybe target
-        o.fstrmOut.close();
-
-        std::string homopolymersRighttmp = o.htrimRight;
+    std::string homopolymersRighttmp = o.htrimRight;
 //         std::string homopolymersLefttmp = rc_string(homopolymersRighttmp);
 
-        o.htrimRight = "";
+    o.htrimRight = "";
 
-        if(homopolymersRighttmp.size() > 0){
-            if(o.barcodeAlignmentLength != 25)
-                std::cout << "Warning barcode alignment length is set to 100 to detect homopolymers.\n";
-            o.barcodeAlignmentLength = 100;
-        }
+    std::string targetName = o.targetName;
+//     o.targetName += "_P1";
+    std::string logFileName = o.targetName + ".res";
+    openOutputFile(o.fstrmOut, logFileName);
+    o.out = &o.fstrmOut;
+    //TODO //overwrite adapter parameters in options
+    //TODO use own parameters //overwrite adapter parameters in options
 
-        std::string targetName = o.targetName;
-        o.targetName += "_P1";
-        std::string logFileName = o.targetName + ".log";
-        openOutputFile(o.fstrmOut, logFileName);
-        o.out = &o.fstrmOut;
-        //TODO //overwrite adapter parameters in options
-        //TODO use own parameters //overwrite adapter parameters in options
+    //P1 alignment
 
-        //P1 alignment
-
-        //use adapter para
-        std::cout << "Primer Alignment\n";
-        {
-            int tmpbundleSize = o.bundleSize;
-            o.bundleSize = 256;
-            startComputation(o);
-            o.bundleSize = tmpbundleSize;
-        }
+    //use adapter para
+//     *o.out << "Primer Alignment\n";
+    std::cout << "Primer Alignment\n";
+    {
+        int tmpbundleSize = o.bundleSize;
+        o.bundleSize = 256;
+        startComputation(o, res);
+        o.bundleSize = tmpbundleSize;
+    }
 
     std::cout << "Finished\n";
 
     o.skipOutput = true;
+    o.barcodeAlignment = true;
+    o.tableHeader = false;
 
-    splitReads(o);
 /*
-        std::cout << "left: " << o.leftTail.size() << "\n\n";
-        for(int i = 0; i < 3; ++i){
-            std::cout << o.leftTail[i].first << "\t" << o.leftTail[i].second << "\n";
+    typedef std::map<seqan::CharString, uint32_t>  PScore;
+    std::cout << "Print leftTail: \n";
+    for(int i = 0; i < res.leftTail.size(); ++i){
+        std::cout << get<0>(res.leftTail[i]) << "\n";
+        std::cout << "map size: " << res.leftTailScores.size() << "\n";
+        PScore::iterator it = res.leftTailScores.find(get<0>(res.leftTail[i]));
+        if(it != res.leftTailScores.end())
+        {
+            std::cout << it->second << "\n";
         }
+        std::cout << get<1>(res.leftTail[i]) << "\t";
+        std::cout << get<2>(res.leftTail[i]) << "\n";
+    }*/
 
-        std::cout << "right: " << o.rightTail.size() << "\n\n";
-        for(int i = 0; i < 3; ++i){
-            std::cout << o.rightTail[i].first << "\t" << o.rightTail[i].second << "\n";
-        }*/
 
-        o.fstrmOut.close();
-//         exit(0);
-        o.targetName = targetName + "_leftTail";
-        logFileName = o.targetName + ".log";
-        appendOutputFile(o.fstrmOut, logFileName);
-        o.out = &o.fstrmOut;
+    appendOutputFile(o.fstrmOut, logFileName);
+    o.out = &o.fstrmOut;
+//     *o.out << "Left Barcode Alignment\n";
 
-        o.adapterSeq = "";
-        o.useAdapterFile = true;
-        o.adapterFile = o.whitelist;
+    o.adapterSeq = "";
+    o.useAdapterFile = true;
+    o.adapterFile = o.whitelist;
 //         std::cout << "Adapter file: " << o.adapterFile << "\n";
 
-        o.fastaRecords = std::move(o.leftTail);
+    o.fastaRecords = std::move(res.leftTail);
 
         //TODO always check if it is empty
 
+    o.logEverything = true;
+//     o.skipStatistics = false;
+    o.a_match = o.barcode_match;
+    o.a_mismatch = o.barcode_mismatch;
+    o.a_gapCost = o.barcode_gapCost;
+    o.a_errorRate = o.barcode_errorRate;
+    o.a_end = flexbar::TrimEnd::LTAIL;
+    o.rcMode    = flexbar::RevCompMode::RCOFF;
+    o.a_min_overlap = o.b_min_overlap;
+    o.htrimRight = homopolymersRighttmp;
 
-//         if(o.bundleSize == 256)
-        o.bundleSize = 4;
-        o.logEverything = true;
-        o.a_match = o.barcode_match;
-        o.a_mismatch = o.barcode_mismatch;
-        o.a_gapCost = o.barcode_gapCost;
-        o.a_errorRate = o.barcode_errorRate;
-        o.a_end = flexbar::TrimEnd::LTAIL;
-        o.rcMode    = flexbar::RevCompMode::RCOFF;
-        o.a_min_overlap = o.b_min_overlap;
-        o.htrimRight = homopolymersRighttmp;
+    std::cout << "Left Tail Size: " << o.fastaRecords.size() << "\n";
+    {
+        startComputation(o, res);
+    }
+    std::cout << "Finished Left Tail Barcode Alignment\n";
 
-        {
-            startComputation(o);
-        }
-        std::cout << "Finished Left Tail Barcode Alignment: " << logFileName << "\n";
+    o.fastaRecords = std::move(res.rightTail);
+    std::cout << "Right Tail Size: " << o.fastaRecords.size() << "\n";
+    appendOutputFile(o.fstrmOut, logFileName);
+    o.out = &o.fstrmOut;
 
-        o.fastaRecords = std::move(o.rightTail);
-        o.targetName = targetName + "_rightTail";
-        logFileName = o.targetName + ".log";
-        openOutputFile(o.fstrmOut, logFileName);
-        o.out = &o.fstrmOut;
+//     *o.out << "Right Barcode Alignment\n";
 
-        //comp
-        o.a_end = flexbar::TrimEnd::RTAIL;
-        o.rcMode = flexbar::RevCompMode::RCONLY;
+    //comp
+    o.a_end = flexbar::TrimEnd::RTAIL;
+    o.rcMode = flexbar::RevCompMode::RCONLY;
 
-        {
-            startComputation(o);
-        }
-        std::cout << "Finished Right Tail Barcode Alignment: " << logFileName << "\n";
+    {
+        startComputation(o, res);
+    }
+    std::cout << "Finished Right Tail Barcode Alignment\n";
 
-        auto end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
 //         std::chrono::duration<int, std::kilo> elapsed = end - start;
-        std::cout << "Total wall clock runtime " <<chrono::duration_cast<chrono::seconds>(end-start).count() << "s." << "\n";
+    std::cout << "Total wall clock runtime " <<chrono::duration_cast<chrono::seconds>(end-start).count() << "s." << "\n";
 
 
 

@@ -7,6 +7,8 @@
 #ifndef FLEXBAR_OPTIONS_H
 #define FLEXBAR_OPTIONS_H
 
+#include <map>
+
 #include <seqan/arg_parse.h>
 #include <seqan/sequence.h>
 #include "FlexbarIO.h"
@@ -16,7 +18,7 @@ struct Options{
 
 //     using seqan::CharString;
 //     using seqan::Dna5String;
-	std::string readsFile, readsFile2, barReadsFile, bamFile, whitelist, regionsFile, regionsLog;
+	std::string readsFile, readsFile2, barReadsFile, bamFile, whitelist, regionsLog;
 
 	std::string outReadsFile, outReadsFile2, outLogFile;
 	std::string barcodeFile, adapterFile, barcode2File, adapter2File;
@@ -24,22 +26,32 @@ struct Options{
 	std::string htrimLeft, htrimRight;
 
 //     std::tuple<int, int>
+
+
+
+    typedef std::map<seqan::CharString, short>  PScore;
+    PScore leftTailScores;
+    PScore rightTailScores;
+
     typedef std::tuple<seqan::CharString, seqan::Dna5String, seqan::CharString> TRecord;
     std::vector<TRecord> fastaRecords;
 
     std::vector<TRecord>  leftTail;
     std::vector<TRecord>  rightTail;
+    std::vector<TRecord>  unvalid;
+
+    bool barcodeAlignment;
 
     bool rmMulti;
-	bool isPaired, useAdapterFile, useNumberTag, useRemovalTag, umiTags, logStdout, skipOutput;
+	bool isPaired, useAdapterFile, useNumberTag, useRemovalTag, umiTags, logStdout, skipOutput, skipStatistics, tableHeader;
 	bool switch2Fasta, writeUnassigned, writeSingleReads, writeSingleReadsP, writeLengthDist;
-	bool useStdin, useStdout, logEverything, relaxRegion, useRcTrimEnd, qtrimPostRm, addBarcodeAdapter;
+	bool useStdin, useStdout, logEverything, printAlignment, relaxRegion, useRcTrimEnd, qtrimPostRm, addBarcodeAdapter;
 	bool interleavedInput, iupacInput, htrimAdapterRm, htrimMaxFirstOnly;
 
     uint32_t readingPos = 0;
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
-	int maxUncalled, min_readLen, barcodeAlignmentLength, barcodeUmiLenth, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
+	int maxUncalled, min_readLen, barcodeUmiLength, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
 
 	int a_match, a_mismatch, a_gapCost, b_match, b_mismatch, b_gapCost, barcode_match, barcode_mismatch, barcode_gapCost, a_cycles;
 
@@ -90,8 +102,8 @@ struct Options{
 
                 bamFile        = "";
                 whitelist      = "";
-                regionsFile    = "";
 
+        barcodeAlignment  = false;
 		rmMulti           = false;
 		isPaired          = false;
 		useAdapterFile    = false;
@@ -104,12 +116,15 @@ struct Options{
 		switch2Fasta      = false;
 		logStdout         = false;
         skipOutput        = false;
+        skipStatistics    = true;
+        tableHeader       = true;
 		umiTags           = false;
 		interleavedInput  = false;
 		iupacInput        = false;
 		useStdin          = false;
 		useStdout         = false;
 		logEverything     = false;
+        printAlignment    = false;
 		relaxRegion       = false;
 		useRcTrimEnd      = false;
 		addBarcodeAdapter = false;
@@ -124,8 +139,7 @@ struct Options{
 		qtrimWinSize    = 0;
 		a_tail_len      = 0;
 		b_tail_len      = 0;
-        barcodeAlignmentLength = 25;
-        barcodeUmiLenth = 0;
+        barcodeUmiLength = 26;
 		a_min_overlap   = 3;
 		b_min_overlap   = 0;
 		htrimMinLength2 = 0;
@@ -216,14 +230,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("t", "target", "Prefix for output file names or paths.", ARG::OUTPUT_PREFIX));
 	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode needs to be sorted after sequence names (coordinate sorted works also) The important part is all reads mapping to the same sequence are together.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("w", "whitelist", "Cell Barcodes which were determined to be valid by chromium pipeline.", ARG::INPUT_FILE));
-    addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file. Region must be sorted after sequence names (alphabetically or numberically)", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
-
-    addOption(parser, ArgParseOption("lr", "logRegions", "List to which region the nanopore reads mapped if they were selected for extraction.", ARG::OUTPUT_FILE));
-
-    addOption(parser, ArgParseOption("rm", "rmMulti", "Remove all Mulimappers."));
-    addOption(parser, ArgParseOption("fq", "qual", "Report Sequence quality."));
-
 
 	addOption(parser, ArgParseOption("p", "reads2", "Second input file of paired reads, gz and bz2 files supported.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("i", "interleaved", "Interleaved format for first input set with paired reads."));
@@ -255,10 +262,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));
     addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
-
-    addOption(parser, ArgParseOption("bl", "barcodeAlignmentLength", "Length of read fragment considered for barcode alignment should be longer than the barcode default 25.", ARG::INTEGER));
-
-    addOption(parser, ArgParseOption("ul", "barcodeUmiLenth", "Length of UMI + barcode needed for homopolymers removal.", ARG::INTEGER));
+    addOption(parser, ArgParseOption("ul", "barcodeUmiLength", "Length of UMI + barcode needed for homopolymers removal. Read fragments 5 bases shorter are discarded.", ARG::INTEGER));
 
 
     setAdvanced(parser, "barcodes2");
@@ -364,12 +368,14 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addSection(parser, "Logging and tagging");
 	addOption(parser, ArgParseOption("l", "align-log", "Print chosen read alignments.", ARG::STRING));
  	addOption(parser, ArgParseOption("alt", "alternative", "Print all valid alignments between query and read. This will break the pipleline in its current form."));
+    addOption(parser, ArgParseOption("pa", "print-alignment", "Print alignments underlying alignments before each row."));
 	addOption(parser, ArgParseOption("o", "stdout-log", "Write statistics to stdout instead of target log file."));
 	addOption(parser, ArgParseOption("O", "output-log", "Output file for logging instead of target prefix usage.", ARG::OUTPUT_FILE));
-	addOption(parser, ArgParseOption("g", "removal-tags", "Do not tag reads that are subject to adapter or barcode removal."));
+// 	addOption(parser, ArgParseOption("g", "removal-tags", "Do not tag reads that are subject to adapter or barcode removal."));
 
     setAdvanced(parser, "stdout-log");
-    setAdvanced(parser, "removal-tags");
+    setAdvanced(parser, "align-log");
+//     setAdvanced(parser, "removal-tags");
 //     setAdvanced(parser, "alternative");
 
 	addOption(parser, ArgParseOption("e", "number-tags", "Replace read tags by ascending number to save space."));
@@ -479,8 +485,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	// setDefaultValue(parser, "version-check", "OFF");
 	setDefaultValue(parser, "target",  "flexbarOut");
 	setDefaultValue(parser, "threads", "1");
-	setDefaultValue(parser, "bundle",  "2");
-    setDefaultValue(parser, "align-log",     "ALL");
+	setDefaultValue(parser, "bundle",  "4");
+    setDefaultValue(parser, "align-log",     "TAB");
 
 
 	setDefaultValue(parser, "max-uncalled",         "0");
@@ -708,9 +714,9 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	*out << "Reads file:             ";
     *out << o.readsFile << endl;
 
-	getOptionValue(o.regionsFile, parser, "regionsFile");
-	*out << "regions File:           ";
-    *out << o.regionsFile << endl;
+// 	getOptionValue(o.regionsFile, parser, "regionsFile");
+// 	*out << "regions File:           ";
+//     *out << o.regionsFile << endl;
 
     *out << "Cellbarcode whitelist: " << o.whitelist << endl;
 
@@ -801,18 +807,12 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 // 		o.useAdapterFile = true;
 	}
 
-	getOptionValue(o.barcodeAlignmentLength, parser, "barcodeAlignmentLength");
-
-	if(isSet(parser, "logRegions")){
-        getOptionValue(o.regionsLog, parser, "logRegions");
-    }
 
 	if(isSet(parser, "adapter-seq")){
 		getOptionValue(o.adapterSeq, parser, "adapter-seq");
 		o.adapRm = NORMAL;
 	}
 
-    o.rmMulti = isSet(parser, "rmMulti");
 
 	if(isSet(parser, "adapters2") && o.adapRm == NORMAL && o.isPaired){
 		getOptionValue(o.adapter2File, parser, "adapters2");
@@ -947,6 +947,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	// trimming of homopolymers
 
+	getOptionValue(o.barcodeUmiLength, parser, "barcodeUmiLength");
 	if(isSet(parser, "htrim-left") || isSet(parser, "htrim-right")){
 
 		if(isSet(parser, "htrim-left")){
@@ -956,12 +957,11 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 		if(isSet(parser, "htrim-right")){
 			getOptionValue(o.htrimRight, parser, "htrim-right");
-            if(!isSet(parser, "barcodeUmiLenth"))
+            if(!isSet(parser, "barcodeUmiLength"))
             {
                 std::cout << "For homopolymers check the barcode + UMI length must be known, set it with -ul\n";
                 exit(0);
             }
-            getOptionValue(o.barcodeUmiLenth, parser, "barcodeUmiLenth");
 			*out << "htrim-right:           " << o.htrimRight << endl;
 		}
 
@@ -1003,6 +1003,9 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 // 	}
 
  	if(isSet(parser, "alternative")) o.logEverything = true;
+
+    if(isSet(parser, "print-alignment")) o.printAlignment= true;
+
 
 
 	if(isSet(parser, "zip-output")){
@@ -1049,7 +1052,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	if(isSet(parser, "fasta-output")) o.switch2Fasta    = true;
 	if(isSet(parser, "length-dist"))  o.writeLengthDist = true;
 	if(isSet(parser, "number-tags"))  o.useNumberTag    = true;
- 	if(!isSet(parser, "removal-tags")) o.useRemovalTag   = true;
+//  	if(!isSet(parser, "removal-tags")) o.useRemovalTag   = true;
 	if(isSet(parser, "umi-tags"))     o.umiTags         = true;
 
 	*out << endl;

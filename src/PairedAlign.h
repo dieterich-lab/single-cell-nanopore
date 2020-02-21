@@ -31,6 +31,8 @@ private:
 	const flexbar::TrimEnd        m_aTrimEnd, m_arcTrimEnd, m_bTrimEnd;
 	const flexbar::PairOverlap    m_poMode;
 
+    AlignmentResults & res;
+
 	tbb::atomic<unsigned long> m_unassigned;
 	tbb::concurrent_vector<flexbar::TBar> *m_adapters, *m_adapters2;
 	tbb::concurrent_vector<flexbar::TBar> *m_barcodes, *m_barcodes2;
@@ -45,7 +47,7 @@ private:
 
 public:
 
-	PairedAlign(Options &o) :
+	PairedAlign(Options &o, AlignmentResults & res) :
 
 		filter(parallel),
 		m_format(o.format),
@@ -73,23 +75,28 @@ public:
 		m_htrim(o.htrimLeft != "" || o.htrimRight != ""),
 		m_twoBarcodes(o.barDetect == flexbar::WITHIN_READ_REMOVAL2 || o.barDetect == flexbar::WITHIN_READ2),
 		out(o.out),
-		m_unassigned(0){
+		m_unassigned(0),
+        res(res){
 
 		m_barcodes  = &o.barcodes;
 		m_adapters  = &o.adapters;
 		m_barcodes2 = &o.barcodes2;
 		m_adapters2 = &o.adapters2;
 
-		m_b1 = new TSeqAlign(m_barcodes,  o, o.b_min_overlap, o.b_errorRate, o.b_tail_len, o.b_match, o.b_mismatch, o.b_gapCost, true);
-		m_b2 = new TSeqAlign(m_barcodes2, o, o.b_min_overlap, o.b_errorRate, o.b_tail_len, o.b_match, o.b_mismatch, o.b_gapCost, true);
+		m_b1 = new TSeqAlign(m_barcodes,  o, o.b_min_overlap, o.b_errorRate, o.b_tail_len, o.b_match, o.b_mismatch, o.b_gapCost, true, res);
+		m_b2 = new TSeqAlign(m_barcodes2, o, o.b_min_overlap, o.b_errorRate, o.b_tail_len, o.b_match, o.b_mismatch, o.b_gapCost, true, res);
 
-		m_a1 = new TSeqAlign(m_adapters,  o, o.a_min_overlap, o.a_errorRate, o.a_tail_len, o.a_match, o.a_mismatch, o.a_gapCost, false);
-		m_a2 = new TSeqAlign(m_adapters2, o, o.a_min_overlap, o.a_errorRate, o.a_tail_len, o.a_match, o.a_mismatch, o.a_gapCost, false);
+		m_a1 = new TSeqAlign(m_adapters,  o, o.a_min_overlap, o.a_errorRate, o.a_tail_len, o.a_match, o.a_mismatch, o.a_gapCost, false, res);
+		m_a2 = new TSeqAlign(m_adapters2, o, o.a_min_overlap, o.a_errorRate, o.a_tail_len, o.a_match, o.a_mismatch, o.a_gapCost, false, res);
 
 		m_p  = new TSeqAlignPair(o, o.p_min_overlap, o.a_errorRate, o.a_match, o.a_mismatch, o.a_gapCost);
 
-		if(m_log == flexbar::TAB)
-		*out << "ReadTag\tQueryTag\tQueryStart\tQueryEnd\tOverlapLength\tMismatches\tIndels\tAllowedErrors\tScore" << std::endl;
+//         <read_id>,<barcode>,<adaptor_invalid>,<adaptor_side>,<adaptor_score>,<barcode_score>,<barcode_indel>,<barcode_match>,<umi_length>,<polyT_length>,<barcode_alt>
+		if(m_log == flexbar::TAB && o.tableHeader)
+        *out << "read_id\tbarcode\tadaptor_invalid\tadaptor_side\tadaptor_score\tbarcode_score\tbarcode_indel\tbarcode_match\tumi_length\tpolyT_length\tbarcode_alt\treal" << std::endl;
+// 		*out << "ReadTag\tQueryTag\tQueryStart\tQueryEnd\tOverlapLength\tMismatches\tIndels\tAllowedErrors\tScore" << std::endl;
+
+//         std::cout << "Paired LeftTail Size: " << res.leftTail.size() << "\n";
 	}
 
 

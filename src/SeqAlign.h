@@ -4,6 +4,7 @@
 #define FLEXBAR_SEQALIGN_H
 
 #include <assert.h>
+
 tbb::mutex ouputMutex;
 
 template <typename TSeqStr, typename TString, class TAlgorithm>
@@ -25,7 +26,9 @@ private:
 
 	const float m_htrimErrorRate;
 
-	const bool m_isBarcoding, m_writeTag, m_umiTags, m_strictRegion, m_addBarcodeAdapter, m_logEverything;
+    const bool m_barcodeAlignment;
+
+	const bool m_isBarcoding, m_writeTag, m_umiTags, m_strictRegion, m_addBarcodeAdapter, m_printAlignment, m_logEverything;
 	const int m_minLength, m_minOverlap, m_tailLength;
 	const float m_errorRate;
 	const unsigned int m_bundleSize;
@@ -36,20 +39,33 @@ private:
 	tbb::concurrent_vector<unsigned long> m_rmOverlaps;
 
 	std::ostream *m_out;
+    AlignmentResults & res;
+/*
+    typedef std::map<seqan::CharString, short>  PScore;
+    PScore & m_leftTailScores;
+    PScore & m_rightTailScores;
+
+    typedef std::tuple<seqan::CharString, seqan::Dna5String, seqan::CharString> TRecord;
+
+    std::vector<TRecord> & m_leftTail;
+    std::vector<TRecord> & m_rightTail;*/
+
 	TAlgorithm m_algo;
 
 public:
 
-	SeqAlign(tbb::concurrent_vector<flexbar::TBar> *queries, const Options &o, int minOverlap, float errorRate, const int tailLength, const int match, const int mismatch, const int gapCost, const bool isBarcoding):
+	SeqAlign(tbb::concurrent_vector<flexbar::TBar> *queries, const Options &o, int minOverlap, float errorRate, const int tailLength, const int match, const int mismatch, const int gapCost, const bool isBarcoding, AlignmentResults & res):
 
 			m_minOverlap(minOverlap),
 			m_errorRate(errorRate),
 			m_tailLength(tailLength),
+			m_barcodeAlignment(o.barcodeAlignment),
 			m_isBarcoding(isBarcoding),
 			m_umiTags(o.umiTags),
 			m_minLength(o.min_readLen),
 			m_poMode(o.poMode),
 			m_log(o.logAlign),
+			m_printAlignment(o.printAlignment),
 			m_logEverything(o.logEverything),
 			m_format(o.format),
 			m_writeTag(o.useRemovalTag),
@@ -59,13 +75,14 @@ public:
 			m_out(o.out),
 			m_nPreShortReads(0),
 			m_modified(0),
-			m_barcode_umi_length(o.barcodeUmiLenth),
+			m_barcode_umi_length(o.barcodeUmiLength),
             m_htrimRight(o.htrimRight),
             m_htrimMinLength(o.htrimMinLength),
             m_htrimMinLength2(o.htrimMinLength2),
             m_htrimMaxLength(o.htrimMaxLength),
             m_htrimMaxFirstOnly(o.htrimMaxFirstOnly),
             m_htrimErrorRate(o.h_errorRate),
+            res(res),
 			m_algo(TAlgorithm(o, match, mismatch, gapCost, ! isBarcoding)){
 
 		m_queries    = queries;
@@ -232,7 +249,10 @@ public:
 
 		stringstream s;
 
-        bool valid_read = true;
+        int polyTlength = 0;
+        int prefixPolyT = 0;
+        bool valid_read = false;
+
         if(m_htrimRight != ""){
 
             auto tmpseq = seqRead.seq;
@@ -254,7 +274,8 @@ public:
                     }
                     else if((notNuc) <= m_htrimErrorRate * (i - m_barcode_umi_length)){
 
-                        if(m_htrimMaxLength != 0 && i - m_barcode_umi_length > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0)) break;
+                        if(m_htrimMaxLength != 0 && i - m_barcode_umi_length > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0))
+                            break;
 
                         cutPos = i;
                     }
@@ -269,23 +290,33 @@ public:
 //                 s << readLength << "\t" << htrimMinLength << "\t" << cutPos << "\t" << m_barcode_umi_length << "\n";
                 if(cutPos > 0 && cutPos - m_barcode_umi_length >= htrimMinLength){
 //                         erase(seqRead->seq, cutPos, length(seqRead->seq));
+//                     std::cout << "TEST: " << cutPos << "\t" << m_barcode_umi_length << "\t" << htrimMinLength << "\n"; //TODO recheck
                     valid_read = true;
+                    polyTlength = cutPos;
 //                     std::cout << "Trim\n";
 
-                    if(m_format == FASTQ){
-//                            erase(seqRead->qual, cutPos, length(seqRead->qual));
+                    //TODO add option
+                    for(int i = m_barcode_umi_length - 1; i > 0; --i){
+                        if(tmpseq[i] == nuc){
+                            polyTlength++;
+                            prefixPolyT++;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }
         }
 
 
-
+        typedef std::map<seqan::CharString, uint32_t>  PScore;
 		// valid alignment
-		if(qIndex_v.size() > 0 /*&& valid_read*/){
+		if(qIndex_v.size() > 0){
 			for(int i = 0; i < qIndex_v.size(); ++i){
-                if(!valid_read)
-                    s << "Not valid; No oligoT found\n";
+//                 if(!valid_read)
+//                     s << "Not valid; No oligoT found\n";
 				TSeqRead seqReadTmp = seqRead;
                 TSeqRead barcode = seqRead;
 				if(!m_logEverything)
@@ -299,15 +330,15 @@ public:
 				else
 				{
 					if(i < qIndex_v.size() - 1){
-						if(m_log == ALL)
-							s << "Alternative alignment:\n";
+// 						if(m_log == ALL)
+// 							s << "Alternative alignment:\n";
 						qIndex = qIndex_v[i];
 						am = am_v[i];
 					}
 					else
 					{
-						if(m_log == ALL)
-							s << "Best alignment (" << qIndex_v.size() << smallest_diff_to_best_score << "):" << "\n";
+// 						if(m_log == ALL)
+// 							s << "Best alignment (" << qIndex_v.size() << smallest_diff_to_best_score << "):" << "\n";
 						qIndex = qIndex_v[i];
 						am = am_v[i];
 					}
@@ -413,14 +444,14 @@ public:
 
 				// alignment stats
 				if(m_log == ALL || (m_log == MOD && performRemoval)){
-					if(performRemoval){
-						s << "Sequence removal:";
+ 					if(performRemoval){
+ 						s << "Sequence removal:";
 
-						     if(trEnd == LEFT  || trEnd == LTAIL) s << " left side\n";
-						else if(trEnd == RIGHT || trEnd == RTAIL) s << " right side\n";
-						else                                      s << " any side\n";
-					}
-					else s << "Sequence detection, no removal:\n";
+ 						     if(trEnd == LEFT  || trEnd == LTAIL) s << " left side\n";
+ 						else if(trEnd == RIGHT || trEnd == RTAIL) s << " right side\n";
+ 						else                                      s << " any side\n";
+ 					}
+ 					else s << "Sequence detection, no removal:\n";
 
 					s << "  query id         " << m_queries->at(qIndex).id            << "\n"
 	  				  << "  query pos        " << am.startPosA << "-" << am.endPosA   << "\n"
@@ -444,34 +475,136 @@ public:
 						s << "  barcode qual     " << barcode.qual << "\n";
 				}
 				s << "\n  Alignment:\n" << endl << am.alString;
-			}
-			else if(m_log == TAB){
-				s << seqReadTmp.id    << "\t" << m_queries->at(qIndex).id << "\t"
-				  << am.startPosA  << "\t" << am.endPosA               << "\t" << am.overlapLength << "\t"
-				  << am.mismatches << "\t" << am.gapsR + am.gapsA      << "\t" << am.allowedErrors << am.score;
 
-				if(m_logEverything){
-					if(i < qIndex_v.size() - 1)
-						s << "\t" << "a" << endl;
-					else
-						s << "\t" << "b:" << qIndex_v.size() << smallest_diff_to_best_score << endl;
-					}
-					else
-					{
-						s << endl;
-					}
-				}
+
+                }
+			else if(m_log == TAB && m_barcodeAlignment){
+
+                if(m_printAlignment)
+                    s << am.alString;
+
+                s << seqReadTmp.id   << "\t" << m_queries->at(qIndex).seq /*barcode.seq */<< "\t" << "no\t";
+
+                if(trimEnd == RTAIL  || trimEnd == RIGHT)
+                {
+                    PScore::iterator it = res.rightTailScores.find(seqReadTmp.id);
+                    if(it != res.rightTailScores.end())
+                    {
+                        s << "right\t" << it->second << "\t";
+                    }
+                    else
+                    {
+                        s << "right\t" << "WARNING VALUE NOT FOUND" << "\t";
+                        std::cerr << "WARNING NO PRIMER ALIGNMENT SCORE FOR READID" << seqReadTmp.id << "FOUND\n";
+                    }
+                }
+
+                if(trimEnd == LTAIL  || trimEnd == LEFT){
+                    PScore::iterator it = res.leftTailScores.find(seqReadTmp.id);
+                    if(it != res.leftTailScores.end())
+                    {
+                        s << "left\t" << it->second << "\t";
+                    }
+                    else
+                    {
+                        s << "left\t" << "WARNING VALUE NOT FOUND" << "\t";
+                        std::cerr << "WARNING NO PRIMER ALIGNMENT SCORE FOR READID" << seqReadTmp.id << "FOUND\n";
+                    }
+                }
+
+                //adaptor_score
+                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << (int)(length(barcode.seq) - am.mismatches - am.gapsR) << "\t";
+                if(valid_read)
+                    s << (m_barcode_umi_length - prefixPolyT) << "\t" << polyTlength - m_barcode_umi_length << "\t";
+                else
+                    s << "-1" << "\t" << "-1" << "\t";
+                if(i < qIndex_v.size() - 1)
+                    s << "yes";
+                else
+                    s << "no";
+
+                s << "\t" << qIndex_v.size() << "\n";
+
+            }
 
 				if(i == qIndex_v.size() - 1 || !m_logEverything){
 					seqRead = seqReadTmp;
 				}
 
+
+				//TODO new mutexLock!!!!
+// 				std::cout << "Primer alignment: " << m_barcodeAlignment << "\n";
+
+
+                if(!m_barcodeAlignment){
+                    ouputMutex.lock();
+                    uint32_t alignmentScore = (am.score > 0) ? am.score : 0;
+                    if((trEnd == LEFT  || trEnd == LTAIL) && length(seqReadTmp.seq) > (m_barcode_umi_length - 5))
+                    {
+                        res.leftTail.push_back(make_tuple(seqReadTmp.id, seqReadTmp.seq, seqReadTmp.qual));
+                        res.leftTailScores[static_cast<seqan::CharString>(seqReadTmp.id)] = alignmentScore;
+                    }
+                    else if((trEnd == RIGHT || trEnd == RTAIL) && length(seqReadTmp.seq) > (m_barcode_umi_length - 5)) //TODO think about this value
+                    {
+                        res.rightTail.push_back(make_tuple(seqReadTmp.id, seqReadTmp.seq, seqReadTmp.qual));
+                        res.rightTailScores[static_cast<seqan::CharString>(seqReadTmp.id)] = alignmentScore;
+                    }
+                    ouputMutex.unlock();
+                }
+
 			}
 		}
-		else if(m_log == ALL){
-			s << "Unvalid alignment:"        << "\n"
-			  << "read id   " << seqRead.id  << "\n"
-			  << "read seq  " << seqRead.seq << "\n\n" << endl;
+		else
+        {
+            //TODO add unvalid
+//             unvalid.push_back(make_tuple(seqRead.id, seqRead.seq, seqRead.qual));
+            if(m_log == ALL){
+                s << "Unvalid alignment:"        << "\n"
+                << "read id   " << seqRead.id  << "\n"
+                << "read seq  " << seqRead.seq << "\n\n" << endl;
+            }
+
+            if(m_log == TAB){
+//                 <read_id>,<barcode>,<adaptor_invalid>,<adaptor_side>,<adaptor_score>,<barcode_score>,<barcode_indel>,<barcode_match>,<umi_length>,<polyT_length>,<barcode_alt>
+                if(!m_barcodeAlignment){
+                    s << seqRead.id << "\t" << "NA\t" << "yes\t" << "-1\t" << "-1\t" << "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
+                }
+                else
+                {
+                    s << seqRead.id << "\t" << "NA\t" << "no\t";
+
+                    if(trimEnd == RTAIL  || trimEnd == RIGHT)
+                    {
+                        PScore::iterator it = res.rightTailScores.find(seqRead.id);
+                        if(it != res.rightTailScores.end())
+                        {
+                            s << "right\t" << it->second << "\t";
+                        }
+                        else
+                        {
+                            s << "right\t" << "WARNING VALUE NOT FOUND" << "\t";
+                            std::cerr << "WARNING NO PRIMER ALIGNMENT SCORE FOR READID" << seqRead.id << "FOUND\n";
+                        }
+                    }
+
+                    if(trimEnd == LTAIL  || trimEnd == LEFT){
+                        PScore::iterator it = res.leftTailScores.find(seqRead.id);
+                        if(it != res.leftTailScores.end())
+                        {
+                            s << "left\t" << it->second << "\t";
+                        }
+                        else
+                        {
+                            s << "left\t" << "WARNING VALUE NOT FOUND" << "\t";
+                            std::cerr << "WARNING NO PRIMER ALIGNMENT SCORE FOR READID" << seqRead.id << "FOUND\n";
+                        }
+                    }
+
+                    s << "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
+                }
+
+            }
+
 		}
 
 		ouputMutex.lock();

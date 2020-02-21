@@ -6,13 +6,13 @@
 
 template <typename TSeqStr, typename TString>
 class SeqRead {
-	
+
 	public:
 	TSeqStr seq;
 	TString id, qual, umi;
-	
+
 	bool rmAdapter, rmAdapterRC, pairOverlap, poRemoval;
-	
+
 	SeqRead(TSeqStr& sequence, TString& seqID) :
 		seq(sequence),
 		id(seqID),
@@ -21,7 +21,7 @@ class SeqRead {
 		pairOverlap(false),
 		poRemoval(false){
 	}
-	
+
 	SeqRead(TSeqStr& sequence, TString& seqID, TString& quality) :
 		seq(sequence),
 		id(seqID),
@@ -36,13 +36,13 @@ class SeqRead {
 
 template <typename TSeqStr, typename TString>
 class PairedRead {
-	
+
 	typedef SeqRead<TSeqStr, TString> TSeqRead;
-	
+
 	public:
 	TSeqRead *r1, *r2, *b;
 	unsigned int barID, barID2;
-	
+
 	PairedRead(TSeqRead *p_r1, TSeqRead *p_r2, TSeqRead *p_b) :
 		r1(p_r1),
 		r2(p_r2),
@@ -50,7 +50,7 @@ class PairedRead {
 		barID(0),
 		barID2(0){
 	}
-	
+
 	virtual ~PairedRead(){
 		delete r1;
 		delete r2;
@@ -61,49 +61,60 @@ class PairedRead {
 
 template <typename TSeqStr>
 struct AlignResults{
-	
+
 	int score, mismatches, gapsR, gapsA;
 	int startPos, startPosA, startPosS;
 	int endPos, endPosS, endPosA;
 	int overlapLength, queryLength, tailLength;
-	
+
 	float allowedErrors;
 	TSeqStr umiTag;
 	std::string alString;
-	
+
 	AlignResults(){}
 };
 
+struct AlignmentResults{
+    typedef std::map<seqan::CharString, uint32_t>  PScore;
+    PScore leftTailScores;
+    PScore rightTailScores;
+
+    typedef std::tuple<seqan::CharString, seqan::Dna5String, seqan::CharString> TRecord;
+
+    std::vector<TRecord>  leftTail;
+    std::vector<TRecord>  rightTail;
+    std::vector<TRecord>  unvalid;
+};
 
 namespace flexbar{
-	
+
 	const unsigned int MAX_READLENGTH = 2048;
-	
+
 	typedef seqan::Dna5String FSeqStr;
 	typedef seqan::CharString FString;
-	
+
 	typedef seqan::StringSet<FSeqStr> TSeqStrs;
 	typedef seqan::StringSet<FString> TStrings;
 	typedef seqan::StringSet<bool>    TBools;
-	
+
 	typedef SeqRead<FSeqStr, FString>    TSeqRead;
 	typedef PairedRead<FSeqStr, FString> TPairedRead;
-	
+
 	typedef seqan::Align<FSeqStr, seqan::ArrayGaps> TAlign;
 	typedef seqan::StringSet<TAlign>                TAlignSet;
 	typedef seqan::String<int>                      TAlignScores;
-	
+
 	struct Alignments {
 		TAlignSet aset;
 		TAlignScores ascores;
 	};
-	
+
 	typedef std::vector<Alignments>    TAlignBundle;
 	typedef std::vector<TPairedRead* > TPairedReadBundle;
-	
+
 	// typedef seqan::StringSet<TAlign, seqan::Dependent<seqan::Tight> > TAlignSet;
-	
-	
+
+
 	// struct SeqReadData {
 	// 	TSeqStrs seqs;
 	// 	TStrings ids, quals;
@@ -111,37 +122,37 @@ namespace flexbar{
 	//
 	// 	SeqReadData(){}
 	// };
-	
+
 	// struct PairedReadBundle {
 	// 	SeqReadData srd, srd2, srdBR;
 	// 	TPairedReads pReads;
 	//
 	// 	PairedReadBundle(){}
 	// };
-	
-	
+
+
 	struct TBar {
-		
+
 		FString id;
 		FSeqStr seq;
 		bool rcAdapter;
-		
+
 		tbb::atomic<unsigned long> rmOverlap, rmFull;
-		
+
 		TBar() :
 			rmOverlap(0),
 			rmFull(0),
 			rcAdapter(false){
 	    }
 	};
-	
-	
+
+
 	struct Adapters {
 		FString id, info;
 		FSeqStr seq1, seq2, seqc;
 	};
-	
-	
+
+
 	enum AdapterPreset {
 		APOFF,
 		TRUSEQ,
@@ -151,46 +162,46 @@ namespace flexbar{
 		NEXTERA,
 		NEXTERAMP
 	};
-	
-	
+
+
 	enum PairOverlap {
 		POFF,
 		PON,
 		PSHORT,
 		PONLY
 	};
-	
+
 	enum RevCompMode {
 		RCOFF,
 		RCON,
 		RCONLY
 	};
-	
+
 	enum AlignmentMode {
 		ALIGNALL,
 		ALIGNRCOFF,
 		ALIGNRC
 	};
-	
+
 	enum ComputeCycle {
 		PRELOAD,
 		COMPUTE,
 		RESULTS
 	};
-	
+
 	enum LogAlign {
 		NONE,
 		ALL,
 		TAB,
 		MOD
 	};
-	
+
 	enum CompressionType {
 		UNCOMPRESSED,
 		GZ,
 		BZ2
 	};
-	
+
 	enum TrimEnd {
 		ANY,
 		LEFT,
@@ -198,18 +209,18 @@ namespace flexbar{
 		LTAIL,
 		RTAIL
 	};
-	
+
 	enum FileFormat {
 		FASTA,
 		FASTQ
 	};
-	
+
 	enum QualityType {
 		SANGER,
 		SOLEXA,
 		ILLUMINA
 	};
-	
+
 	enum QualTrimType {
 		QOFF,
 		TAIL,
@@ -217,7 +228,7 @@ namespace flexbar{
 		WINTAIL,
 		BWA
 	};
-	
+
 	enum BarcodeDetect {
 		BARCODE_READ,
 		WITHIN_READ,
@@ -226,7 +237,7 @@ namespace flexbar{
 		WITHIN_READ_REMOVAL2,
 		BOFF
 	};
-	
+
 	enum AdapterRemoval {
 		NORMAL,
 		NORMAL2,
@@ -234,13 +245,13 @@ namespace flexbar{
 		ATWO,
 		AOFF
 	};
-	
+
 	enum AdapterTrimmed {
 		ATON,
 		ATOFF,
 		ATONLY
 	};
-	
+
 	enum RunType {
 		SINGLE,
 		PAIRED,
