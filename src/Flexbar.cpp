@@ -67,7 +67,7 @@ int main(int argc, const char* argv[]){
 
     std::string targetName = o.targetName;
 //     o.targetName += "_P1";
-    std::string logFileName = o.targetName + ".res";
+    std::string logFileName = o.targetName + ".tab";
     openOutputFile(o.fstrmOut, logFileName);
     o.out = &o.fstrmOut;
     //TODO //overwrite adapter parameters in options

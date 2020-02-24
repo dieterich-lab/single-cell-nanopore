@@ -245,6 +245,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
         setAdvanced(parser, "interleaved");
         setAdvanced(parser, "iupac");
 
+    addOption(parser, ArgParseOption("fq", "fastq", "Output fastq."));
+
 
 	addSection(parser, "Barcode detection");
 	addOption(parser, ArgParseOption("b",  "barcodes", "Fasta file with potential barcodes determine from illumina reads.", ARG::INPUT_FILE));
@@ -700,7 +702,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	}
 	else *out << endl;
 
-    o.format = (isSet(parser, "fq")) ? flexbar::FASTQ : flexbar::FASTA;
+    o.format = (isSet(parser, "fastq")) ? flexbar::FASTQ : flexbar::FASTA;
 
 	getOptionValue(o.targetName, parser, "target");
 	*out << "Target name:            " << o.targetName << endl;
@@ -713,10 +715,6 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	getOptionValue(o.readsFile, parser, "reads");
 	*out << "Reads file:             ";
     *out << o.readsFile << endl;
-
-// 	getOptionValue(o.regionsFile, parser, "regionsFile");
-// 	*out << "regions File:           ";
-//     *out << o.regionsFile << endl;
 
     *out << "Cellbarcode whitelist: " << o.whitelist << endl;
 
