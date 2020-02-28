@@ -245,7 +245,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
         setAdvanced(parser, "interleaved");
         setAdvanced(parser, "iupac");
 
-    addOption(parser, ArgParseOption("fq", "fastq", "Output fastq."));
+    addOption(parser, ArgParseOption("fq", "fq", "Output fastq."));
 
 
 	addSection(parser, "Barcode detection");
@@ -524,8 +524,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setDefaultValue(parser, "qtrim-threshold", "20");
 	setDefaultValue(parser, "qtrim-win-size",  "5");
 
-	setDefaultValue(parser, "htrim-min-length", "3");
-	setDefaultValue(parser, "htrim-error-rate", "0.1");
+	setDefaultValue(parser, "htrim-min-length", "7");
+	setDefaultValue(parser, "htrim-error-rate", "0.3");
 /*
 	addTextSection(parser, "TRIM-END MODES");
 	addText(parser._toolDoc, "\\fBANY:\\fP   longer side of read remains after removal of overlap", false);
@@ -702,7 +702,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	}
 	else *out << endl;
 
-    o.format = (isSet(parser, "fastq")) ? flexbar::FASTQ : flexbar::FASTA;
+    o.format = (isSet(parser, "fq")) ? flexbar::FASTQ : flexbar::FASTA;
 
 	getOptionValue(o.targetName, parser, "target");
 	*out << "Target name:            " << o.targetName << endl;
