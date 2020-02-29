@@ -516,7 +516,7 @@ public:
                 }
 
                 //adaptor_score
-                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << (int)(length(barcode.seq) - am.mismatches - am.gapsR) << "\t";
+                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << am.startPosA  << "\t" << am.mismatches << "\t";
                 if(valid_read)
                     s << (m_barcode_umi_length - prefixPolyT) << "\t" << polyTlength - m_barcode_umi_length << "\t";
                 else
@@ -568,9 +568,9 @@ public:
             }
 
             if(m_log == TAB){
-//                 <read_id>,<barcode>,<adaptor_invalid>,<adaptor_side>,<adaptor_score>,<barcode_score>,<barcode_indel>,<barcode_match>,<umi_length>,<polyT_length>,<barcode_alt>
+//                 <read_id>,<barcode>,<adaptor_invalid>,<adaptor_side>,<adaptor_score>,<barcode_score>,<barcode_indel>,<barcode_start>,<barcode_mismatch>,<umi_length>,<polyT_length>,<barcode_alt>
                 if(!m_barcodeAlignment){
-                    s << seqRead.id << "\t" << "NA\t" << "yes\t" << "-1\t" << "-1\t" << "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
+                    s << seqRead.id << "\t" << "NA\t" << "yes\t" << "-1\t" << "-1\t" << "-1\t" <<  "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
                 }
                 else
                 {
@@ -603,7 +603,7 @@ public:
                         }
                     }
 
-                    s << "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
+                    s << "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
                 }
 
             }

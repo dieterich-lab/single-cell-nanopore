@@ -91,9 +91,9 @@ public:
 
 		m_p  = new TSeqAlignPair(o, o.p_min_overlap, o.a_errorRate, o.a_match, o.a_mismatch, o.a_gapCost);
 
-//         <read_id>,<barcode>,<adaptor_invalid>,<adaptor_side>,<adaptor_score>,<barcode_score>,<barcode_indel>,<barcode_match>,<umi_length>,<polyT_length>,<barcode_alt>
+//         <read_id>,<barcode>,<adaptor_invalid>,<adaptor_side>,<adaptor_score>,<barcode_score>,<barcode_indel>,<barcode_start>,<barcode_mismatch>,<umi_length>,<polyT_length>,<barcode_alt>
 		if(m_log == flexbar::TAB && o.tableHeader)
-        *out << "read_id\tbarcode\tadaptor_invalid\tadaptor_side\tadaptor_score\tbarcode_score\tbarcode_indel\tbarcode_match\tumi_length\tpolyT_length\tbarcode_alt\treal" << std::endl;
+        *out << "read_id\tbarcode\tadaptor_invalid\tadaptor_side\tadaptor_score\tbarcode_score\tbarcode_indel\tbarcode_start\tbarcode_mismatch\tumi_length\tpolyT_length\tbarcode_alt\treal" << std::endl;
 // 		*out << "ReadTag\tQueryTag\tQueryStart\tQueryEnd\tOverlapLength\tMismatches\tIndels\tAllowedErrors\tScore" << std::endl;
 
 //         std::cout << "Paired LeftTail Size: " << res.leftTail.size() << "\n";
