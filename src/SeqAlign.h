@@ -376,14 +376,23 @@ public:
 
 							if(rCutPos > readLength) rCutPos = readLength;
 
-							erase(seqReadTmp.seq, 0, rCutPos);
-                            erase(barcode.seq, rCutPos, length(barcode.seq));
+                            int modCut = (rCutPos > keepbp) ? (rCutPos - keepbp) : 0;
+                            if(!m_barcodeAlignment){
+                                erase(seqReadTmp.seq, 0, modCut);
+                                erase(barcode.seq, rCutPos, length(barcode.seq));
+                            }
+                            else
+                            {
+                                erase(seqReadTmp.seq, 0, modCut);
+                                erase(barcode.seq, rCutPos, length(barcode.seq));
+                            }
 
 
 							if(m_format == FASTQ){
 								erase(seqReadTmp.qual, 0, rCutPos);
                                 erase(barcode.qual, rCutPos, length(barcode.qual));
                             }
+                            //TODO add modified removal to fastq
 
 							break;
 
@@ -397,8 +406,16 @@ public:
 							// skipped restriction
 							if(rCutPos < 0) rCutPos = 0;
 
-                            erase(seqReadTmp.seq, rCutPos, readLength);
-                            erase(barcode.seq, 0, rCutPos);
+                            int modCut = (rCutPos + keepbp < readLength) ? (rCutPos + keepbp) : (readLength - 1);
+                            if(!m_barcodeAlignment){
+                                erase(seqReadTmp.seq, modCut, readLength);
+                                erase(barcode.seq, 0, modCut);
+                            }
+                            else
+                            {
+                                erase(seqReadTmp.seq, rCutPos, readLength);
+                                erase(barcode.seq, 0, rCutPos);
+                            }
 
 							if(m_format == FASTQ){
 								erase(seqReadTmp.qual, rCutPos, readLength);

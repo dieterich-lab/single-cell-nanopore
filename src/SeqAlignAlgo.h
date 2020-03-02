@@ -154,8 +154,8 @@ public:
                         (matches * mCost + (a.gapsR + a.gapsA) * gCost + a.mismatches * mmCost) : 0;
         }
 
-//         std::cout << a.alString << "\n";
-//         std::cout << "Score: " << a.score << "\nGaps read: " << a.gapsR << "\nGaps Bar: " << a.gapsA << "\nMismatchtes: "<<a.mismatches << "\n\n";
+        std::cout << a.alString << "\n";
+        std::cout << "Score: " << a.score << "\nGaps read: " << a.gapsR << "\nGaps Bar: " << a.gapsA << "\nMismatchtes: "<<a.mismatches << "\n\n";
 
 	}
 
