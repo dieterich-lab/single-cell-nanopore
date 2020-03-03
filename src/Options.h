@@ -501,22 +501,22 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));*/
 
 
-	setDefaultValue(parser, "barcode-trim-end",   "LTAIL");
-	setDefaultValue(parser, "barcode-error-rate", "0.24");
+	setDefaultValue(parser, "barcode-trim-end",   "LEFT");
+	setDefaultValue(parser, "barcode-error-rate", "0.2");
 	setDefaultValue(parser, "barcode-match",      "1");
 	setDefaultValue(parser, "barcode-mismatch",   "-1");
-	setDefaultValue(parser, "barcode-gap",        "-1");
+	setDefaultValue(parser, "barcode-gap",        "-2");
     setDefaultValue(parser, "barcode-min-overlap", "10");
 
 	setDefaultValue(parser, "adapter-trim-end",     "ANY");
 
-	setDefaultValue(parser, "adapter-min-overlap",  "20");
-	setDefaultValue(parser, "adapter-error-rate",   "0.15");
+	setDefaultValue(parser, "adapter-min-overlap",  "10");
+	setDefaultValue(parser, "adapter-error-rate",   "0.3");
 	setDefaultValue(parser, "adapter-min-poverlap", "40");
 	setDefaultValue(parser, "adapter-cycles",       "1");
 	setDefaultValue(parser, "adapter-match",        "1");
 	setDefaultValue(parser, "adapter-mismatch",     "-1");
-	setDefaultValue(parser, "adapter-gap",          "-1");
+	setDefaultValue(parser, "adapter-gap",          "-2");
     setDefaultValue(parser, "adapter-revcomp",      "ON");
 
 	// setDefaultValue(parser, "adapter-overhang",     "0");
@@ -524,7 +524,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setDefaultValue(parser, "qtrim-threshold", "20");
 	setDefaultValue(parser, "qtrim-win-size",  "5");
 
-	setDefaultValue(parser, "htrim-min-length", "7");
+	setDefaultValue(parser, "htrim-min-length", "10");
 	setDefaultValue(parser, "htrim-error-rate", "0.3");
 /*
 	addTextSection(parser, "TRIM-END MODES");
