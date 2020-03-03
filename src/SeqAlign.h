@@ -123,6 +123,8 @@ public:
 				TSeqStr *rseq = &seqRead.seq;
 				TSeqStr tmp, tmpq;
 
+//                 std::cout << seqRead.id << "\t" << seqRead.seq << "\n";
+
 				if(! m_isBarcoding && m_addBarcodeAdapter && addBarcode != ""){
 					tmpq = addBarcode;
 					append(tmpq, m_queries->at(i).seq);
@@ -310,7 +312,7 @@ public:
             }
         }
 
-
+        //TODO m_queries->at(qIndex).rcAdapter does not work but from qIndex_v[i] rc can be derived
         typedef std::map<seqan::CharString, uint32_t>  PScore;
 		// valid alignment
 		if(qIndex_v.size() > 0){
@@ -349,12 +351,11 @@ public:
 				if(performRemoval){
 
 					if(trEnd == ANY){
-
 						if(am.startPosA <= am.startPosS && am.endPosS <= am.endPosA){
 							seqReadTmp.seq = "";
 							if(m_format == FASTQ) seqReadTmp.qual = "";
 						}
-						else if(am.startPosA - am.startPosS >= am.endPosS - am.endPosA){
+						else if(qIndex_v[i] == 1){
 							trEnd = RIGHT;
 						}
 						else trEnd = LEFT;
