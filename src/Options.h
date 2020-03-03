@@ -51,7 +51,7 @@ struct Options{
     uint32_t readingPos = 0;
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
-	int maxUncalled, min_readLen, barcodeUmiLength, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
+	int maxUncalled, min_readLen, barcodeUmiLength, keepbpOfAdapter, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
 
 	int a_match, a_mismatch, a_gapCost, b_match, b_mismatch, b_gapCost, barcode_match, barcode_mismatch, barcode_gapCost, a_cycles;
 
@@ -140,6 +140,7 @@ struct Options{
 		a_tail_len      = 0;
 		b_tail_len      = 0;
         barcodeUmiLength = 26;
+        keepbpOfAdapter = 1;
 		a_min_overlap   = 3;
 		b_min_overlap   = 0;
 		htrimMinLength2 = 0;
@@ -264,6 +265,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));
     addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
+    addOption(parser, ArgParseOption("kb", "keepbpOfAdapter", "Keep this many bp of the end of the adapter alignment incase inaccurate alignment", ARG::INTEGER));
     addOption(parser, ArgParseOption("ul", "barcodeUmiLength", "Length of UMI + barcode needed for homopolymers removal. Read fragments 5 bases shorter are discarded.", ARG::INTEGER));
 
 
@@ -945,6 +947,9 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	// trimming of homopolymers
 
+
+
+	getOptionValue(o.keepbpOfAdapter, parser, "keepbpOfAdapter");
 	getOptionValue(o.barcodeUmiLength, parser, "barcodeUmiLength");
 	if(isSet(parser, "htrim-left") || isSet(parser, "htrim-right")){
 

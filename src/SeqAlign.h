@@ -33,6 +33,7 @@ private:
 	const float m_errorRate;
 	const unsigned int m_bundleSize;
     const int m_barcode_umi_length;
+    const int m_keepbp;
 
 	tbb::atomic<unsigned long> m_nPreShortReads, m_modified;
 	tbb::concurrent_vector<flexbar::TBar> *m_queries;
@@ -76,6 +77,7 @@ public:
 			m_nPreShortReads(0),
 			m_modified(0),
 			m_barcode_umi_length(o.barcodeUmiLength),
+			m_keepbp(o.keepbpOfAdapter),
             m_htrimRight(o.htrimRight),
             m_htrimMinLength(o.htrimMinLength),
             m_htrimMinLength2(o.htrimMinLength2),
@@ -128,7 +130,7 @@ public:
 				}
 
 				if(trimEnd == LTAIL || trimEnd == RTAIL){
-					int tailLength  = (m_tailLength > 0) ? m_tailLength : length(*qseq);
+					int tailLength  = (m_tailLength > 0) ? m_tailLength : (length(*qseq) + m_keepbp + 1);
 
 					if(tailLength < readLength){
 						if(trimEnd == LTAIL) tmp = prefix(seqRead.seq, tailLength);
@@ -290,10 +292,8 @@ public:
 //                 s << readLength << "\t" << htrimMinLength << "\t" << cutPos << "\t" << m_barcode_umi_length << "\n";
                 if(cutPos > 0 && cutPos - m_barcode_umi_length >= htrimMinLength){
 //                         erase(seqRead->seq, cutPos, length(seqRead->seq));
-//                     std::cout << "TEST: " << cutPos << "\t" << m_barcode_umi_length << "\t" << htrimMinLength << "\n"; //TODO recheck
                     valid_read = true;
                     polyTlength = cutPos;
-//                     std::cout << "Trim\n";
 
                     //TODO add option
                     for(int i = m_barcode_umi_length - 1; i > 0; --i){
@@ -366,6 +366,7 @@ public:
 
 						case LTAIL:
 						case LEFT:
+                        {
 							rCutPos = am.endPos;
 
 							// translate alignment end pos to read idx
@@ -376,7 +377,7 @@ public:
 
 							if(rCutPos > readLength) rCutPos = readLength;
 
-                            int modCut = (rCutPos > keepbp) ? (rCutPos - keepbp) : 0;
+                            int modCut = (rCutPos > m_keepbp) ? (rCutPos - m_keepbp) : 0;
                             if(!m_barcodeAlignment){
                                 erase(seqReadTmp.seq, 0, modCut);
                                 erase(barcode.seq, rCutPos, length(barcode.seq));
@@ -395,21 +396,23 @@ public:
                             //TODO add modified removal to fastq
 
 							break;
+                        }
 
 						case RTAIL:
 							// adjust cut pos to original read length
 							am.startPos += readLength - am.tailLength;
 
 						case RIGHT:
+                        {
 							rCutPos = am.startPos;
 
 							// skipped restriction
 							if(rCutPos < 0) rCutPos = 0;
 
-                            int modCut = (rCutPos + keepbp < readLength) ? (rCutPos + keepbp) : (readLength - 1);
+                            int modCut2 = (rCutPos + m_keepbp < readLength) ? (rCutPos + m_keepbp) : (readLength - 1);
                             if(!m_barcodeAlignment){
-                                erase(seqReadTmp.seq, modCut, readLength);
-                                erase(barcode.seq, 0, modCut);
+                                erase(seqReadTmp.seq, modCut2, readLength);
+                                erase(barcode.seq, 0, modCut2);
                             }
                             else
                             {
@@ -424,6 +427,7 @@ public:
                             }
 
 							break;
+                        }
 
 			     			case ANY:;
 					}
@@ -533,7 +537,9 @@ public:
                 }
 
                 //adaptor_score
-                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << am.startPosA  << "\t" << am.mismatches << "\t";
+                int barcodeOffset = (trimEnd == RTAIL  || trimEnd == RIGHT) ? (am.endPosS - am.endPosA) : am.startPosA;
+
+                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << (barcodeOffset - m_keepbp) << "\t" << am.mismatches << "\t";
                 if(valid_read)
                     s << (m_barcode_umi_length - prefixPolyT) << "\t" << polyTlength - m_barcode_umi_length << "\t";
                 else
