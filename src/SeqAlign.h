@@ -566,12 +566,16 @@ public:
                 if(!m_barcodeAlignment){
                     ouputMutex.lock();
                     uint32_t alignmentScore = (am.score > 0) ? am.score : 0;
-                    if((trEnd == LEFT  || trEnd == LTAIL) && length(seqReadTmp.seq) > (m_barcode_umi_length - 5))
+                    if(length(seqReadTmp.seq) <= (m_barcode_umi_length - 10))
+                    {
+                        s << seqRead.id << "\t" << "NA\t" << "no\t" << alignmentScore << "\t-1\t" << "-1\t" <<  "-1\t" <<  "-1\t" <<  "-1\t" << "-1\t" << "-1\t" <<  "no\t" << "0\n";
+                    }
+                    else if(trEnd == LEFT  || trEnd == LTAIL)
                     {
                         res.leftTail.push_back(make_tuple(seqReadTmp.id, seqReadTmp.seq, seqReadTmp.qual));
                         res.leftTailScores[static_cast<seqan::CharString>(seqReadTmp.id)] = alignmentScore;
                     }
-                    else if((trEnd == RIGHT || trEnd == RTAIL) && length(seqReadTmp.seq) > (m_barcode_umi_length - 5)) //TODO think about this value
+                    else if(trEnd == RIGHT || trEnd == RTAIL) //TODO think about this value
                     {
                         res.rightTail.push_back(make_tuple(seqReadTmp.id, seqReadTmp.seq, seqReadTmp.qual));
                         res.rightTailScores[static_cast<seqan::CharString>(seqReadTmp.id)] = alignmentScore;
