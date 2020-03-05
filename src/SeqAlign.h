@@ -260,6 +260,7 @@ public:
         if(m_htrimRight != ""){
 
             auto tmpseq = seqRead.seq;
+            int nonPolyTprefixLength = m_barcode_umi_length + m_keepbp;
             if(trimEnd == TrimEnd::RTAIL || trimEnd == TrimEnd::RIGHT)
                 seqan::reverseComplement(tmpseq);
             valid_read = false;
@@ -272,13 +273,13 @@ public:
                 int cutPos = 0;
                 int notNuc = 0;
 
-                for(int i = m_barcode_umi_length; i < readLength; ++i){
+                for(int i = nonPolyTprefixLength; i < readLength; ++i){
                     if(tmpseq[i] != nuc){
                         notNuc++;
                     }
-                    else if((notNuc) <= m_htrimErrorRate * (i - m_barcode_umi_length)){
+                    else if((notNuc) <= m_htrimErrorRate * (i - nonPolyTprefixLength)){
 
-                        if(m_htrimMaxLength != 0 && i - m_barcode_umi_length > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0))
+                        if(m_htrimMaxLength != 0 && i - nonPolyTprefixLength > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0))
                             break;
 
                         cutPos = i;
@@ -286,19 +287,19 @@ public:
 
                 }
 
-//                 s << "\ncutoff: " << (readLength - cutPos + m_barcode_umi_length) << "\n";
+//                 s << "\ncutoff: " << (readLength - cutPos + nonPolyTprefixLength) << "\n";
                 unsigned int htrimMinLength = m_htrimMinLength;
                 if(m_htrimMinLength2 > 0 && pos > 0) htrimMinLength = m_htrimMinLength2;
 
 
-//                 s << readLength << "\t" << htrimMinLength << "\t" << cutPos << "\t" << m_barcode_umi_length << "\n";
-                if(cutPos > 0 && cutPos - m_barcode_umi_length >= htrimMinLength){
+//                 s << readLength << "\t" << htrimMinLength << "\t" << cutPos << "\t" << nonPolyTprefixLength << "\n";
+                if(cutPos > 0 && cutPos - nonPolyTprefixLength >= htrimMinLength){
 //                         erase(seqRead->seq, cutPos, length(seqRead->seq));
                     valid_read = true;
                     polyTlength = cutPos;
 
                     //TODO add option
-                    for(int i = m_barcode_umi_length - 1; i > 0; --i){
+                    for(int i = nonPolyTprefixLength - 1; i > 0; --i){
                         if(tmpseq[i] == nuc){
                             polyTlength++;
                             prefixPolyT++;
