@@ -256,7 +256,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bo", "barcode-min-overlap", "Minimum overlap of barcode and read. Default: barcode length.", ARG::INTEGER));
 // 	addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
 	addOption(parser, ArgParseOption("bt", "barcode-trim-end", "Type of detection, see section trim-end modes.", ARG::STRING));
-	addOption(parser, ArgParseOption("bn", "barcode-tail-length", "Region size in tail trim-end modes. Default: barcode length.", ARG::INTEGER));
+	addOption(parser, ArgParseOption("bn", "extend-barcode-tail-length", "Extened region size in tail trim-end modes. Default: 5.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bk", "barcode-keep", "Keep barcodes within reads instead of removal."));
 	addOption(parser, ArgParseOption("bu", "barcode-unassigned", "Include unassigned reads in output generation."));
 
@@ -272,7 +272,6 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     setAdvanced(parser, "barcodes2");
     setAdvanced(parser, "barcode-reads");
     setAdvanced(parser, "barcode-trim-end");
-    setAdvanced(parser, "barcode-tail-length");
     setAdvanced(parser, "barcode-keep");
     setAdvanced(parser, "barcode-unassigned");
 
@@ -285,7 +284,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("ao", "adapter-min-overlap", "Minimum overlap for removal for primer alignment without pair overlap.", ARG::INTEGER));
 // 	addOption(parser, ArgParseOption("ae", "adapter-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
 // 	addOption(parser, ArgParseOption("at", "adapter-trim-end", "Type of removal, see section trim-end modes.", ARG::STRING));
-	addOption(parser, ArgParseOption("an", "adapter-tail-length", "Region size for tail trim-end modes. Default: adapter length.", ARG::INTEGER));
+// 	addOption(parser, ArgParseOption("an", "adapter-tail-length", "Region size for tail trim-end modes. Default: adapter length.", ARG::INTEGER));
 	// addOption(parser, ArgParseOption("ah", "adapter-overhang", "Overhang at read ends in right and left modes.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("ax", "adapter-relaxed", "Skip restriction to pass read ends in right and left modes."));
 	addOption(parser, ArgParseOption("ap", "adapter-pair-overlap", "Overlap detection of paired reads.", ARG::STRING));
@@ -299,7 +298,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
     setAdvanced(parser, "adapters2");
     setAdvanced(parser, "adapter-preset");
-    setAdvanced(parser, "adapter-tail-length");
+//     setAdvanced(parser, "adapter-tail-length");
     setAdvanced(parser, "adapter-relaxed");
     setAdvanced(parser, "adapter-pair-overlap");
     setAdvanced(parser, "adapter-min-poverlap");
@@ -393,7 +392,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	hideOption(parser, "version");
 
 	setAdvanced(parser, "barcodes2");
-	setAdvanced(parser, "barcode-tail-length");
+// 	setAdvanced(parser, "barcode-tail-length");
 	setAdvanced(parser, "barcode-keep");
 	setAdvanced(parser, "barcode-unassigned");/*
 	setAdvanced(parser, "barcode-match");
@@ -402,7 +401,6 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setAdvanced(parser, "barcode-gap");*/
 
 // 	setAdvanced(parser, "adapter-seq");
-	setAdvanced(parser, "adapter-tail-length");
 	setAdvanced(parser, "adapter-relaxed");
 	setAdvanced(parser, "adapter-min-poverlap");
 	setAdvanced(parser, "adapter-revcomp");
@@ -504,6 +502,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 
 	setDefaultValue(parser, "barcode-trim-end",   "LEFT");
+    setDefaultValue(parser, "extend-barcode-tail-length",   "5");
 	setDefaultValue(parser, "barcode-error-rate", "0.2");
 	setDefaultValue(parser, "barcode-match",      "1");
 	setDefaultValue(parser, "barcode-mismatch",   "-1");
@@ -951,6 +950,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	getOptionValue(o.keepbpOfAdapter, parser, "keepbpOfAdapter");
 	getOptionValue(o.barcodeUmiLength, parser, "barcodeUmiLength");
+    getOptionValue(o.b_tail_len, parser, "extend-barcode-tail-length");
 	if(isSet(parser, "htrim-left") || isSet(parser, "htrim-right")){
 
 		if(isSet(parser, "htrim-left")){
@@ -1168,11 +1168,11 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 				cerr << "\nAdapter trim-end should be RIGHT for adapter presets.\n" << endl;
 				exit(1);
 			}
-
+/*
 			if(isSet(parser, "adapter-tail-length")){
 				getOptionValue(o.a_tail_len, parser, "adapter-tail-length");
 				*out << "adapter-tail-length:   " << o.a_tail_len << endl;
-			}
+			}*/
 
 
 			if(true){

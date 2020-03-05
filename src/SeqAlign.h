@@ -29,7 +29,7 @@ private:
     const bool m_barcodeAlignment;
 
 	const bool m_isBarcoding, m_writeTag, m_umiTags, m_strictRegion, m_addBarcodeAdapter, m_printAlignment, m_logEverything;
-	const int m_minLength, m_minOverlap, m_tailLength;
+	const int m_minLength, m_minOverlap, m_tailLength_extension;
 	const float m_errorRate;
 	const unsigned int m_bundleSize;
     const int m_barcode_umi_length;
@@ -59,7 +59,7 @@ public:
 
 			m_minOverlap(minOverlap),
 			m_errorRate(errorRate),
-			m_tailLength(tailLength),
+			m_tailLength_extension(tailLength),
 			m_barcodeAlignment(o.barcodeAlignment),
 			m_isBarcoding(isBarcoding),
 			m_umiTags(o.umiTags),
@@ -132,7 +132,7 @@ public:
 				}
 
 				if(trimEnd == LTAIL || trimEnd == RTAIL){
-					int tailLength  = (m_tailLength > 0) ? m_tailLength : (length(*qseq) + m_keepbp + 1);
+					int tailLength  = length(*qseq) + m_keepbp + m_tailLength_extension;
 
 					if(tailLength < readLength){
 						if(trimEnd == LTAIL) tmp = prefix(seqRead.seq, tailLength);
@@ -181,7 +181,7 @@ public:
 				a.queryLength += length(addBarcode);
 			}
 
-			a.tailLength  = (m_tailLength > 0) ? m_tailLength : a.queryLength;
+			a.tailLength  = m_tailLength_extension + a.queryLength + m_keepbp;
 
 			a.overlapLength = a.endPos - a.startPos;
 			a.allowedErrors = m_errorRate * a.overlapLength;

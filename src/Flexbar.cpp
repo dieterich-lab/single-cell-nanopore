@@ -130,6 +130,7 @@ int main(int argc, const char* argv[]){
     o.rcMode    = flexbar::RevCompMode::RCOFF;
     o.a_min_overlap = o.b_min_overlap;
     o.htrimRight = homopolymersRighttmp;
+    o.a_tail_len = o.b_tail_len;
 
     std::cout << "Left Tail Size: " << o.fastaRecords.size() << "\n";
     {
