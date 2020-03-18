@@ -194,6 +194,8 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
 
                 //taake prefix of the read as soon as more than threshold many matches are found
                 if (match_count > threshold && !found){
+                    if(pos < o.minimumFL)
+                        pos = (o.minimumFL < length(end1) ? o.minimumFL : length(end1) - 1);
 //                     std::cout << "found pos: " << pos << "\n";
                     end1 = prefix(end1, pos + 1);
                     qual1 = prefix(qual1, pos + 1);
@@ -225,6 +227,8 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
 
                 //since the overall match count is know we can stop as soon as we determined the start position of the prefix
                 if (match_count2 > threshold){
+                    if(pos < o.minimumFL)
+                        pos = (o.minimumFL < length(end2) ? o.minimumFL : length(end2) - 1);
     //                     std::cout << "found pos: " << pos << "\n";
                     end2 = suffix(end2, length(end2) - pos - 1);
                     qual2 = suffix(qual2, length(qual2) - pos - 1);
