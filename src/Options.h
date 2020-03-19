@@ -48,7 +48,7 @@ struct Options{
 	bool useStdin, useStdout, logEverything, printAlignment, relaxRegion, useRcTrimEnd, qtrimPostRm, addBarcodeAdapter;
 	bool interleavedInput, iupacInput, htrimAdapterRm, htrimMaxFirstOnly;
 
-    uint32_t readingPos = 0, minimumFL;
+    uint32_t readingPos = 0, fragmentLength;
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
 	int maxUncalled, min_readLen, barcodeUmiLength, keepbpOfAdapter, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
@@ -135,7 +135,7 @@ struct Options{
 		cutLen_begin    = 0;
 		cutLen_end      = 0;
 		cutLen_read     = 0;
-        minimumFL       = 0;
+        fragmentLength = 100;
 		qtrimThresh     = 0;
 		qtrimWinSize    = 0;
 		a_tail_len      = 0;
@@ -233,7 +233,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode needs to be sorted after sequence names (coordinate sorted works also) The important part is all reads mapping to the same sequence are together.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("w", "whitelist", "Cell Barcodes which were determined to be valid by chromium pipeline.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
-    addOption(parser, ArgParseOption("mi", "minimum-fragment-length", "Tail ends containing potential barcode ... polty should be at least this many bp long.", ARG::INTEGER));
+    addOption(parser, ArgParseOption("fl", "fragment-length", "Extract this many bp from the front and end of reads for barcode detection.", ARG::INTEGER));
 
 	addOption(parser, ArgParseOption("p", "reads2", "Second input file of paired reads, gz and bz2 files supported.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("i", "interleaved", "Interleaved format for first input set with paired reads."));
@@ -809,7 +809,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	}
 
 
-    getOptionValue(o.minimumFL, parser, "minimum-fragment-length");
+    getOptionValue(o.fragmentLength, parser, "fragment-length");
 
 	if(isSet(parser, "adapter-seq")){
 		getOptionValue(o.adapterSeq, parser, "adapter-seq");

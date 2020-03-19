@@ -153,7 +153,6 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
     SeqFileOut seqFileOut(toCString(outputPath));*/
 
     //TODO add threshold as parameter
-    int threshold = 5;
 
     //modify bam (Add UMI and Barcode (determined from flexbar) to each Alignment record)
     CigarElement<> soft = seqan::CigarElement<>('S', 1);
@@ -169,132 +168,61 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
     for(uint32_t i = 0; i < records.size(); ++i)
     {
         auto & record = records[i];
-            Dna5String end1 = record.seq;
-            Dna5String end2 = record.seq;
-            CharString id = record.qName;
-            CharString qual1 = record.qual;
-            CharString qual2 = record.qual;
+        Dna5String end1 = prefix(record.seq, o.fragmentLength);
+        Dna5String end2 = suffix(record.seq, length(record.seq) - o.fragmentLength);
+        CharString id = record.qName;
+        CharString qual1 = prefix(record.qual, o.fragmentLength);
+        CharString qual2 = suffix(record.qual, length(record.seq) - o.fragmentLength);
 
+
+        if(verbose){
+            std::cout << "Accession in Bam " << toCString(id) << "\n";
+            std::cout << "Read length: " << length(record.seq) << ": " << record.seq << "\n";
+        }
+
+        bool rc = hasFlagRC(record);
+
+        if(rc){
+            Dna5StringReverseComplement rcend1(end1);
+            Dna5StringReverseComplement rcend2(end2);
+            ModifiedString<CharString, ModReverse> rcqual1(qual1);
+            ModifiedString<CharString, ModReverse> rcqual2(qual2);
 
             if(verbose){
-                std::cout << "Accession in Bam " << toCString(id) << "\n";
-                std::cout << "Read length: " << length(record.seq) << ": " << record.seq << "\n";
+                std::cout << "Use reverse Complement of reads to restore original orientation.\n";
+                std::cout << "before: " << end1 << "\n";
+                std::cout << "before2: " << end2 << "\n";
             }
+            Dna5String tmpend1 = rcend1;
+            CharString tmpqual1 = rcqual1;
 
-            String<CigarElement<> > cigar = record.cigar;
-            //take front
-            int pos = 0;
-            //count amount of overall matches in cigar string
-            int match_count = 0;
-            bool found = false;
-            for(int i = 0; i < length(cigar); ++i){
+            qual1 = rcqual2;
+            qual2 = tmpqual1;
 
-                if (cigar[i].operation == op_match)
-                    match_count += cigar[i].count;
-
-                //taake prefix of the read as soon as more than threshold many matches are found
-                if (match_count > threshold && !found){
-                    if(pos < o.minimumFL)
-                        pos = (o.minimumFL < length(end1) ? o.minimumFL : length(end1) - 1);
-//                     std::cout << "found pos: " << pos << "\n";
-                    end1 = prefix(end1, pos + 1);
-                    qual1 = prefix(qual1, pos + 1);
-                    found = true;
-                }
-                //calculate end position of prefix according to cigar string
-                if(!found && (cigar[i].operation == op_match || cigar[i].operation == op_soft || cigar[i].operation == op_del))
-                    pos += cigar[i].count;
+            end1 = rcend2;
+            end2 = tmpend1;
+            if(verbose){
+                std::cout << "after:  " << end1 << "\n";
+                std::cout << "after2:  " << end2 << "\n";
             }
+        }
+        else
+        {
+            if(verbose)
+                std::cout << "Is in original orientation\n";
+        }
 
-            int score = 0;
+        CharString idend1 = id;
+        CharString idend2 = id;
+        idend1 += "_end1";
+        idend2 += "_end2";
 
+    //                 std::cout << end1 << "\n" << qual1 << "\n";
+        assert(length(end1) == length(qual1));
+        assert(length(end2) == length(qual2));
 
-            if(!found){
-                if(verbose)
-                    std::cout << "Take whole read since it was not aligned\n";
-                o.fastaRecords.push_back(make_tuple(id, end1, qual1));
-//                 std::make_tuple(10, "Test", 3.14, std::ref(n), n);
-                continue;
-            }
-
-            pos = 0;
-            int match_count2 = 0;
-            bool found2 = false;
-            for(int i = length(cigar) - 1; i >= 0 ; --i){
-
-                if (cigar[i].operation == op_match)
-                    match_count2 += cigar[i].count;
-
-                //since the overall match count is know we can stop as soon as we determined the start position of the prefix
-                if (match_count2 > threshold){
-                    if(pos < o.minimumFL)
-                        pos = (o.minimumFL < length(end2) ? o.minimumFL : length(end2) - 1);
-    //                     std::cout << "found pos: " << pos << "\n";
-                    end2 = suffix(end2, length(end2) - pos - 1);
-                    qual2 = suffix(qual2, length(qual2) - pos - 1);
-                    found2 = true;
-                    break;
-                }
-
-                if(cigar[i].operation == op_match || cigar[i].operation == op_soft || cigar[i].operation == op_del)
-                    pos += cigar[i].count;
-            }
-
-                if(verbose){
-                    std::cout << "lenght end1: " << length(end1) << "\n";
-
-                    std::cout << "lenght end2: " << length(end2) << "\n";
-
-                    std::cout << "Score: " << (match_count) << "\n";
-                }
-
-
-                score = match_count;
-
-
-                bool rc = hasFlagRC(record);
-
-                if(rc){
-                    Dna5StringReverseComplement rcend1(end1);
-                    Dna5StringReverseComplement rcend2(end2);
-                    ModifiedString<CharString, ModReverse> rcqual1(qual1);
-                    ModifiedString<CharString, ModReverse> rcqual2(qual2);
-
-                    if(verbose){
-                        std::cout << "Use reverse Complement of reads to restore original orientation.\n";
-                        std::cout << "before: " << end1 << "\n";
-                        std::cout << "before2: " << end2 << "\n";
-                    }
-                    Dna5String tmpend1 = rcend1;
-                    CharString tmpqual1 = rcqual1;
-
-                    qual1 = rcqual2;
-                    qual2 = tmpqual1;
-
-                    end1 = rcend2;
-                    end2 = tmpend1;
-                    if(verbose){
-                        std::cout << "after:  " << end1 << "\n";
-                        std::cout << "after2:  " << end2 << "\n";
-                    }
-                }
-                else
-                {
-                    if(verbose)
-                        std::cout << "Is in original orientation\n";
-                }
-
-                CharString idend1 = id;
-                CharString idend2 = id;
-                idend1 += "_end1";
-                idend2 += "_end2";
-
-//                 std::cout << end1 << "\n" << qual1 << "\n";
-                assert(length(end1) == length(qual1));
-                assert(length(end2) == length(qual2));
-
-                o.fastaRecords.push_back(make_tuple(idend1, end1, qual1));
-                o.fastaRecords.push_back(make_tuple(idend2, end2, qual2));
+        o.fastaRecords.push_back(make_tuple(idend1, end1, qual1));
+        o.fastaRecords.push_back(make_tuple(idend2, end2, qual2));
 
     }
 

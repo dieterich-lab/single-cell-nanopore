@@ -545,7 +545,7 @@ public:
                 if(valid_read)
                     s << (m_barcode_umi_length - prefixPolyT) << "\t" << polyTlength - m_barcode_umi_length << "\t";
                 else
-                    s << "-1" << "\t" << "-1" << "\t";
+                    s << length(seqReadTmp.seq) << "\t" << "-1" << "\t";
                 if(i < qIndex_v.size() - 1)
                     s << "yes";
                 else
