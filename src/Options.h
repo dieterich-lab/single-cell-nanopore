@@ -641,7 +641,7 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
 		string s;
 		getOptionValue(s, parser, "target");
 
-		s = s + "_leftTail.log";
+		s = s + "parameterLog.log";
 
 		if(isSet(parser, "output-log") && ! o.logStdout){
 			getOptionValue(o.outLogFile, parser, "output-log");
