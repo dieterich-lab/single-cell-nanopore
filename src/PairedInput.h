@@ -76,6 +76,7 @@ public:
 		if(m_interleaved) bundleSize = m_bundleSize * 2;
 
 		unsigned int nReads = m_f1->loadSeqReads(uncalled, ids, seqs, quals, bundleSize, readingPos);
+        std::cout << "Tbb loaded Size: " << nReads << "\n";
 		if(m_interleaved && nReads % 2 == 1){
 			cerr << "\nERROR: Interleaved reads input does not contain even number of reads.\n" << endl;
 			exit(1);

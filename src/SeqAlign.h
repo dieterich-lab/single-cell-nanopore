@@ -5,7 +5,8 @@
 
 #include <assert.h>
 
-tbb::mutex ouputMutex;
+tbb::mutex outputMutex;
+tbb::mutex primerResultMutex;
 
 template <typename TSeqStr, typename TString, class TAlgorithm>
 class SeqAlign {
@@ -560,12 +561,11 @@ public:
 				}
 
 
-				//TODO new mutexLock!!!!
 // 				std::cout << "Primer alignment: " << m_barcodeAlignment << "\n";
 
-
+                primerResultMutex.lock();
                 if(!m_barcodeAlignment){
-                    ouputMutex.lock();
+
                     uint32_t alignmentScore = (am.score > 0) ? am.score : 0;
                     if(length(seqReadTmp.seq) <= (m_barcode_umi_length - 10))
                     {
@@ -581,8 +581,8 @@ public:
                         res.rightTail.push_back(make_tuple(seqReadTmp.id, seqReadTmp.seq, seqReadTmp.qual));
                         res.rightTailScores[static_cast<seqan::CharString>(seqReadTmp.id)] = alignmentScore;
                     }
-                    ouputMutex.unlock();
                 }
+                primerResultMutex.unlock();
 
 			}
 		}
@@ -639,9 +639,9 @@ public:
 
 		}
 
-		ouputMutex.lock();
+		outputMutex.lock();
 		*m_out << s.str();
-		ouputMutex.unlock();
+		outputMutex.unlock();
 
 		return ++qIndex;
 	}

@@ -50,11 +50,13 @@ int main(int argc, const char* argv[]){
     AlignmentResults res;
 
     {
-        std::cout << "Extract Reads\n";
+        std::cout << "Extract Reads:\n";
         std::vector<BamAlignmentRecord > recordstable = extractReads(o);
 //             std::cout << recordstable.size() << " finished\n";
-        std::cout << "Remove cDNA from Reads\n";
+
+        std::cout << "Remove cDNA from Reads and create fragments:\n";
         removeCDNA(o,recordstable);
+        std::cout << o.fastaRecords.size() << "\n";
     }
 
     //TODO use output prefix // maybe target
