@@ -267,8 +267,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));
     addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
-    addOption(parser, ArgParseOption("kb", "keepbpOfAdapter", "Keep this many bp of the end of the adapter alignment incase inaccurate alignment", ARG::INTEGER));
-    addOption(parser, ArgParseOption("ul", "barcodeUmiLength", "Length of UMI + barcode needed for homopolymers removal. Read fragments 5 bases shorter are discarded.", ARG::INTEGER));
+    addOption(parser, ArgParseOption("kb", "keepbp", "Keep this many bp of the end of the adapter alignment incase inaccurate alignment", ARG::INTEGER));
+    addOption(parser, ArgParseOption("ul", "barcodeUmiLength", "Length of UMI + barcode needed for homopolymers removal. Read fragments, 5 bases shorter after the removal the primer are discarded.", ARG::INTEGER));
 
 
     setAdvanced(parser, "barcodes2");
@@ -757,6 +757,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		o.iupacInput = true;
 	}
 
+	getOptionValue(o.keepbpOfAdapter, parser, "keepbp");
 
 	// barcode and adapter file options
 
@@ -952,7 +953,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 
 
-	getOptionValue(o.keepbpOfAdapter, parser, "keepbpOfAdapter");
+
 	getOptionValue(o.barcodeUmiLength, parser, "barcodeUmiLength");
     getOptionValue(o.b_tail_len, parser, "extend-barcode-tail-length");
 	if(isSet(parser, "htrim-left") || isSet(parser, "htrim-right")){
