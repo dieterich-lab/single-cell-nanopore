@@ -260,7 +260,7 @@ public:
         if(m_htrimRight != ""){
 
             auto tmpseq = seqRead.seq;
-            int nonPolyTprefixLength = m_barcode_umi_length + m_keepbp;
+            int nonPolyTprefixLength = m_barcode_umi_length + m_keepbp - 1;
             if(trimEnd == TrimEnd::RTAIL || trimEnd == TrimEnd::RIGHT)
                 seqan::reverseComplement(tmpseq);
             valid_read = false;
@@ -277,9 +277,9 @@ public:
                     if(tmpseq[i] != nuc){
                         notNuc++;
                     }
-                    else if((notNuc) <= m_htrimErrorRate * (i - nonPolyTprefixLength)){
+                    else if((notNuc) <= m_htrimErrorRate * (i - nonPolyTprefixLength + 1)){
 
-                        if(m_htrimMaxLength != 0 && i - nonPolyTprefixLength > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0))
+                        if(m_htrimMaxLength != 0 && (i - nonPolyTprefixLength + 1) > m_htrimMaxLength && (!m_htrimMaxFirstOnly || pos == 0))
                             break;
 
                         cutPos = i;
@@ -293,7 +293,7 @@ public:
 
 
 //                 s << readLength << "\t" << htrimMinLength << "\t" << cutPos << "\t" << nonPolyTprefixLength << "\n";
-                if(cutPos > 0 && cutPos - nonPolyTprefixLength >= htrimMinLength){
+                if(cutPos > 0 && (cutPos - nonPolyTprefixLength + 1) >= htrimMinLength){
 //                         erase(seqRead->seq, cutPos, length(seqRead->seq));
                     valid_read = true;
                     polyTlength = cutPos;
