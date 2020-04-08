@@ -168,6 +168,12 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
     for(uint32_t i = 0; i < records.size(); ++i)
     {
         auto & record = records[i];
+
+        if(1.5 * static_cast<float>(o.fragmentLength) >  length(record.seq))
+        {
+            o.fastaRecords.push_back(make_tuple(record.qName, record.seq, record.qual));
+            continue;
+        }
         Dna5String end1 = prefix(record.seq, o.fragmentLength);
         Dna5String end2 = suffix(record.seq, length(record.seq) - o.fragmentLength);
         CharString id = record.qName;
