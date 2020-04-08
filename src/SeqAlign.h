@@ -505,7 +505,6 @@ public:
 
                 if(m_printAlignment)
                     s << am.alString;
-
                 s << seqReadTmp.id   << "\t";
 
                 if(trimEnd == RTAIL  || trimEnd == RIGHT)
@@ -539,11 +538,15 @@ public:
                 }
 
                 //adaptor_score
-                int barcodeOffset = (trimEnd == RTAIL  || trimEnd == RIGHT) ? (am.endPosS - am.endPosA) : am.startPosA;
+                int barcodeStartOffset = (trimEnd == RTAIL  || trimEnd == RIGHT) ? (am.endPosS - am.endPosA) : am.startPosA;
+                int barcodeLength = am.endPosA - am.startPosA + am.gapsR;
 
-                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << (barcodeOffset - m_keepbp) << "\t" << am.mismatches << "\t";
+//                 std::cout << am.gapsR  << "\t" << am.gapsA << "\n";
+//                 std::cout << barcodeLength << "\t" << am.startPosS  << "\t" << am.endPosS  << "\t" << am.startPosA << "\t" << am.endPosA << "\n";
+
+                s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << (barcodeStartOffset - m_keepbp) << "\t" << am.mismatches << "\t";
                 if(valid_read)
-                    s << (m_barcode_umi_length - prefixPolyT) << "\t" << polyTlength - m_barcode_umi_length << "\t";
+                    s << (m_barcode_umi_length - prefixPolyT - barcodeLength) << "\t" << polyTlength - m_barcode_umi_length << "\t";
                 else
                     s << length(seqReadTmp.seq) << "\t" << "-1" << "\t";
                 if(i < qIndex_v.size() - 1)
