@@ -23,7 +23,7 @@ samtools view possorted_genome_bam.bam | grep GN:Z:.*CB:Z: | sed 's/.*CB:Z:\([AC
 # Nanopore library
 ## align_longreads.sh
 ```
-~/minimap2-2.17/minimap2 -o FC1 -t 5 -ax splice -ub GRCh38_90.mmi pass_reads_guppy333.fastq.gz
+~/minimap2-2.17/minimap2 -o FC1 -t 5 -ax splice --MD -ub GRCh38_90.mmi pass_reads_guppy333.fastq.gz
 ```
 ## assign_genenames.sh
 ```
