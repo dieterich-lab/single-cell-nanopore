@@ -68,7 +68,7 @@ x=read.table('fc1.tab1',sep="\t",header=TRUE)
 y=read.table('fc1.barcodes.txt',sep="\t",header=FALSE,row.names=1)
 x[,ncol(x)] = 1-as.integer(y[x[,1],1]==x[,2])
 colnames(x)[ncol(x)]='label'
-write.table(x,file='fc1.tab1',sep="\t",quote=F,row.names=F,col.names=F)
+write.table(x,file='fc1.tab1',sep="\t",quote=F,row.names=FALSE)
 ```
 ## build_model.r
 ```
