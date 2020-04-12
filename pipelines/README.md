@@ -77,11 +77,11 @@ library(e1071)
 Sys.setlocale("LC_NUMERIC","C")
 options(stringsAsFactors = FALSE)
 args = commandArgs(trailingOnly=TRUE)
-j=5:11 # We use feature 3-9
+j=c(5,7,8,9,10,11) # We use feature 3-9
 x=read.table('fc1.tab1',sep="\t",header=TRUE)
 d=preProcess(x[,j], method=c("YeoJohnson","range"))
 x[,j]=predict(d,x[,j])
-model = naiveBayes(label~., data = x[,c(j,14)])
+model = naiveBayes(label~., data = x[,c(j,ncol(x))])
 save(model,d,file='fc1.model.rda')
 ```
 ## pred.r
