@@ -61,6 +61,15 @@ perl -ne 'print "$1\t" if /^>(\w+):/;print substr($_,22,16),"\n" unless /^>/' fc
 singleCellPipe -n 20 -r fc1.bam -t FC1 -w 10k.barcodes.fa -as CTACACGACGCTCTTCCGATCT -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
 awk '$2!="NA" || NR==1' fc1.tab > fc1.tab1
 ```
+## add_label.r
+```
+options(stringsAsFactors = FALSE)
+x=read.table('fc1.tab1',sep="\t",header=TRUE)
+y=read.table('fc1.barcodes.txt',sep="\t",header=FALSE,row.names=1)
+x[,ncol(x)] = 1-as.integer(y[x[,1],1]==x[,2])
+colnames(x)[ncol(x)]='label'
+write.table(x,file='fc1.tab1',sep="\t",quote=F,row.names=F,col.names=F)
+```
 ## build_model.r
 ```
 library(caret)
