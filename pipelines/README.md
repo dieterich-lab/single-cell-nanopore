@@ -79,6 +79,7 @@ save(model,d,file='fc1.model.rda')
 ```
 y=read.table('FC1.tab1',sep="\t",header=TRUE)
 y2=y
+y[,j]=predict(d,y[,j])
 pred = predict(model, y[,j], "raw")[,1]
 # Prior knowledge from Illumina sequencing
 cnt = read.table('reads_per_barcode')
