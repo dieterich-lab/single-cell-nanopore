@@ -109,7 +109,7 @@ write.table(m,file='FC1.prob',sep="\t",quote=F,row.names=F,col.names=F)
 ```
 ## filter_pred.sh
 ```
-awk '$15>30' FC1.prob | sed 's/_end[1|2]//' | sort -k15,15rn |sort -u -k1,1 | cut -f1-2 > FC1.label
+awk '$15>30' FC1.prob | sed 's/_end[1|2]//' | awk '{a[$1]++;b[$1]=$0}END{for(i in a){if(a[i]==1)print b[i]}}' | cut -f1-2 > FC1.label
 ```
 ## feat_stat.r
 ```
