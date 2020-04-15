@@ -1,6 +1,6 @@
-# Singlesqure
+# Singlesquare
 
-Singlesqure is designed for cell barcode assignment from Nanopore sequencing data.
+Singlesquare is designed for cell barcode assignment from Nanopore sequencing data.
 It requires bam files from both Nanopore and Illumina reads, then builds a model based on the parameters estimated from the two libraries.
 
 # Quick run
@@ -11,12 +11,21 @@ Requirements:
 
 * [Cell Ranger](https://github.com/10XGenomics/cellranger)
 
+* [Minimap2](https://github.com/lh3/minimap2)
+
 * [samtools](https://github.com/samtools/)
 
 Input files:
 
 * [barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)  and [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger.
 
+* Nanopore reads in FATSQ format
+
+* Reference genome and transcriptome in FATSA format
+
+* Annotation file in ensemble GTF/GFF formats
+
+Run main.sh
 
 # Workflow
 
