@@ -5,11 +5,18 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 
 # Quick run
 
-requires:
+Requirements:
 
 * [SingleCellPipe](https://github.com/dieterich-lab/single-cell-nanopore),
 
+* [Cell Ranger](https://github.com/10XGenomics/cellranger)
+
 * [samtools](https://github.com/samtools/)
+
+Input files:
+
+* [barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)  and [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger.
+
 
 # Workflow
 
