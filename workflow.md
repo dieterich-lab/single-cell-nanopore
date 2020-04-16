@@ -7,7 +7,7 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 
 Requirements:
 
-* [SingleCellPipe](https://github.com/dieterich-lab/single-cell-nanopore),
+* [SingleCellPipe](https://github.com/dieterich-lab/single-cell-nanopore/releases),
 
 * [Cell Ranger](https://github.com/10XGenomics/cellranger)
 
@@ -15,17 +15,27 @@ Requirements:
 
 * [samtools](https://github.com/samtools/)
 
+* [R packages](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#install_packagesr)
+
 Input files:
 
 * [barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)  and [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger.
 
-* Nanopore reads in FATSQ format
+* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/Nanopore.fq.gz)) in FATSQ format
 
 * Reference genome and transcriptome in FATSA format
 
 * Annotation file in ensemble GTF/GFF formats
 
-Run main.sh
+Extract the bash snippets to the same directory as the datasets:
+
+perl [write_sh.pl](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/write_sh.pl) [README.md](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md)
+
+Run [var.sh](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#varsh-define-bash-variables) and [main.sh](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#mainsh)
+
+Output files:
+
+Barcode assignments above the threshold (0-99, 30 in the example we provided).
 
 # Workflow
 
@@ -58,11 +68,11 @@ In the next step, we run our feature extraction [pipeline](https://github.com/di
 Using the naive bayesian model built in the last step, we can predict the likelihood given the alignment features from the other Nanopore reads sequenced from the same cDNA library. Then we use the bayesian theorem to calculated the posterior probabilities that the barcode alignment is correct among all potential barcodes. The [predicted probabilities](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#predr) allow us benchmarking our predictions with the other simulated reads, or do barcode assignment with the real Nanopore reads. User may [set a cutoff and select the highest from these probabilities](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#filter_predsh)
 
 ## Benchmarking
-[1) Simulated Nanopore reads]
+[1) Simulated Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore)
 
 We have provided an [R script](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/sim_bench.r) that allows user to inspect the various metrics (accuracy, precision, sensitivity, specificity, and F1) along different cut-off thresholds on the predicted probabilities. User may also want to plot the [feature variances](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#feat_varr) and [feature importance](https://github.com/dieterich-lab/single-cell-nanopore/tree/master/pipelines#feat_statr) for a better understanding of the correct and false barcode assignments.
 
-[2) Real Nanopore reads]
+[2) Real Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore)
 
 
 ## Authors
