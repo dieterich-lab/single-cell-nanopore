@@ -21,7 +21,7 @@ Input files:
 
 * [barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)  and [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger.
 
-* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/Nanopore.fq.gz)) in FATSQ format
+* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/)) in FATSQ format
 
 * Reference genome and transcriptome in FATSA format
 
