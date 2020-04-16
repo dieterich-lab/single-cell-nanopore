@@ -1,92 +1,155 @@
+# Overview
+## var.sh Define bash variables
+```
+export samtools=`which samtools`
+export minimap2="$HOME/bin/minimap2-master/minimap2"
+export single_cell_pipe="$HOME/bin/singleCellPipe"
+export nanosim_path="$HOME/bin/NanoSim-2.4-beta/src"
+export ref_genome="GRCh38_90.fa"
+export ref_cdna="Homo_sapiens.GRCh38.cdna.all.fa"
+export ref_gff="Homo_sapiens.GRCh38.90.gff3"
+export input_nanosim="Nanopore.fq"
+export output_sim="sim"
+export nanosim_model="NanosimModel"
+export sim_genome="genome.fa"
+```
+## main.sh
+```
+sh src/get_cbc.sh
+sh src/get_cbfreq.sh
+Rscript src/find_dist.r
+sort MoreBarcodes.txt|uniq|perl -ne 'print ">$_$_"' > MoreBarcodes.fasta
+sh src/align_longreads.sh
+mkdir $nanosim_model 
+sh src/build_nanosim.sh
+sh src/build_genome.sh
+sh src/sim_reads.sh
+sh src/build_align.sh
+sh src/get_barcodes.sh
+sh src/run_pipe.sh
+Rscript src/add_label.r
+Rscript src/build_model.r ${output_sim}_model.rda ${output_sim}.tab1
+Rscript src/pred.r ${output_sim}_model.rda ${output_sim}.tab1
+sh src/filter_pred.sh ${output_sim}.tab1.prob
+```
+## install_packages.r
+```
+install.packages('stringdist')
+install.packages('caret')
+install.packages('e1071')
+```
 # Illumina library
 ## get_cbc.sh
 ```
-zcat outs/filtered_feature_bc_matrix/barcodes.tsv.gz | perl -ne 'print ">$1\n$1\n" if /^(\w+)/' > CellBarcodes.fasta
+zcat barcodes.tsv.gz | perl -ne 'print ">$1\n$1\n" if /^(\w+)/' > CellBarcodes.fasta
 ```
 ## get_gfpcbc.sh
 ```
-samtools view possorted_genome_bam.bam pcDNA5:1-6000 | perl -ne 'print "$1\n" if /CB:Z:([ACGT]+)/' > gfp.txt
+$samtools view possorted_genome_bam.bam pcDNA5:1-6000 | perl -ne 'print "$1\n" if /CB:Z:([ACGT]+)/' > gfp.txt
 ```
 ## find_dist.r
 ```
 library(stringdist)
 options(stringsAsFactors = FALSE)
-x=read.table('../reads_per_barcode')
+x=read.table('reads_per_barcode')
 y=read.table('CellBarcodes.fasta')
 r=unlist(lapply(y[seq(2,nrow(y),2),1],function(d) x[stringdist(d,x[,2],method='dl')<2,2]))
-write.table(r,file='10k.barcodes.fa',sep="\t",quote=F,row.names=F,col.names=F)
+write.table(r,file='MoreBarcodes.txt',sep="\t",quote=F,row.names=F,col.names=F)
 ```
 ## get_cbfreq.sh
 ```
-samtools view possorted_genome_bam.bam | grep GN:Z:.*CB:Z: | sed 's/.*CB:Z:\([ACGT]*\).*/\1/' | sort | uniq -c > reads_per_barcode
+$samtools view possorted_genome_bam.bam | grep GN:Z:.*CB:Z: | sed 's/.*CB:Z:\([ACGT]*\).*/\1/' | sort | uniq -c > reads_per_barcode
 ```
 # Nanopore library
 ## align_longreads.sh
 ```
-~/minimap2-2.17/minimap2 -o FC1 -t 5 -ax splice --MD -ub GRCh38_90.mmi pass_reads_guppy333.fastq.gz
+$minimap2 -o Nanopore.bam -t 5 -ax splice --MD -ub $ref_genome $input_nanosim
 ```
 ## assign_genenames.sh
 ```
 java -jar -Xmx64g Jar/Sicelore-1.0.jar AddGeneNameTag I=FC1.bam O=FC1.GE.bam REFFLAT=refFlat.txt GENETAG=GE ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true VALIDATION_STRINGENCY=SILENT
-samtools view FC1.GE.bam|perl -ne 'print "$1\t$2\n" if /^(\S+).*GE:Z:(\S+)/' > FC1.ge
+$samtools view FC1.GE.bam|perl -ne 'print "$1\t$2\n" if /^(\S+).*GE:Z:(\S+)/' > FC1.ge
 ```
 # Build artifical genome
 ## build_nanosim.sh
 ```
-~/bin/NanoSim-2.4-beta/src/read_analysis.py transcriptome -i FC1.fq -rg GRCh38_90.fa -rt Homo_sapiens.GRCh38.cdna.all.fa -annot Homo_sapiens.GRCh38.90.gff3 -t 10 -o ../NanosimModel/FC1
+$nanosim_path/read_analysis.py transcriptome -i $input_nanosim -rg $ref_genome -rt $ref_cdna -annot $ref_gff -t 10 -o $nanosim_model/sim
 ```
 ## build_genome.sh
 ```
-samtools view possorted_genome_bam.bam |perl -ne '@t=split(/\t/);print ">",++$j,"\n" if $i++%25e5==0;print "CTACACGACGCTCTTCCGATCT$3$4TTTTTTTTTTTTTTTTTTTT",substr($t[9],0,32),"\n" if /(TX|AN):Z:(\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > genome.fa
-samtools faidx genome.fa
+$samtools view possorted_genome_bam.bam |perl -ne '@t=split(/\t/);print ">",++$j,"\n" if $i++%25e5==0;print "CTACACGACGCTCTTCCGATCT$3$4TTTTTTTTTTTTTTTTTTTT",substr($t[9],0,32),"\n" if /(TX|AN):Z:(\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > $sim_genome
+$samtools faidx $sim_genome 
 ```
 ## sim_reads.sh
 ```
-~/bin/NanoSim-2.4-beta/src/simulator.py genome -rg genome.fa -c ../NanosimModel/FC1 -o fc1 -n 1000000
+$nanosim_path/simulator.py genome -rg $sim_genome -c $nanosim_model/sim -o $output_sim -n 1000000
+```
+## fa2sam.pl
+```
+print '@SQ	SN:1	LN:100',"\n";
+while(<>){chomp;
+$b=/^>/;
+$l=length($_);
+$q='I'x$l;
+print substr($_,1),"\t" if $b;
+print "0\t1\t21\t31\t${l}S\t*\t0\t0\t$_\t$q\n" unless $b;
+}
 ```
 ## build_align.sh
 ```
-perl -ne '$L=100;chomp;if (/^>/){$id=$_}else{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq 'R'){$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}$s=substr($s,$d,$t[6]);print $id,"\n",$t[6]>$L?substr($s,$L-$t[1]%$L,68):$s,"\n"}' fc1_reads.fasta > fc1.test.fa
-perl fa2sam.pl fc1.test.fa|samtools view -bS > fc1.bam
+perl -ne '$L=100;chomp;if (/^>/){$id=$_}else{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq 'R'){$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}$s=substr($s,$d,$t[6]);print $id,"\n",$t[6]>$L?substr($s,$L-$t[1]%$L,68):$s,"\n"}' ${output_sim}_reads.fasta > ${output_sim}_test.fa
+perl src/fa2sam.pl ${output_sim}_test.fa|$samtools view -bS > ${output_sim}.bam
 ```
 ## get_barcodes.sh
 ```
-perl -ne '$L=100;next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\t$d\t",$d+$L,"\t$_"' fc1_reads.fasta|sort -k1,1 -k2,2n > fc1.real.bed
-bedtools getfasta -fi genome.fa -bed fc1.real.bed -name > fc1.real.fa
-perl -ne 'print "$1\t" if /^>(\w+):/;print substr($_,22,16),"\n" unless /^>/' fc1.real.fa > fc1.barcodes.txt
+perl -ne '$L=100;next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\t$d\t",$d+$L,"\t$_"' ${output_sim}_reads.fasta|sort -k1,1 -k2,2n > ${output_sim}_real.bed
+bedtools getfasta -fi $sim_genome -bed ${output_sim}_real.bed -name > ${output_sim}_real.fa
+perl -ne 'print "$1\t" if /^>(\w+):/;print substr($_,22,16),"\n" unless /^>/' ${output_sim}_real.fa > ${output_sim}_barcodes.txt
 ```
 # Features extraction and build model
 ## run_pipe.sh
 ```
-singleCellPipe -n 20 -r fc1.bam -t FC1 -w 10k.barcodes.fa -as CTACACGACGCTCTTCCGATCT -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
-awk '$2!="NA" || NR==1' fc1.tab > fc1.tab1
+$single_cell_pipe -n 20 -r ${output_sim}.bam -t $output_sim -w MoreBarcodes.fasta -as CTACACGACGCTCTTCCGATCT -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
+awk '$2!="NA" || NR==1' ${output_sim}.tab > ${output_sim}.tab1
 ```
 ## add_label.r
 ```
 options(stringsAsFactors = FALSE)
-x=read.table('fc1.tab1',sep="\t",header=TRUE)
-y=read.table('fc1.barcodes.txt',sep="\t",header=FALSE,row.names=1)
+dat=Sys.getenv('output_sim')
+x=read.table(paste0(dat,'.tab1'),sep="\t",header=TRUE)
+y=read.table(paste0(dat,'_barcodes.txt'),sep="\t",header=FALSE,row.names=1)
 x[,ncol(x)] = 1-as.integer(y[x[,1],1]==x[,2])
 colnames(x)[ncol(x)]='label'
-write.table(x,file='fc1.tab1',sep="\t",quote=F,row.names=FALSE)
+write.table(x,file=paste0(dat,'.tab1'),sep="\t",quote=F,row.names=FALSE)
 ```
 ## build_model.r
 ```
 library(caret)
 library(e1071)
 Sys.setlocale("LC_NUMERIC","C")
-options(stringsAsFactors = FALSE)
 args = commandArgs(trailingOnly=TRUE)
+mdat =args[1]
+dat = args[2]
+options(stringsAsFactors = FALSE)
 j=c(5,7,8,9,10,11) # We use feature 3-9
-x=read.table('fc1.tab1',sep="\t",header=TRUE)
+x=read.table(dat,sep="\t",header=TRUE)
 d=preProcess(x[,j], method=c("YeoJohnson","range"))
 x[,j]=predict(d,x[,j])
 model = naiveBayes(label~., data = x[,c(j,ncol(x))])
-save(model,d,file='fc1.model.rda')
+save(model,d,file=mdat)
 ```
 ## pred.r
 ```
-y=read.table('FC1.tab1',sep="\t",header=TRUE)
+library(caret)
+library(e1071)
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+j=c(5,7,8,9,10,11) # We use feature 3-9
+args = commandArgs(trailingOnly=TRUE)
+mdat =args[1]
+dat = args[2]
+load(mdat)
+y=read.table(dat,sep="\t",header=TRUE)
 y2=y
 y[,j]=predict(d,y[,j])
 pred = predict(model, y[,j], "raw")[,1]
@@ -105,11 +168,11 @@ as.integer(round(min(d[i,'pred'],prob)*100))
 }))
 d
 }))
-write.table(m,file='FC1.prob',sep="\t",quote=F,row.names=F,col.names=F)
+write.table(m,file=paste0(dat,'.prob'),sep="\t",quote=F,row.names=F,col.names=F)
 ```
 ## filter_pred.sh
 ```
-awk '$15>30' FC1.prob | sed 's/_end[1|2]//' | awk '{a[$1]++;b[$1]=$0}END{for(i in a){if(a[i]==1)print b[i]}}' | cut -f1-2 > FC1.label
+awk '$15>30' $1 | sed 's/_end[1|2]//' | awk '{a[$1]++;b[$1]=$0}END{for(i in a){if(a[i]==1)print b[i]}}' | cut -f1-2 > $1.label
 ```
 ## feat_stat.r
 ```
