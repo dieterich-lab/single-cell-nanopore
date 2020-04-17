@@ -190,3 +190,11 @@ df=data.frame(assignment=c('unassigned','assigned')[as.integer(x[,ncol(x)]>30)+1
 p=ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ggsave("fc1-fp.pdf",width=6,height=4.5,units="in")
 ```
+## get_gfpreads.sh
+```
+printf "while(<DATA>){chomp;\$h{\$_}=1}while(<>){print if /^@/;@t=split(/\\\\t/);print if defined \$h{\$t[0]};print STDERR unless defined \$h{\$t[0]}}\n__DATA__\n" > gfp_reads.pl
+# https://stackoverflow.com/questions/17234071/find-content-of-one-file-from-another-file-in-unix/
+awk -v FS="[ =]" 'NR==FNR{rows[$1]++;next}(substr($NF,1,length($NF)-1) in rows)' gfp20.txt FC1.label|cut -f1 >> gfp_reads.pl
+samtools view -h FC1.bam|perl gfp_reads.pl > FC1.gfp.sam 2> FC1.nogfp.sam
+for f in *gfp.sam;do samtools view -bS $f > ${f%.*}.bam; done
+```
