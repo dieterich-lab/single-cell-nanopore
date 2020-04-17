@@ -193,7 +193,7 @@ ggsave("fc1-fp.pdf",width=6,height=4.5,units="in")
 ## get_gfpreads.sh
 ```
 printf "while(<DATA>){chomp;\$h{\$_}=1}while(<>){print if /^@/;@t=split(/\\\\t/);print if defined \$h{\$t[0]};print STDERR unless defined \$h{\$t[0]}}\n__DATA__\n" > gfp_reads.pl
-awk 'FNR==NR{a[$1]++;next}{if(a[$2]>0){print $1}}' gfp20.txt FC1.label|cut -f1 >> gfp_reads.pl
+awk 'FNR==NR{a[$1]++;next}{if(a[$2]>=20){print $1}}' gfp.txt FC1.label >> gfp_reads.pl
 samtools view -h FC1.bam|perl gfp_reads.pl > FC1.gfp.sam 2> FC1.nogfp.sam
 for f in *gfp.sam;do samtools view -bS $f > ${f%.*}.bam; done
 ```
