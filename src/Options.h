@@ -192,7 +192,7 @@ const std::string getFlexbarCitation(){
 
 
 const std::string getFlexbarURL(){
-	return "Available on github.com/seqan/flexbar\n";
+	return "Available on github.com/dieterich-lab/single-cell-nanopore\n";
 }
 
 
