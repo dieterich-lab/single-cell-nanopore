@@ -20,11 +20,17 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 ```
     cd single-cell-nanopore
 ```
-4. Install conda software dependencies with
+
+4. Use these commands for building **`SingleCellPipe`**: 
+```
+    cmake .
+    make
+```
+5. Install conda software dependencies with
 ```
     conda env create --name single-cell-nanopore --file environment.yaml
 ```
-5. Initialise conda environment with 
+6. Initialise conda environment with 
 ```
     conda activate single-cell-nanopore
 ```
@@ -37,18 +43,6 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 ```
     snakemake -j 8 all
 ```
-
-Requirements:
-
-* [SingleCellPipe](https://github.com/dieterich-lab/single-cell-nanopore/releases),
-
-* [Cell Ranger](https://github.com/10XGenomics/cellranger)
-
-* [Minimap2](https://github.com/lh3/minimap2)
-
-* [samtools](https://github.com/samtools/)
-
-* [R packages](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#install_packagesr)
 
 Input files:
 
