@@ -11,8 +11,6 @@ usableThreads = 8
 dir_in = "data/"
 dir_out = "analysis/"
 ref_genome = config["reference_genome"]
-ref_cdna = config["reference_cdna"]
-ref_gff = config["reference_geneset"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
@@ -21,7 +19,15 @@ fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
 rule all:
   input:
-    dir_out + ".label"
+    dir_out + "sim.label"
+
+rule unzip_fq:
+  input:
+    file = dir_in + fq_nanopore + '.gz'
+  output:
+    file = dir_in + fq_nanopore
+  run:
+    shell("gunzip -c {input} > {output}")
 
 rule get_cbc:
   input:
@@ -69,14 +75,13 @@ rule align_longreads:
 rule build_nanosim:
   input:
     fq = dir_in + fq_nanopore,
-    ref_genome = dir_in + ref_genome,
-    ref_cdna = dir_in + ref_cdna,
-    ref_gff = dir_in + ref_cdna
+    ref_genome = dir_in + ref_genome
   output:
-    model = dir_out + "nanosim_model"
+    model = dir_out + "nanosim_model/sim_error_markov_model"
+  threads: config["threads"]
   shell:
     """
-    read_analysis.py transcriptome -i {input.fq} -rg {input.ref_genome} -rt {input.ref_cdna} -annot {input.ref_gff} -t 10 -o {output}/sim
+    read_analysis.py genome -i {input.fq} -rg {input.ref_genome} -t {threads} -o {dir_out}nanosim_model/sim
     """
 
 rule build_genome:
@@ -85,7 +90,7 @@ rule build_genome:
   output:
     fa_sim = dir_out + "genome.fa"
   params:
-    adapter = config["adapter"]
+    adapter = config["adapter"],
     polyTlength = config["polyTlength"]
   shell:
     """
@@ -95,13 +100,16 @@ rule build_genome:
 
 rule sim_reads:
   input:
-    model = dir_out + "nanosim_model",
+    model = dir_out + "nanosim_model/sim_error_markov_model",
     fa_sim = dir_out + "genome.fa"
   output:
     sim = dir_out + "sim_reads.fasta"
+  params:
+    num = config["numSimReads"],
   shell:
     """
-    simulator.py genome -rg {input.fa_sim} -c {input.model}/sim -o {output} -n 1000000
+    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num}
+    cat {dir_out}sim_aligned_reads.fasta {dir_out}sim_unaligned_reads.fasta > {output}
     """
 
 rule build_align:
@@ -121,7 +129,7 @@ rule get_barcodes:
     sim = dir_out + "sim_reads.fasta",
     fa_sim = dir_out + "genome.fa"
   output:
-    barcode = dir_out + "_barcodes.txt"
+    barcode = dir_out + "sim_barcodes.txt"
   shell:
     """
     perl -ne '$L=100;next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\t$d\t",$d+$L,"\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
@@ -141,7 +149,7 @@ rule run_pipe:
   threads: config["threads"]
   shell:
     """
-    bin/singleCellPipe -n 20 -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
+    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
     """
@@ -149,7 +157,7 @@ rule run_pipe:
 rule add_label:
   input:
     tab = dir_out + "sim.tab",
-    barcode = dir_out + "_barcodes.txt"
+    barcode = dir_out + "sim_barcodes.txt"
   output:
     tab = dir_out + "sim.tab1"
   shell:
@@ -161,30 +169,30 @@ rule build_model:
   input:
     tab = dir_out + "sim.tab1"
   output:
-    model = dir_out + ".model.rda"
+    model = dir_out + "sim.model.rda"
   shell:
     """
     Rscript pipelines/build_model.r {input} {output}
     """
 
-rule pred:
+rule run_pred:
   input:
-    model = dir_out + ".model.rda",
-    tab = dir_out + "sim.tab",
+    model = dir_out + "sim.model.rda",
+    tab = dir_out + "sim.tab1",
     reads_per_barcode = dir_out + "reads_per_barcode"
   output:
-    prob = dir_out + ".prob"
+    prob = dir_out + "sim.prob"
   shell:
     """
-    Rscript pipelines/build_model.r {input.model} {input.tab} {input.reads_per_barcode} {output}
+    Rscript pipelines/pred.r {input.model} {input.tab} {input.reads_per_barcode} {output}
     """
 
 rule filter_pred:
   input:
-    prob = dir_out + ".prob"
+    prob = dir_out + "sim.prob"
   output:
-    label = dir_out + ".label"
+    label = dir_out + "sim.label"
   shell:
     """
-    awk '$15>30' {input} | sed 's/_end[1|2]//' | awk '{a[$1]++;b[$1]=$0}END{for(i in a){if(a[i]==1)print b[i]}}' | cut -f1-2 > {output}
+    awk '$15>30' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
     """
