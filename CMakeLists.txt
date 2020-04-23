@@ -9,7 +9,7 @@ include_directories( ${FLEXBAR_SOURCE_DIR}/include )
 
 # file( MAKE_DIRECTORY build )
 
-set( EXECUTABLE_OUTPUT_PATH ${FLEXBAR_BINARY_DIR} )
+set( EXECUTABLE_OUTPUT_PATH "../bin" )
 
 add_subdirectory( src )
 
