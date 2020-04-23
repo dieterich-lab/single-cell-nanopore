@@ -1,0 +1,16 @@
+---
+
+pipeline: "Singlesquare"
+
+reference_genome: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.4.fa.gz"
+reference_cdna: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
+reference_geneset: "http://ftp.ensembl.org/pub/release-99/gff3/homo_sapiens/Homo_sapiens.GRCh38.99.gff3.gz"
+
+# Cell Ranger alignment ouput
+illumina_bam: "possorted_genome_bam.bam"
+nanopore_fq: "Nanopore.fq.gz"
+barcode: "barcodes.tsv.gz"
+adapter: "CTACACGACGCTCTTCCGATCT"
+polyTlength: 20
+threads: 8
+

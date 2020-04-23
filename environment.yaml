@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+  - snakemake-minimal
+  - python
+  - samtools
+  - minimap2
+  - nanosim
+  - bedtools
+  - r
+  - r::r-stringdist
+  - r::r-caret
+  - r::r-e1071
