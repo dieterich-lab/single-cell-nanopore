@@ -7,7 +7,6 @@ HTTP = HTTPRemoteProvider()
 
 configfile: "config.yaml"
 
-usableThreads = 8
 dir_in = "data/"
 dir_out = "analysis/"
 ref_genome = config["reference_genome"]
@@ -19,7 +18,7 @@ fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
 rule all:
   input:
-    dir_out + "sim.label"
+    dir_out + "real.label"
 
 rule unzip_fq:
   input:
@@ -69,7 +68,7 @@ rule align_longreads:
     bam = dir_out + bam_nanopore
   shell:
     """
-    minimap2 -o {output} -t 5 -ax splice --MD -ub {input.ref_genome} {input.fq}
+    minimap2 -v1 -t 5 -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort -o {output}
     """
 
 rule build_nanosim:
@@ -154,6 +153,23 @@ rule run_pipe:
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
     """
 
+rule run_pipe2:
+  input:
+    barcode = dir_out + 'whitelist.fa',
+    bam = dir_out + bam_nanopore
+  output:
+    tab = dir_out + "real.tab"
+  params:
+    adapter = config["adapter"],
+    prefix = "real"
+  threads: config["threads"]
+  shell:
+    """
+    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
+    awk '$2!="NA" || NR==1' {params.prefix}.tab > {output}
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
+    """
+
 rule add_label:
   input:
     tab = dir_out + "sim.tab",
@@ -178,10 +194,10 @@ rule build_model:
 rule run_pred:
   input:
     model = dir_out + "sim.model.rda",
-    tab = dir_out + "sim.tab1",
+    tab = dir_out + "real.tab",
     reads_per_barcode = dir_out + "reads_per_barcode"
   output:
-    prob = dir_out + "sim.prob"
+    prob = dir_out + "real.prob"
   shell:
     """
     Rscript pipelines/pred.r {input.model} {input.tab} {input.reads_per_barcode} {output}
@@ -189,9 +205,9 @@ rule run_pred:
 
 rule filter_pred:
   input:
-    prob = dir_out + "sim.prob"
+    prob = dir_out + "real.prob"
   output:
-    label = dir_out + "sim.label"
+    label = dir_out + "real.label"
   shell:
     """
     awk '$15>30' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
