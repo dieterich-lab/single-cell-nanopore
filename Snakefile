@@ -13,7 +13,7 @@ ref_genome = config["reference_genome"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
-bam_nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0] + '.bam'
+_nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
 fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
 rule all:
@@ -65,22 +65,28 @@ rule align_longreads:
     fq = dir_in + fq_nanopore,
     ref_genome = dir_in + ref_genome
   output:
-    bam = dir_out + bam_nanopore
+    sam = dir_out + _nanopore + '.sam',
+    bam = dir_out + _nanopore + '.bam'
   shell:
     """
-    minimap2 -v1 -t 5 -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort -o {output}
+    minimap2 -v1 -t 5 -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
+    grep '^@' {output.sam}.tmp > {output.sam}.head
+    grep -v '^@' {output.sam}.tmp > {output.sam}.body
+    cat {output.sam}.head {output.sam}.body > {output.sam}
+    samtools view -bS -o {output.bam} {output.sam}
+    rm {output.sam}.head {output.sam}.body {output.sam}.tmp
     """
 
 rule build_nanosim:
   input:
     fq = dir_in + fq_nanopore,
-    ref_genome = dir_in + ref_genome
+    genome_alignment = dir_out + _nanopore + '.sam'
   output:
     model = dir_out + "nanosim_model/sim_error_markov_model"
   threads: config["threads"]
   shell:
     """
-    read_analysis.py genome -i {input.fq} -rg {input.ref_genome} -t {threads} -o {dir_out}nanosim_model/sim
+    read_analysis.py genome -i {input.fq} -ga {input.genome_alignment} -t {threads} -o {dir_out}nanosim_model/sim
     """
 
 rule build_genome:
@@ -156,7 +162,7 @@ rule run_pipe:
 rule run_pipe2:
   input:
     barcode = dir_out + 'whitelist.fa',
-    bam = dir_out + bam_nanopore
+    bam = dir_out + _nanopore + '.bam'
   output:
     tab = dir_out + "real.tab"
   params:
