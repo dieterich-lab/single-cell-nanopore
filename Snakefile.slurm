@@ -71,10 +71,10 @@ rule align_longreads:
   shell:
     """
     srun --mem=100g -c {threads} minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
-    grep '^@' {output.sam}.tmp |sort|uniq > {output.sam}.head
-    grep -v '^@' {output.sam}.tmp |sort -snk3 -k4|uniq > {output.sam}.body
+    srun grep '^@' {output.sam}.tmp |sort|uniq > {output.sam}.head
+    srun grep -v '^@' {output.sam}.tmp |sort -snk3 -k4|uniq > {output.sam}.body
     cat {output.sam}.head {output.sam}.body > {output.sam}
-    samtools view -bS -o {output.bam} {output.sam}
+    srun samtools view -bS -o {output.bam} {output.sam}
     rm {output.sam}.head {output.sam}.body {output.sam}.tmp
     """
 
@@ -100,8 +100,8 @@ rule build_genome:
     polyTlength = config["polyTlength"]
   shell:
     """
-    samtools view {input} |perl -ne '@t=split(/\t/);print ">",++$j,"\n" if $i++%25e5==0;print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\n" if /(TX|AN):Z:(\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > {output}
-    samtools faidx {output}
+    srun samtools view {input} |perl -ne '@t=split(/\t/);print ">",++$j,"\n" if $i++%25e5==0;print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\n" if /(TX|AN):Z:(\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > {output}
+    srun samtools faidx {output}
     """
 
 rule sim_reads:
