@@ -13,7 +13,7 @@ ref_genome = config["reference_genome"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
-bam_nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0] + '.bam'
+_nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
 fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
 rule all:
@@ -65,23 +65,29 @@ rule align_longreads:
     fq = dir_in + fq_nanopore,
     ref_genome = dir_in + ref_genome
   output:
-    bam = dir_out + bam_nanopore
+    sam = dir_out + _nanopore + '.sam',
+    bam = dir_out + _nanopore + '.bam'
   threads: config["threads"]
   shell:
     """
-    srun --mem=100g -c {threads} minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort -o {output}
+    srun --mem=100g -c {threads} minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
+    grep '^@' {output.sam}.tmp |sort|uniq > {output.sam}.head
+    grep -v '^@' {output.sam}.tmp |sort -snk3 -k4|uniq > {output.sam}.body
+    cat {output.sam}.head {output.sam}.body > {output.sam}
+    samtools view -bS -o {output.bam} {output.sam}
+    rm {output.sam}.head {output.sam}.body {output.sam}.tmp
     """
 
 rule build_nanosim:
   input:
     fq = dir_in + fq_nanopore,
-    ref_genome = dir_in + ref_genome
+    genome_alignment = dir_out + _nanopore + '.sam'
   output:
     model = dir_out + "nanosim_model/sim_error_markov_model"
   threads: config["threads"]
   shell:
     """
-    srun --mem=100g read_analysis.py genome -i {input.fq} -rg {input.ref_genome} -t {threads} -o {dir_out}nanosim_model/sim
+    srun --mem=100g read_analysis.py genome -i {input.fq} -ga {input.genome_alignment} -t {threads} -o {dir_out}nanosim_model/sim
     """
 
 rule build_genome:
@@ -158,7 +164,7 @@ rule run_pipe:
 rule run_pipe2:
   input:
     barcode = dir_out + 'whitelist.fa',
-    bam = dir_out + bam_nanopore
+    bam = dir_out + _nanopore + '.bam'
   output:
     tab = dir_out + "real.tab"
   params:
@@ -211,7 +217,9 @@ rule filter_pred:
     prob = dir_out + "real.prob"
   output:
     label = dir_out + "real.label"
+  params:
+    cutoff = config["cutoff"],
   shell:
     """
-    awk '$15>30' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
+    awk '$15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
     """
