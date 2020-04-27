@@ -15,5 +15,6 @@ barcode: "barcodes.tsv.gz"
 adapter: "CTACACGACGCTCTTCCGATCT"
 polyTlength: 20
 numSimReads: 1000000
+cutoff: 30
 threads: 8
 
