@@ -67,9 +67,10 @@ rule align_longreads:
   output:
     sam = dir_out + _nanopore + '.sam',
     bam = dir_out + _nanopore + '.bam'
+  threads: config["threads"]
   shell:
     """
-    minimap2 -v1 -t 5 -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
+    minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
     grep '^@' {output.sam}.tmp > {output.sam}.head
     grep -v '^@' {output.sam}.tmp > {output.sam}.body
     cat {output.sam}.head {output.sam}.body > {output.sam}
