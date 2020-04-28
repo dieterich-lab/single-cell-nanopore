@@ -1,4 +1,7 @@
-library(stringdist)
+if(!require(stringdist)){
+    install.packages("stringdist",repos="https://cloud.r-project.org")
+    library(stringdist)
+}
 options(stringsAsFactors = FALSE)
 Sys.setlocale("LC_NUMERIC","C")
 args = commandArgs(trailingOnly=TRUE)
