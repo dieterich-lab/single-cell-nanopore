@@ -1,0 +1,81 @@
+{
+    "__default__":
+    {
+        "account": "qwang",
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "get_cbfreq":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "find_dist":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "align_longreads":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "build_nanosim":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "sim_reads":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "get_barcodes":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "run_pipe":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "run_pipe2":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "add_label":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "build_model":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "run_pred":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    },
+    "filter_pred":
+    {
+        "mem": "100G",
+        "time": "5:5:0",
+        "threads": "5"
+    }
+}
