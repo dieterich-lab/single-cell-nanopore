@@ -1,5 +1,11 @@
-library(caret)
-library(e1071)
+if(!require(caret)){
+    install.packages("caret",repos="https://cloud.r-project.org")
+    library(caret)
+}
+if(!require(e1071)){
+    install.packages("e1071",repos="https://cloud.r-project.org")
+    library(e1071)
+}
 Sys.setlocale("LC_NUMERIC","C")
 options(stringsAsFactors = FALSE)
 args = commandArgs(trailingOnly=TRUE)
