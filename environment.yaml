@@ -8,6 +8,7 @@ dependencies:
   - samtools
   - minimap2
   - nanosim
+  - joblib
   - bedtools
   - r
   - r::r-stringdist
