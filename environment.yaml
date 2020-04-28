@@ -3,14 +3,14 @@ channels:
   - bioconda
   - r
 dependencies:
-  - snakemake-minimal
-  - python
-  - samtools
-  - minimap2
-  - nanosim
-  - joblib
-  - bedtools
-  - r
-  - r::r-stringdist
-  - r::r-caret
-  - r::r-e1071
+  - snakemake-minimal=5.15.0
+  - python=3.7.6
+  - samtools=1.10
+  - minimap2=2.17
+  - nanosim=2.5.1
+  - htseq=0.11.3
+  - bedtools=2.29.2
+  - r-base=3.6.3
+  - r::r-stringdist=0.9.5.1
+  - r::r-caret=6.0_83
+  - r::r-e1071=1.7_1
