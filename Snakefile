@@ -84,7 +84,7 @@ rule build_nanosim:
     fq = dir_in + fq_nanopore,
     genome_alignment = dir_out + _nanopore + '.sam'
   output:
-    model = dir_out + "nanosim_model/sim_error_markov_model"
+    model = dir_out + "nanosim_model/sim_model_profile"
   shell:
     """
     read_analysis.py genome -i {input.fq} -ga {input.genome_alignment} -t {threads} -o {dir_out}nanosim_model/sim
@@ -106,7 +106,7 @@ rule build_genome:
 
 rule sim_reads:
   input:
-    model = dir_out + "nanosim_model/sim_error_markov_model",
+    model = dir_out + "nanosim_model/sim_model_profile",
     fa_sim = dir_out + "genome.fa"
   output:
     sim = dir_out + "sim_reads.fasta"
