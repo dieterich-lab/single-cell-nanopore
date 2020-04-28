@@ -43,6 +43,10 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 ```
     snakemake -j 8 all
 ```
+You can also submit the job via job schedulers. We have provided an example on the SLURM. Change the account settings in cluster.json before using it.
+```
+    snakemake -j 100 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
+```
 
 Input files:
 
