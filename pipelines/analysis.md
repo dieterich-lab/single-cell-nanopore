@@ -7,6 +7,10 @@ awk -v OFS='\t' '{print $2,$1}' bc.gene > gene.bc
 ```
 perl -F"\t" -ane '$h{$F[0]}{$F[1]}++; END { print "$_\t".(keys %{$h{$_}})."\n" for keys %h }' fc1.barumi > fc1.barumi.cnt
 ```
+## count_isoform.sh
+```
+perl -ne 'print unless /cov \"[0|1]\./' FC1new.gtf|perl -ne 'print "$1\n" if /gene_name \"(\S+)\"/'|sort|uniq -c > fc1.uipg
+```
 ## cor_gene.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
@@ -58,5 +62,33 @@ xy=merge(x,y,by='V1')
 png('FC1-UMIcount.png')
 plot(xy[,2:3],main="Number of UMI sequences",xlab="Nanopore",ylab="Illumina")
 text(100,1e5,paste0("r=",round(cor(xy[,2],xy[,3]), digits=2)))
+dev.off()
+```
+## count_upig.r
+```
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+y=read.table('FC2.label',col.names=c('id','barcode'))
+nm=read.table('FC2.ge')
+i=match(y$id,nm[,1])
+df=data.frame(y$barcode,nm[i,2])
+colnames(df)=c('barcode','gene')
+df=df[!is.na(df[,2]),]
+x=reshape2::dcast(df, gene~barcode, length)
+rownames(x)=x[,1]
+x=x[,-1]
+lw=function(d) length(which(d))
+i=apply(x,1,function(d) lw(d>0))
+j=apply(x,2,function(d) lw(d>0))
+x=x[i>=3,j>=200]
+cb=read.table(gzfile("barcodes.tsv.gz"),sep='-')[,1]
+x=x[,colnames(x) %in% cb]
+y=read.table('fc2.uipg',row.names=2)
+df=data.frame(V1=i,V2=y[names(i),])
+df=df[!is.na(df[,2]),]
+png('FC2-UIPG.png')
+plot(df,xlab="Cells expressing gene",ylab="Unique isoforms per gene",ylim=c(0,200),col='darkgrey')
+points(df[grepl('^RPS',rownames(df)),],col='red')
+points(df[grepl('^RPL',rownames(df)),],col='red')
 dev.off()
 ```
