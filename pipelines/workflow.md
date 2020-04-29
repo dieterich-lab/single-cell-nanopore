@@ -1,5 +1,5 @@
 # Overview
-## var.sh Define bash variables
+## var.sh
 ```
 export samtools=`which samtools`
 export minimap2="$HOME/bin/minimap2-master/minimap2"
