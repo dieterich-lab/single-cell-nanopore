@@ -1,6 +1,6 @@
 ## gene_names.sh
 ```
-sv possorted_genome_bam.bam|perl -ne 'print "$2\t$1\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+)/' > bc.gene
+samtools view possorted_genome_bam.bam|perl -ne 'print "$2\t$1\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+)/' > bc.gene
 awk -v OFS='\t' '{print $2,$1}' bc.gene > gene.bc
 ```
 ## count_umi.sh
@@ -10,6 +10,10 @@ perl -F"\t" -ane '$h{$F[0]}{$F[1]}++; END { print "$_\t".(keys %{$h{$_}})."\n" f
 ## count_isoform.sh
 ```
 perl -ne 'print unless /cov \"[0|1]\./' FC1new.gtf|perl -ne 'print "$1\n" if /gene_name \"(\S+)\"/'|sort|uniq -c > fc1.uipg
+```
+## ts_cov.sh
+```
+grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "(\S+)\"/' > illu.cov
 ```
 ## cor_gene.r
 ```
