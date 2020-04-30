@@ -15,6 +15,12 @@ perl -ne 'print unless /cov \"[0|1]\./' FC1new.gtf|perl -ne 'print "$1\n" if /ge
 ```
 grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "(\S+)\"/' > illu.cov
 ```
+## gb_cov.sh
+```
+~/bin/ExpressionAnalysis-ea-utils-bd148d4/clipper/gtf2bed GRCh38.90.gtf > 1.bed
+perl -F"\t" -ane '$s=$F[2]-$F[1];print "$s\t$_" if $s>100' 1.bed|sort -k1,1n|cut -f2-|perl -ne 'print if $i++%40==0' > 2.bed
+geneBody_coverage.py -i FC1.bam,FC2.bam -r 2.bed -o coverage
+```
 ## cor_gene.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
