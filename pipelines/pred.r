@@ -30,4 +30,4 @@ as.integer(round(min(d[i,'pred'],prob)*100))
 }))
 d
 }))
-write.table(m,file=args[4],sep="\t",quote=F,row.names=F,col.names=F)
+write.table(m,file=args[4],sep="\t",quote=F,row.names=FALSE,col.names=TRUE)
