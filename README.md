@@ -5,7 +5,7 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 
 # Installation:
 
-1. Most software dependecies are managed using **`conda`**. Please install as described at  <br> [https://conda.io/docs/install/quick.html](https://conda.io/docs/install/quick.html).
+1. Most software dependecies are managed using **`conda`**. Please install as described at  <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 ```
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
     bash Miniconda3-latest-Linux-x86_64.sh
@@ -45,7 +45,7 @@ It requires bam files from both Nanopore and Illumina reads, then builds a model
 ```
 You can also submit the job via job schedulers. We have provided an example on the SLURM. Change the account settings in cluster.json before using it.
 ```
-    snakemake -j 100 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
+    snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
 ```
 
 Input files:
