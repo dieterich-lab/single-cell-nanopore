@@ -123,3 +123,13 @@ library(ggplot2)
 p=ggplot(df, aes(x = V1, y = V2)) + geom_boxplot(outlier.shape = NA) + theme(axis.text.x = element_text(angle = 30, hjust = 1)) + labs(x='Transcript length (bp)',y="Expression level ratio \n Nanopore / Illumina") + coord_cartesian(ylim = c(0,10)) 
 ggsave(p,file='fc1-ratio.pdf')
 ```
+## tsne_isoform.r
+```
+y=read.table('srsf2.label',row.names=2)
+cnt=y[rownames(x),1]
+cnt[is.na(cnt)]=0
+cols=colorRampPalette(c("grey", "red"))(max(cnt)+1)
+png("FC2-SRSF2.png")
+plot(tsne$Y,col=cols[cnt+1])
+dev.off()
+```
