@@ -2,80 +2,80 @@
     "__default__":
     {
         "account": "qwang",
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "get_cbfreq":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "find_dist":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "align_longreads":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "build_nanosim":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "sim_reads":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "get_barcodes":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "run_pipe":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "run_pipe2":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "add_label":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "build_model":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "run_pred":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     },
     "filter_pred":
     {
-        "mem": "100G",
+        "mem": "80G",
         "time": "5:5:0",
-        "threads": "5"
+        "threads": "4"
     }
 }
