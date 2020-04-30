@@ -96,3 +96,24 @@ points(df[grepl('^RPS',rownames(df)),],col='red')
 points(df[grepl('^RPL',rownames(df)),],col='red')
 dev.off()
 ```
+## exp_ratio.r
+```
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+x=read.table('illu.cov')
+y=read.table('fc1.cov')
+breaks=seq(0,5700,300)
+tags=paste(breaks,breaks+300,sep='-')
+breaks=c(breaks,6000)
+x$V1 = cut(x$V1,breaks=breaks,include.lowest=TRUE,right=FALSE,labels=tags)
+y$V1 = cut(y$V1,breaks=breaks,include.lowest=TRUE,right=FALSE,labels=tags)
+x=do.call(rbind,lapply(split(x,x$V1),function(d)d[sample(seq_len(nrow(d)),1000),]))
+y=do.call(rbind,lapply(split(y,y$V1),function(d)d[sample(seq_len(nrow(d)),1000),]))
+df=x
+df$V2 = y$V2/x$V2
+df=df[is.finite(df$V2),]
+df=df[df$V2<20,]
+library(ggplot2)
+p=ggplot(df, aes(x = V1, y = V2)) + geom_boxplot(outlier.shape = NA) + theme(axis.text.x = element_text(angle = 30, hjust = 1)) + labs(x='Transcript length (bp)',y="Expression level ratio \n Nanopore / Illumina") + coord_cartesian(ylim = c(0,10)) 
+ggsave(p,file='fc1-ratio.pdf')
+```
