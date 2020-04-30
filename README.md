@@ -60,7 +60,9 @@ Input files:
 
 Output files:
 
-Barcode assignments above the threshold (0-99, 30 in the example we provided).
+* Barcode assignments above the threshold (0-99, 30 in the example we provided).
+
+* Demultiplexed FATSQ file
 
 # Workflow
 
