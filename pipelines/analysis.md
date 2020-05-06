@@ -69,10 +69,10 @@ cb=read.table(gzfile("barcodes.tsv.gz"),sep='-')[,1]
 x=x[x[,1] %in% cb,]
 y=y[y[,1] %in% cb,]
 xy=merge(x,y,by='V1')
-png('FC1-UMIcount.png')
-plot(xy[,2:3],main="Number of UMI sequences",xlab="Nanopore",ylab="Illumina")
-text(100,1e5,paste0("r=",round(cor(xy[,2],xy[,3]), digits=2)))
-dev.off()
+colnames(xy)=c('barcode','Nano','Illu')
+library(ggplot2)
+p=ggplot(xy[,2:3], aes(x=Nano, y=Illu)) + geom_point() + labs(title="Number of UMI sequences",x="Nanopore", y="Illumina") + geom_text(x=100,y=1e5,label=paste0("r=",round(cor(xy[,2],xy[,3]), digits=2)))
+ggsave(p,file='fc1-same.pdf',height=6,width=6)
 ```
 ## count_upig.r
 ```
