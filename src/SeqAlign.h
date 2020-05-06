@@ -540,22 +540,24 @@ public:
                 //adaptor_score
                 int barcodeStartOffset = (trimEnd == RTAIL  || trimEnd == RIGHT) ? (am.endPosS - am.endPosA) : am.startPosA;
                 int barcodeLength = am.endPosA - am.startPosA + am.gapsR;
+		int umiLength = m_barcode_umi_length - prefixPolyT - barcodeLength;
+		umiLength = umiLength < 0 ? 0 : umiLength;
+		umiLength = am.endPosA + umiLength < length(seqRead.seq) ? umiLength : length(seqRead.seq) - am.endPosA;
 
 //                 std::cout << am.gapsR  << "\t" << am.gapsA << "\n";
 //                 std::cout << barcodeLength << "\t" << am.startPosS  << "\t" << am.endPosS  << "\t" << am.startPosA << "\t" << am.endPosA << "\n";
 
                 s << am.score << "\t" << am.gapsR + am.gapsA  << "\t" << (barcodeStartOffset - m_keepbp) << "\t" << am.mismatches << "\t";
                 if(valid_read)
-                    s << (m_barcode_umi_length - prefixPolyT - barcodeLength) << "\t" << polyTlength - m_barcode_umi_length << "\t";
+                    s << umiLength << "\t" << polyTlength - m_barcode_umi_length << "\t";
                 else
                     s << length(seqReadTmp.seq) << "\t" << "-1" << "\t";
                 if(i < qIndex_v.size() - 1)
                     s << "yes";
                 else
                     s << "no";
-
-                s << "\t" << qIndex_v.size() << "\n";
-
+                
+		s << "\t" << infix(seqRead.seq, am.endPosA, am.endPosA + umiLength) << "\n";
             }
 
 				if(i == qIndex_v.size() - 1 || !m_logEverything){
