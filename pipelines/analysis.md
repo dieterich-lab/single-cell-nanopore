@@ -143,11 +143,9 @@ x=x[,colnames(x) %in% cb]
 y=read.table('fc2.uipg',row.names=2)
 df=data.frame(V1=i,V2=y[names(i),])
 df=df[!is.na(df[,2]),]
-png('FC2-UIPG.png')
-plot(df,xlab="Cells expressing gene",ylab="Unique isoforms per gene",ylim=c(0,200),col='darkgrey')
-points(df[grepl('^RPS',rownames(df)),],col='red')
-points(df[grepl('^RPL',rownames(df)),],col='red')
-dev.off()
+df$RP=grepl('^RP[S|L]',rownames(df))
+p=ggplot(df, aes(x=V1, y=V2, color=RP)) + geom_point() + labs(title="Number of unique isoforms",x="Cells expressing gene", y="Unique isoforms per gene")+scale_y_continuous(limits = c(0,200))
+ggsave(p,file='fc1-numiso.pdf',height=6,width=6)
 ```
 ## exp_ratio.r
 ```
