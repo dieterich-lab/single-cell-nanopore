@@ -168,6 +168,28 @@ library(ggplot2)
 p=ggplot(df, aes(x = V1, y = V2)) + geom_boxplot(outlier.shape = NA) + theme(axis.text.x = element_text(angle = 30, hjust = 1)) + labs(x='Transcript length (bp)',y="Expression level ratio \n Nanopore / Illumina") + coord_cartesian(ylim = c(0,10)) 
 ggsave(p,file='fc1-ratio.pdf')
 ```
+## tsne.r
+```
+library(Rtsne)
+lbl=read.table("gfp.txt")[,1]
+lbl=names(which(table(lbl)>20))
+lw=function(d) length(which(d))
+i=apply(x,1,function(d) lw(d>0))
+j=apply(x,2,function(d) lw(d>0))
+x=t(x[i>=3,j>=200])
+cb=read.table(gzfile("barcodes.tsv.gz"),sep='-')[,1]
+x=x[rownames(x) %in% cb,]
+tsne <- Rtsne(x, dims=2, perplexity=30, initial_dims=10, num_threads=0)
+df=data.frame(tsne$Y)
+df$GFP = rownames(x) %in% lbl
+p=ggplot(df, aes(x=X1, y=X2, color=GFP)) + geom_point() + labs(title="Gene expression Nanopore",x="tSNE_1", y="tSNE_2")
+ggsave(p,file='fc1-tsne.pdf',height=6,width=6)
+df=read.csv('projection.csv')
+df$Barcode=substr(df$Barcode,1,16)
+df$GFP = df$Barcode %in% lbl
+p=ggplot(df, aes(x=TSNE.1, y=TSNE.2, color=GFP)) + geom_point() + labs(title="Gene expression Illumina",x="tSNE_1", y="tSNE_2")
+ggsave(p,file='illu-tsne.pdf',height=6,width=6)
+```
 ## tsne_isoform.r
 ```
 y=read.table('srsf2.label',row.names=2)
