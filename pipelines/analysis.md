@@ -13,6 +13,13 @@ perl -F"\t" -ane '$h{$F[0]}{$F[1]}++; END { print "$_\t".(keys %{$h{$_}})."\n" f
 ```
 perl -ne 'print unless /cov \"[0|1]\./' FC1new.gtf|perl -ne 'print "$1\n" if /gene_name \"(\S+)\"/'|sort|uniq -c > fc1.uipg
 ```
+## test_barcode.sh
+```
+perl  gt1.pl fc1sv.prob > fc1sv.prob.lbl
+perl sis1.pl fc1sv.prob.lbl > fc1sv.prob.lbl.sis
+sort -k15,15rn fc1sv.prob.lbl.sis | perl -ne 'chomp;@t=split(/\t/);print "$_\t";print defined $h{$t[0]}?1:0;print "\n";$h{$t[0]}=1' > fc1sv.prob.lbl.sis2
+awk '$17==0 && $18==1' fc1sv.prob.lbl.sis2|cut -f19|sort|uniq -c
+```
 ## ts_cov.sh
 ```
 grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "(\S+)\"/' > illu.cov
@@ -172,4 +179,19 @@ cols=colorRampPalette(c("grey", "red"))(max(cnt)+1)
 png("FC2-SRSF2.png")
 plot(tsne$Y,col=cols[cnt+1])
 dev.off()
+```
+## sis1.pl
+```
+while(<DATA>){chomp;
+@t=split(/\t/);
+$h{$t[0]}=$t[1];
+}
+while(<>){chomp;
+@t=split(/\t/);
+$t[0]=~s/_end\d//;
+print $_,"\t";
+print defined $h{$t[0]} ? ($h{$t[0]} eq $t[1] ? 0 : 1) : -1;
+print "\n"
+}
+__DATA__
 ```
