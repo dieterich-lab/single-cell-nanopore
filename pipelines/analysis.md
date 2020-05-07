@@ -1,5 +1,7 @@
 ## gene_names.sh
 ```
+samtools view possorted_genome_bam.bam|perl -ne 'print "$2\t$1\t$3\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > illu.gene
+cut -f1,2 illu.gene|sort|uniq|cut -f1|sort|uniq -c|perl -npe 's/^ +//;s/ +/\t/' > illu.gene.cnt
 samtools view possorted_genome_bam.bam|perl -ne 'print "$2\t$1\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+)/' > bc.gene
 awk -v OFS='\t' '{print $2,$1}' bc.gene > gene.bc
 ```
@@ -72,7 +74,32 @@ xy=merge(x,y,by='V1')
 colnames(xy)=c('barcode','Nano','Illu')
 library(ggplot2)
 p=ggplot(xy[,2:3], aes(x=Nano, y=Illu)) + geom_point() + labs(title="Number of UMI sequences",x="Nanopore", y="Illumina") + geom_text(x=100,y=1e5,label=paste0("r=",round(cor(xy[,2],xy[,3]), digits=2)))
-ggsave(p,file='fc1-same.pdf',height=6,width=6)
+ggsave(p,file='fc1-corumi.pdf',height=6,width=6)
+```
+## count_gene.r
+```
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+y=read.table('FC1.label',col.names=c('id','barcode'))
+nm=read.table('FC1.ge')
+i=match(y$id,nm[,1])
+df=data.frame(y$barcode,nm[i,2])
+colnames(df)=c('barcode','gene')
+df=df[!is.na(df[,2]),]
+write.table(df,sep='\t',quote=F,row.names=F,col.names=F,file='FC1.gene')
+#sort FC1.gene |uniq|cut -f1|sort|uniq -c|perl -npe 's/^ +//;s/ +/\t/' > FC1.gene.cnt
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+x=read.table('FC1.gene.cnt')
+y=read.table('illu.gene.cnt')
+cb=read.table(gzfile("barcodes.tsv.gz"),sep='-')[,1]
+x=x[x[,2] %in% cb,]
+y=y[y[,2] %in% cb,]
+xy=merge(x,y,by='V2')
+colnames(xy)=c('gene','Nano','Illu')
+library(ggplot2)
+p=ggplot(xy[,2:3], aes(x=Nano, y=Illu)) + geom_point() + labs(title="Number of Genes",x="Nanopore", y="Illumina") + geom_text(x=100,y=8e3,label=paste0("r=",round(cor(xy[,2],xy[,3]), digits=2)))
+ggsave(p,file='fc1-corgene.pdf',height=6,width=6)
 ```
 ## count_upig.r
 ```
