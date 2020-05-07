@@ -61,6 +61,19 @@ df=rbind(df,data.frame(V1=diff,V2='different cell'))
 p=ggplot(df, aes(x=V2, y=V1)) + geom_quasirandom(dodge.width=.8,cex=.2) + labs(x='',y='Correlation Illumina / Nanopore')
 ggsave(p,file='fc1-same.pdf',height=6,width=6)
 ```
+## diff_isoform.r
+```
+options(stringsAsFactors = FALSE)
+Sys.setlocale("LC_NUMERIC","C")
+library(ballgown)
+bg=ballgown(dataDir="/scratch/qw/nanopore/", samplePattern = "GFP", meas='all')
+pData(bg)=data.frame(id=sampleNames(bg), group=substr(sampleNames(bg),1,6), batch=substr(sampleNames(bg),8,10))
+df = stattest(bg, feature="gene", covariate="batch", getFC=TRUE, meas="FPKM")
+df$threshold=df$pval < 0.05
+library(ggplot2)
+p=ggplot(df) + geom_point(aes(x=-log2(fc), y=-log2(pval), colour=threshold))+scale_x_continuous(limits = c(-3,3))
+ggsave(p,file='fc1-dffiso.pdf',height=6,width=6)
+```
 ## count_umi.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
