@@ -168,6 +168,29 @@ library(ggplot2)
 p=ggplot(df, aes(x = V1, y = V2)) + geom_boxplot(outlier.shape = NA) + theme(axis.text.x = element_text(angle = 30, hjust = 1)) + labs(x='Transcript length (bp)',y="Expression level ratio \n Nanopore / Illumina") + coord_cartesian(ylim = c(0,10)) 
 ggsave(p,file='fc1-ratio.pdf')
 ```
+## runtime.r
+```
+perm_without_replacement = function(n, r) factorial(n)/factorial(n-r)
+df=do.call(rbind,lapply(0:3,function(i){
+l=2*i+1
+j=2000
+data.frame(pos=i,method=c("Sicelore","SingleCellPipe"),runtime=c(l*perm_without_replacement(i+16,3)*j,(l+16)*16*j))
+}))
+p=ggplot(df, aes(x=pos, y=runtime, group=method)) +
+  geom_line(aes(color=method))+
+  geom_point(aes(color=method))+
+  theme(legend.position="top") + labs(title="Runtime comparison",x="Barcode position", y="Runtime")
+ggsave(p,file='rt-pos.pdf',height=6,width=6)
+df=do.call(rbind,lapply(seq(1000,4000,100),function(j){
+l=7;i=3
+data.frame(cells=j,method=c("Sicelore","SingleCellPipe"),runtime=c(l*perm_without_replacement(i+16,3)*j,(l+16)*16*j))
+}))
+p=ggplot(df, aes(x=cells, y=runtime, group=method)) +
+  geom_line(aes(color=method))+
+  geom_point(aes(color=method))+
+  theme(legend.position="top") + labs(title="Runtime comparison",x="Number of cell barcodes", y="Runtime")
+ggsave(p,file='rt-cb.pdf',height=6,width=6)
+```
 ## tsne.r
 ```
 library(Rtsne)
