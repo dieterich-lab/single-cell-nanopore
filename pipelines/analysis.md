@@ -30,6 +30,19 @@ grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "
 perl -F"\t" -ane '$s=$F[2]-$F[1];print "$s\t$_" if $s>100' 1.bed|sort -k1,1n|cut -f2-|perl -ne 'print if $i++%40==0' > 2.bed
 geneBody_coverage.py -i FC1.bam,FC2.bam -r 2.bed -o coverage
 ```
+## fisher_test.r
+```
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+x=read.table('fc1sv.prob.lbl.sis2')
+(m=table(x[x$V17==0,c(19,18)]))
+fisher.test(matrix(matrix(m)[3:6,1],ncol=2))
+x$V20=abs(x$V8)>=3
+(m=table(x[x$V17==0,c(20,18)]))
+#ours
+(m=table(x[x$V16>30,c(20,17)]))
+fisher.test(matrix(matrix(m)[,1],ncol=2))
+```
 ## cor_gene.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
