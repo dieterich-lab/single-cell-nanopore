@@ -30,6 +30,13 @@ grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "
 perl -F"\t" -ane '$s=$F[2]-$F[1];print "$s\t$_" if $s>100' 1.bed|sort -k1,1n|cut -f2-|perl -ne 'print if $i++%40==0' > 2.bed
 geneBody_coverage.py -i FC1.bam,FC2.bam -r 2.bed -o coverage
 ```
+## gfp_isoform.sh
+```
+samtools view -h FC1new.gfp.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' > SRSF2.gfp.sam
+samtools view FC2new.gfp.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' >> SRSF2.gfp.sam
+samtools view -h FC1new.nogfp.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' > SRSF2.nogfp.sam
+samtools view FC2new.nogfp.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' >> SRSF2.nogfp.sam
+```
 ## fisher_test.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
