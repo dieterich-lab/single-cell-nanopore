@@ -271,6 +271,17 @@ pbmc <- RunTSNE(object = pbmc, dims.use = 1:10)
 p=DimPlot(pbmc, reduction = "tsne")
 ggsave(p, file='FC1-tsne.pdf',height=6,width=6)
 ```
+## edit_dist.r
+```
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+x=read.table('fc1.tab.feat.sis.lbl')
+df=data.frame(table(rowSums(abs(x[,7:9]))),method="ground_truth")
+df=rbind(df,data.frame(table(rowSums(abs(x[x$V14==0,7:9]))),method="Sicelore"))
+df=rbind(df,data.frame(table(rowSums(abs(x[x$V15==0,7:9]))),method="Single^2"))
+p=ggplot(data=df, aes(x=Var1, y=Freq, fill=method)) + geom_bar(stat="identity", position=position_dodge())+theme(legend.position="top")+ labs(title='Edit distance of simulated reads',x="Edit distance", y="Percentage of simulated reads")+coord_cartesian(xlim = c(0,6)) 
+ggsave(p,file='fc1-ed.pdf',height=6,width=6)
+```
 ## sis1.pl
 ```
 while(<DATA>){chomp;
