@@ -8,6 +8,10 @@ awk -v OFS='\t' '{print $2,$1}' bc.gene > gene.bc
 ## count_umi.sh
 ```
 perl -F"\t" -ane '$h{$F[0]}{$F[1]}++; END { print "$_\t".(keys %{$h{$_}})."\n" for keys %h }' fc1.barumi > fc1.barumi.cnt
+perl gt1feat.pl fc1.prob > fc1.prob.ed
+perl gt1feat.sis.pl fc1.sis > fc1.sis.ed
+cat fc1.sis.ed fc1.prob.ed|perl -F"\t" -ane '$h{"$F[0]\t$F[1]"}="$F[0]\t$F[1]\t$F[2]\t3\n"; END {print $h{$_} foreach keys %h}' > fc1.all.ed
+cat fc1.sis.ed fc1.prob.ed fc1.all.ed > fc1.tab.ed
 ```
 ## count_isoform.sh
 ```
@@ -29,6 +33,11 @@ grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "
 ~/bin/ExpressionAnalysis-ea-utils-bd148d4/clipper/gtf2bed GRCh38.90.gtf > 1.bed
 perl -F"\t" -ane '$s=$F[2]-$F[1];print "$s\t$_" if $s>100' 1.bed|sort -k1,1n|cut -f2-|perl -ne 'print if $i++%40==0' > 2.bed
 geneBody_coverage.py -i FC1.bam,FC2.bam -r 2.bed -o coverage
+```
+## sim_ed.sh
+```
+samtools view fc1.GEUS10xAttributes.bam|perl -F"\t" -ane '$F[0]=~s/_REV.*//;print "$F[0]\t$2\t$1\n" if /B1:i:(\d+).*BC:Z:(\w+)/' > fc1.sis
+
 ```
 ## gfp_isoform.sh
 ```
@@ -275,10 +284,10 @@ ggsave(p, file='FC1-tsne.pdf',height=6,width=6)
 ```
 Sys.setlocale("LC_NUMERIC","C")
 options(stringsAsFactors = FALSE)
-x=read.table('fc1.tab.feat.sis.lbl')
-df=data.frame(table(rowSums(abs(x[,7:9]))),method="ground_truth")
-df=rbind(df,data.frame(table(rowSums(abs(x[x$V14==0,7:9]))),method="Sicelore"))
-df=rbind(df,data.frame(table(rowSums(abs(x[x$V15==0,7:9]))),method="Single^2"))
+x=read.table('fc1.tab.ed')
+df=data.frame(table(x[x$V4==3,3]),method="ground_truth")
+df=rbind(df,data.frame(table(x[x$V4==2,3])),method="Sicelore"))
+df=rbind(df,data.frame(table(x[x$V4==0,3])),method="Single^2"))
 p=ggplot(data=df, aes(x=Var1, y=Freq, fill=method)) + geom_bar(stat="identity", position=position_dodge())+theme(legend.position="top")+ labs(title='Edit distance of simulated reads',x="Edit distance", y="Percentage of simulated reads")+coord_cartesian(xlim = c(0,6)) 
 ggsave(p,file='fc1-ed.pdf',height=6,width=6)
 ```
