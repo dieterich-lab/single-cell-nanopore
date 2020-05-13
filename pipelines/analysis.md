@@ -253,6 +253,24 @@ expression=exp2[,1]
 p=ggplot(df, aes(x=X1, y=X2, color=expression)) + geom_point() +theme(legend.position="top")+ labs(title='SRSF2-WT',x="tSNE_1", y="tSNE_2")+scale_color_gradient2(low="black", mid="yellow", high="yellow", midpoint = 4.5)
 ggsave(p,file='SRSF2-WT.pdf',height=6,width=5)
 ```
+## seurat.r
+```
+#https://satijalab.org/seurat/v3.0/pbmc3k_tutorial.html
+pbmc = CreateSeuratObject(counts = x, project = "FC1", min.cells = 3, min.features = 200)
+p = FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
+top10 <- head(VariableFeatures(pbmc), 10)
+plot1 <- VariableFeaturePlot(pbmc)
+p=VizDimLoadings(pbmc, dims = 1:2, reduction = "pca")
+p=DimPlot(pbmc, reduction = "pca")
+p=DimHeatmap(pbmc, dims = 1, cells = 200, balanced = TRUE)
+pbmc <- RunUMAP(pbmc, dims = 1:10)
+p=DimPlot(pbmc, reduction = "umap")
+pbmc <- RunTSNE(object = pbmc, dims.use = 1:10)
+p=DimPlot(pbmc, reduction = "tsne")
+ggsave(p, file='FC1-tsne.pdf',height=6,width=6)
+```
 ## sis1.pl
 ```
 while(<DATA>){chomp;
