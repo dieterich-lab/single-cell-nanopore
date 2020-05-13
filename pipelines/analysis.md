@@ -244,13 +244,14 @@ ggsave(p,file='illu-tsne.pdf',height=6,width=6)
 ```
 ## tsne_isoform.r
 ```
-y=read.table('srsf2.label',row.names=2)
-cnt=y[rownames(x),1]
-cnt[is.na(cnt)]=0
-cols=colorRampPalette(c("grey", "red"))(max(cnt)+1)
-png("FC2-SRSF2.png")
-plot(tsne$Y,col=cols[cnt+1])
-dev.off()
+cnt=read.table('SRSF2.isoform.txt')
+cname=gsub('\\.','-',colnames(cnt))
+exp=cnt[match(rownames(x),rownames(cnt)),]
+exp[is.na(exp)]=0
+exp2=exp[,1:2]+exp[,3:4]
+expression=exp2[,1]
+p=ggplot(df, aes(x=X1, y=X2, color=expression)) + geom_point() +theme(legend.position="top")+ labs(title='SRSF2-WT',x="tSNE_1", y="tSNE_2")+scale_color_gradient2(low="black", mid="yellow", high="yellow", midpoint = 4.5)
+ggsave(p,file='SRSF2-WT.pdf',height=6,width=5)
 ```
 ## sis1.pl
 ```
