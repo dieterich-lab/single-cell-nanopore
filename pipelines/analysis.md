@@ -214,26 +214,25 @@ ggsave(p,file='fc1-ratio.pdf')
 ```
 ## runtime.r
 ```
+#https://gist.github.com/qwang-big/658d3ca9ad775503bb20123151e37b55
 perm_without_replacement = function(n, r) factorial(n)/factorial(n-r)
-df=do.call(rbind,lapply(0:3,function(i){
+d  <- do.call(rbind,lapply(0:4,function(i){
 l=2*i+1
 j=2000
-data.frame(pos=i,method=c("Sicelore","SingleCellPipe"),runtime=c(l*perm_without_replacement(i+16,3)*j,(l+16)*16*j))
+data.frame(pos=i,Sicelore=l*perm_without_replacement(i+16,3)*j,SingleCellPipe=(l+16)*16*j)
 }))
-p=ggplot(df, aes(x=pos, y=runtime, group=method)) +
-  geom_line(aes(color=method))+
-  geom_point(aes(color=method))+
-  theme(legend.position="top") + labs(title="Runtime comparison",x="Barcode position", y="Runtime")
-ggsave(p,file='rt-pos.pdf',height=6,width=6)
-df=do.call(rbind,lapply(seq(1000,4000,100),function(j){
-l=7;i=3
-data.frame(cells=j,method=c("Sicelore","SingleCellPipe"),runtime=c(l*perm_without_replacement(i+16,3)*j,(l+16)*16*j))
-}))
-p=ggplot(df, aes(x=cells, y=runtime, group=method)) +
-  geom_line(aes(color=method))+
-  geom_point(aes(color=method))+
-  theme(legend.position="top") + labs(title="Runtime comparison",x="Number of cell barcodes", y="Runtime")
-ggsave(p,file='rt-cb.pdf',height=6,width=6)
+x  <- 'pos'
+y1 <- 'SingleCellPipe'
+y2 <- 'Sicelore'
+a            <- range(d[[y1]])
+b            <- range(d[[y2]])
+scale_factor <- diff(a)/diff(b)
+d[[y2]]      <- ((d[[y2]] - b[1]) * scale_factor) + a[1]
+trans <- ~ ((. - a[1]) / scale_factor) + b[1]
+ggplot(d, aes(x = pos)) +
+  geom_line(aes(y = Sicelore, colour = "Sicelore")) + 
+  geom_line(aes(y = SingleCellPipe, colour = "SingleCellPipe"))  + scale_colour_manual(values = c("blue", "red"))+ 
+  scale_y_continuous(sec.axis = sec_axis(trans=trans, name=y2)) +theme(legend.position="top") + labs(title="Runtime comparison",x="Barcode positions", y=y1)
 ```
 ## tsne.r
 ```
