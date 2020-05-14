@@ -297,6 +297,15 @@ colnames(x)[2]="RunId"
 x$Steps=factor(x$Steps,levels=rev(levels(as.factor(x$Steps))))
 p=ggplot(x, aes(x=Steps, y=value, fill=RunId)) + geom_bar(stat="identity", position=position_dodge())+theme(legend.position="top")+coord_flip()+ labs(title='Number of simulated reads per step',x="Processing steps", y="Number of simulated reads")
 ```
+## den_pred.r
+```
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+x=read.table('fc1.prob.den',header=T,col.names=c('Score','Alignment'))
+x[,2]=x[,2]==0
+p=ggplot(x, aes(x = Score, group = Alignment)) + geom_density(aes(color = Alignment))
+ggsave(p,file='fc1-pden.pdf',height=6,width=6)
+```
 ## edit_dist.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
