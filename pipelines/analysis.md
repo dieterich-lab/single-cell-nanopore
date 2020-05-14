@@ -30,6 +30,13 @@ grep transcript Illu.gtf |perl -F"\t" -ane 'print $F[4]-$F[3],"\t$1\n" if /cov "
 perl -F"\t" -ane '$s=$F[2]-$F[1];print "$s\t$_" if $s>100' 1.bed|sort -k1,1n|cut -f2-|perl -ne 'print if $i++%40==0' > 2.bed
 geneBody_coverage.py -i FC1.bam,FC2.bam -r 2.bed -o coverage
 ```
+## stat.sh
+```
+x="fc1.tab"
+cut -f1 $x|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l
+awk '$3=="no"' $x|cut -f1|perl -ne 's/_end[1|2]//;print'|sort|uniq|wc -l
+awk '$2!="NA"' $x|cut -f1|perl -ne 's/_end[1|2]//;print'|sort|uniq|wc -l
+```
 ## sim_ed.sh
 ```
 samtools view fc1.GEUS10xAttributes.bam|perl -F"\t" -ane '$F[0]=~s/_REV.*//;print "$F[0]\t$2\t$1\n" if /B1:i:(\d+).*BC:Z:(\w+)/' > fc1.sis
