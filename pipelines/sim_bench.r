@@ -35,6 +35,6 @@ ggsave('fc1-roc.pdf')
 # all benchmarks
 df=melt(df)
 df1=melt(data.frame(ss,var=names(ss)))
-p=ggplot(df,aes(Var1,value,col=Var2))+geom_line()+geom_hline(data=df1,aes(yintercept=value,colour=var),linetype="dashed")+
-labs(title='Performance of the predicted probabilities',x='Predicted probability cutoff')
+p=ggplot(df,aes(Var1,value,col=Measures))+geom_line()+geom_vline(xintercept=35, linetype=4)+ annotate("text", x=38,y=0.2,label="35")+geom_hline(data=df1,aes(yintercept=value,colour=var),linetype="dashed")+
+labs(title='Performance of the predicted probabilities',x='Predicted probability cutoff',y='Score')
 ggsave('fc1-t.pdf')
