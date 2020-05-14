@@ -266,6 +266,11 @@ ggsave(p,file='illu-tsne.pdf',height=6,width=6)
 ```
 ## tsne_isoform.r
 ```
+df=data.frame(do.call(cbind,lapply(ff,function(f){x=read.table(f)
+as.numeric(x[seq(2,nrow(x),2),1])})))
+rownames(df)=x[seq(1,nrow(x),2),1]
+write.table(df,sep='\t',quote=F,file='SRSF2.isoform.txt')
+
 cnt=read.table('SRSF2.isoform.txt')
 cname=gsub('\\.','-',colnames(cnt))
 exp=cnt[match(rownames(x),rownames(cnt)),]
