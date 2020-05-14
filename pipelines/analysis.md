@@ -125,6 +125,14 @@ library(ggplot2)
 p=ggplot(df) + geom_point(aes(x=log2(fc), y=-log10(pval), colour=significant))+scale_x_continuous(limits = c(-3,3))
 ggsave(p,file='fc1-dffiso.png',height=6,width=6)
 ```
+## gb_cov.r
+```
+df=melt(data_matrix)
+colnames(df)[1]='Library'
+p=ggplot(data=df, aes(x=Var2, y=value, group=Library)) +
+  geom_line(aes(color=Library))+labs(title='Gene body coverage',x="Gene body percentile (5'->3')", y="Coverage")
+ggsave(p,file='gbcov.pdf',height=6,width=6)
+```
 ## count_umi.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
