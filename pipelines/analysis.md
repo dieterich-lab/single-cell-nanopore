@@ -286,6 +286,18 @@ pbmc <- RunTSNE(object = pbmc, dims.use = 1:10)
 p=DimPlot(pbmc, reduction = "tsne")
 ggsave(p, file='FC1-tsne.pdf',height=6,width=6)
 ```
+## stat.r
+```
+x=read.csv(text="Steps,FC1,FC2
+Aligned to adapter,815243,807878
+Aligned to barcode,751903,741537
+Assigned to barcode,484458,464685
+Correctly assigned,458145,440433")
+x=melt(x)
+colnames(x)[2]="RunId"
+p=ggplot(x, aes(x=Steps, y=value, fill=RunId)) + geom_bar(stat="identity", position=position_dodge())+theme(legend.position="top")+coord_flip()+ labs(title='Number of simulated reads per step',x="Processing steps", y="Number of simulated reads")
+ggsave(p,file='fc12-steps.pdf',height=6,width=6)
+```
 ## edit_dist.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
