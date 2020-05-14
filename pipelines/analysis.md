@@ -307,9 +307,9 @@ p=ggplot(x, aes(x=Steps, y=value, fill=RunId)) + geom_bar(stat="identity", posit
 ```
 Sys.setlocale("LC_NUMERIC","C")
 options(stringsAsFactors = FALSE)
-x=read.table('fc1.prob.den',header=T,col.names=c('Score','Alignment'))
-x[,2]=x[,2]==0
-p=ggplot(x, aes(x = Score, group = Alignment)) + geom_density(aes(color = Alignment))
+x=read.table('fc1.prob.den',header=T,col.names=c('Score','Assignment'))
+x[,2]=c('correct','false')[x[,2]+1]
+p=ggplot(x, aes(x = Score, group = Assignment)) + geom_density(aes(color = Assignment))+ labs(title="Density of barcode scores",x="Scores", y='Density')
 ggsave(p,file='fc1-pden.pdf',height=6,width=6)
 ```
 ## edit_dist.r
