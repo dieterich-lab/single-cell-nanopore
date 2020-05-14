@@ -277,7 +277,7 @@ exp=cnt[match(rownames(x),rownames(cnt)),]
 exp[is.na(exp)]=0
 exp2=exp[,c(1,3)]+exp[,c(2,4)]
 expression=exp2[,1]
-p=ggplot(df, aes(x=X1, y=X2, color=expression)) + geom_point() +theme(legend.position="top")+ labs(title='SRSF2-WT',x="tSNE_1", y="tSNE_2")+scale_color_gradient2(low="black", mid="yellow", high="yellow", midpoint = 4.5)
+p=ggplot(data.frame(tsne$Y), aes(x=X1, y=X2, color=expression)) + geom_point() +theme(legend.position="top")+ labs(title='SRSF2-WT',x="tSNE_1", y="tSNE_2")+scale_color_gradient2(low="black", mid="yellow", high="yellow", midpoint = 4.5)
 ggsave(p,file='SRSF2-WT.pdf',height=6,width=5)
 ```
 ## seurat.r
