@@ -292,6 +292,12 @@ Aligned to adapter,815243,807878
 Aligned to barcode,751903,741537
 Assigned to barcode,484458,464685
 Correctly assigned,458145,440433")
+y=read.csv(text="Steps,FC1,FC2
+Total reads,13126013,11923896
+Aligned to genome,11158994,10164820
+Aligned to adapter,8223382,7571238
+Aligned to barcode,7457842,6882174
+Assigned to barcode,4692389,4359238")
 x=melt(x)
 colnames(x)[2]="RunId"
 x$Steps=factor(x$Steps,levels=rev(levels(as.factor(x$Steps))))
