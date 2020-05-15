@@ -311,6 +311,10 @@ Aligned to genome,11158994,10164820
 Aligned to adapter,8223382,7571238
 Aligned to barcode,7457842,6882174
 Assigned to barcode,4692389,4359238")
+x=read.csv(text="event,WT,KD
+NMD_ex,556,950
+NMD_in,1113,1890
+A5SS,441,788")
 x=melt(x)
 colnames(x)[2]="RunId"
 x$Steps=factor(x$Steps,levels=rev(levels(as.factor(x$Steps))))
