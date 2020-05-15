@@ -323,8 +323,11 @@ p=ggplot(x, aes(x=Steps, y=value, fill=RunId)) + geom_bar(stat="identity", posit
 ## feat_stat.r
 ```
 mat = cor(x[,j])
-findCorrelation(mat, cutoff=0.5)
-corrplot(mat, method="circle")
+#findCorrelation(mat, cutoff=0.5)
+#corrplot(mat, method="circle")
+p=ggcorrplot(mat, method = "circle")
+ggsave(p,file='fc1-cor.pdf',height=5,width=5)
+
 control = trainControl(method="repeatedcv", number=10, repeats=3)
 model = train(label~., data=x[,c(j,14)], method="lvq", preProcess=c("YeoJohnson","range"), trControl=control)
 importance = varImp(model, scale=FALSE)
