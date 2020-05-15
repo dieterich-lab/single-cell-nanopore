@@ -320,6 +320,26 @@ colnames(x)[2]="RunId"
 x$Steps=factor(x$Steps,levels=rev(levels(as.factor(x$Steps))))
 p=ggplot(x, aes(x=Steps, y=value, fill=RunId)) + geom_bar(stat="identity", position=position_dodge())+theme(legend.position="top")+coord_flip()+ labs(title='Number of simulated reads per step',x="Processing steps", y="Number of simulated reads")
 ```
+## feat_stat.r
+```
+mat = cor(x[,j])
+findCorrelation(mat, cutoff=0.5)
+corrplot(mat, method="circle")
+control = trainControl(method="repeatedcv", number=10, repeats=3)
+model = train(label~., data=x[,c(j,14)], method="lvq", preProcess=c("YeoJohnson","range"), trControl=control)
+importance = varImp(model, scale=FALSE)
+df = data.frame(importance$importance)
+df[,1] = rownames(df)
+p=ggplot(df, aes(x=reorder(X0, -X1), y=X1, fill='blue')) + geom_bar(stat="identity", position=position_dodge())+theme(legend.position="none")+coord_flip()+ labs(title='Feature importances',y="Importance", x="")
+ggsave(p,file='fc1-varimp.pdf',height=4,width=4)
+```
+## feat_var.r
+```
+x=read.table('FC1.prob',header=TRUE)
+df=data.frame(assignment=c('unassigned','assigned')[as.integer(x[,ncol(x)]>30)+1],melt(x[,5:11],id.vars=NULL))
+p=ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
+ggsave("fc1-fp.pdf",width=6,height=4.5,units="in")
+```
 ## den_pred.r
 ```
 Sys.setlocale("LC_NUMERIC","C")
