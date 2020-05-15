@@ -174,22 +174,6 @@ write.table(m,file=paste0(dat,'.prob'),sep="\t",quote=F,row.names=F,col.names=F)
 ```
 awk '$15>30' $1 | sed 's/_end[1|2]//' | awk '{a[$1]++;b[$1]=$0}END{for(i in a){if(a[i]==1)print b[i]}}' | cut -f1-2 > $1.label
 ```
-## feat_stat.r
-```
-mat = cor(x[,j])
-findCorrelation(mat, cutoff=0.5)
-corrplot(mat, method="circle")
-control = trainControl(method="repeatedcv", number=10, repeats=3)
-model = train(label~., data=x[,c(j,14)], method="lvq", preProcess=c("YeoJohnson","range"), trControl=control)
-importance = varImp(model, scale=FALSE)
-```
-## feat_var.r
-```
-x=read.table('FC1.prob',header=TRUE)
-df=data.frame(assignment=c('unassigned','assigned')[as.integer(x[,ncol(x)]>30)+1],melt(x[,5:11],id.vars=NULL))
-p=ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
-ggsave("fc1-fp.pdf",width=6,height=4.5,units="in")
-```
 ## get_gfpreads.sh
 ```
 printf "while(<DATA>){chomp;\$h{\$_}=1}while(<>){print if /^@/;@t=split(/\\\\t/);print if defined \$h{\$t[0]};print STDERR unless defined \$h{\$t[0]}}\n__DATA__\n" > gfp_reads.pl
