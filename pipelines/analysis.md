@@ -47,19 +47,12 @@ cat fc1.sis.ed fc1.prob.ed fc1.all.ed > fc1.tab.ed
 ```
 ## gfp_isoform.sh
 ```
-samtools view -h FC1new.gfp.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' > SRSF2.gfp.sam
-samtools view -h FC1new.nogfp.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' > SRSF2.nogfp.sam
-samtools view FC2new.gfp.bam 17:76734115-76737374|awk '$2==0||$2==16' >> SRSF2.gfp.sam
-samtools view FC2new.nogfp.bam 17:76734115-76737374|awk '$2==0||$2==16' >> SRSF2.nogfp.sam
-perl -ne '$b=0 if /^>/;$b=1 if /SRSF2/;print if $b' Homo_sapiens.GRCh38.cdna.all.fa > SRSF2.fa
-kallisto index -i SRSF2 SRSF2.fa
-grep -v '^@' SRSF2.gfp.sam|awk '{print "@"$1"\n"$10"\n+\n"$11}' > SRSF2.gfp.fq
+samtools view -h FC1new.bam 17:76734115-76737374|awk '/^@/||$2==0||$2==16' > SRSF2.FC1.sam
+grep -v '^@' SRSF2.FC1.sam|awk '{print "@"$1"\n"$10"\n+\n"$11}' > SRSF2.FC1.fq
 cat ../FC1.label ../FC2.label > label.pl
-for f in $(ls -1|awk 'length($0)==16 {print}');do kallisto quant --single -i SRSF2 -l 1000 -s 200 -o $f $f/seq.fq;done
-for f in $(ls -1|awk 'length($0)==16 {print}');do echo $f;grep ENST00000359995 $f/abundance.tsv|cut -f4;done > ../SRSF2-202
-for f in $(ls -1|awk 'length($0)==16 {print}');do echo $f;grep ENST00000392485 $f/abundance.tsv|cut -f4;done > ../SRSF2-203
-for f in $(ls -1|awk 'length($0)==16 {print}');do echo $f;grep ENST00000452355 $f/abundance.tsv|cut -f4;done > ../SRSF2-204
-for f in $(ls -1|awk 'length($0)==16 {print}');do echo $f;grep ENST00000585202 $f/abundance.tsv|cut -f4;done > ../SRSF2-208
+perl label.pl SRSF2.FC1.sam
+for f in $(ls -1 *.sam);do samtools view -bS $f > ${f%.*}.bam;samtools index ${f%.*}.bam;done
+for f in *.bam;do regtools junctions extract $f -s 0|intersectBed -a stdin -b as.bed -F 0.5;done
 ```
 ## fisher_test.r
 ```
@@ -392,11 +385,12 @@ $h{$t[0]}=$t[1]
 while(<>){chomp;
 next if /^@/;
 @t=split(/\t/);
-$h1{$h{$t[0]}}.="\@$t[0]\n$t[9]\n+\n$t[10]\n" if defined $h{$t[0]};
+$h1{$h{$t[0]}}.=$_
 }
 foreach(keys %h1){
 mkdir($_);
-open(F,">$_/seq.fq\n");
+open(F,">$_/seq.sam\n");
+print F "\@SQ\tSN:17\tLN:83257441\n";
 print F $h1{$_};
 close F;
 }
