@@ -389,7 +389,7 @@ $h1{$h{$t[0]}}.=$_
 }
 foreach(keys %h1){
 mkdir($_);
-open(F,">$_/seq.sam\n");
+open(F,">$_/seq.sam");
 print F "\@SQ\tSN:17\tLN:83257441\n";
 print F $h1{$_};
 close F;
