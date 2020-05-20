@@ -382,7 +382,7 @@ while(<DATA>){chomp;
 @t=split(/\t/);
 $h{$t[0]}=$t[1]
 }
-while(<>){chomp;
+while(<>){
 next if /^@/;
 @t=split(/\t/);
 $h1{$h{$t[0]}}.=$_
@@ -390,7 +390,7 @@ $h1{$h{$t[0]}}.=$_
 foreach(keys %h1){
 mkdir($_);
 open(F,">$_/seq.sam");
-print F "\@SQ\tSN:17\tLN:83257441\n";
+print F "\@SQ\tSN:17\tLN:83257441\n\@HD\tVN:1.3\tSO:coordinate\n";
 print F $h1{$_};
 close F;
 }
