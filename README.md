@@ -1,38 +1,39 @@
-# Singlesquare
+# ScNapBar
 
-Singlesquare is designed for cell barcode assignment from Nanopore sequencing data.
+ScNapBar is designed for cell barcode assignment from Nanopore sequencing data.
 It requires bam files from both Nanopore and Illumina reads, then builds a model based on the parameters estimated from the two libraries.
 
 # Installation:
 
 1. Most software dependecies are managed using **`conda`**. Please install as described at  <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 ```
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    bash Miniconda3-latest-Linux-x86_64.sh
-    bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+bash
 ```
-2. Download the files into folder named `single-cell-nanopore`. The program requires the **`NanoSim`** which should be installed first through **`conda`**
+2. Download the files into folder named `single-cell-nanopore`. The program requires the **`NanoSim`** and **`tbb`** which should be installed first through **`conda`**
 ```
-    conda install -c bioconda nanosim
-    git clone https://github.com/nanoporetech/single-cell-nanopore.git single-cell-nanopore
+conda install -c bioconda nanosim
+conda install -c conda-forge tbb tbb-devel 
+git clone https://github.com/nanoporetech/single-cell-nanopore.git single-cell-nanopore
 ```
 3. Change working directory into the new `single-cell-nanopore` folder 
 ```
-    cd single-cell-nanopore
+cd single-cell-nanopore
 ```
 
-4. Use these commands for building **`SingleCellPipe`**: 
+4. Use these commands for building **`ScNapBar`**: 
 ```
-    cmake .
-    make
+cmake .
+make
 ```
 5. Install conda software dependencies with
 ```
-    conda env create --name single-cell-nanopore --file environment.yaml
+conda env create --name single-cell-nanopore --file environment.yaml
 ```
 6. Initialise conda environment with 
 ```
-    conda activate single-cell-nanopore
+conda activate single-cell-nanopore
 ```
 
 # Quick run
