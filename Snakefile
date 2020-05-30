@@ -100,7 +100,7 @@ rule build_genome:
     polyTlength = config["polyTlength"]
   shell:
     """
-    samtools view {input} |perl -ne '@t=split(/\\t/);print ">",++$j,"\\n" if $i++%25e5==0;print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\\n" if /(TX|AN):Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > {output}
+    samtools view {input} |perl -ne '@t=split(/\\t/);next if length($t[9])<32;print ">",++$j,"\\n" if $i++%25e5==0;print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\\n" if /(TX|AN):Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > {output}
     samtools faidx {output}
     """
 
