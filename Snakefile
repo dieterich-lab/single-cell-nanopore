@@ -37,7 +37,7 @@ rule get_cbc:
     fa_barcode = dir_out + fa_barcode
   shell:
     """
-    zcat {input} | perl -ne 'print ">$1\n$1\n" if /^(\w+)/' > {output}
+    zcat {input} | perl -ne 'print ">$1\\n$1\\n" if /^(\\w+)/' > {output}
     """
 
 rule get_cbfreq:
@@ -47,7 +47,7 @@ rule get_cbfreq:
     reads_per_barcode = dir_out + "reads_per_barcode"
   shell:
     """
-    samtools view {input} | perl -ne 'print "$1\n" if /GN:Z:.*CB:Z:([ACGT]+)/' | sort | uniq -c > {output}
+    samtools view {input} | perl -ne 'print "$1\\n" if /GN:Z:.*CB:Z:([ACGT]+)/' | sort | uniq -c > {output}
     """
 
 rule find_dist:
@@ -100,7 +100,7 @@ rule build_genome:
     polyTlength = config["polyTlength"]
   shell:
     """
-    samtools view {input} |perl -ne '@t=split(/\t/);print ">",++$j,"\n" if $i++%25e5==0;print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\n" if /(TX|AN):Z:(\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > {output}
+    samtools view {input} |perl -ne '@t=split(/\\t/);print ">",++$j,"\\n" if $i++%25e5==0;print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\\n" if /(TX|AN):Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' > {output}
     samtools faidx {output}
     """
 
@@ -138,9 +138,9 @@ rule get_barcodes:
     barcode = dir_out + "sim_barcodes.txt"
   shell:
     """
-    perl -ne '$L=100;next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\t$d\t",$d+$L,"\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
+    perl -ne '$L=100;next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
-    perl -ne 'print "$1\t" if /^>(\w+):/;print substr($_,22,16),"\n" unless /^>/' {input.sim}.fa > {output}
+    perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,22,16),"\\n" unless /^>/' {input.sim}.fa > {output}
     """
 
 rule run_pipe:
