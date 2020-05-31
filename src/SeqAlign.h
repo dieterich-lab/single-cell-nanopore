@@ -3,6 +3,7 @@
 #ifndef FLEXBAR_SEQALIGN_H
 #define FLEXBAR_SEQALIGN_H
 
+#include <algorithm>
 #include <assert.h>
 
 tbb::mutex ouputMutex;
@@ -541,8 +542,6 @@ public:
                 int barcodeStartOffset = (trimEnd == RTAIL  || trimEnd == RIGHT) ? (am.endPosS - am.endPosA) : am.startPosA;
                 int barcodeLength = am.endPosA - am.startPosA + am.gapsR;
 		int umiLength = m_barcode_umi_length - prefixPolyT - barcodeLength;
-		umiLength = umiLength < 0 ? 0 : umiLength;
-		umiLength = am.endPosA + umiLength < length(seqRead.seq) ? umiLength : length(seqRead.seq) - am.endPosA;
 
 //                 std::cout << am.gapsR  << "\t" << am.gapsA << "\n";
 //                 std::cout << barcodeLength << "\t" << am.startPosS  << "\t" << am.endPosS  << "\t" << am.startPosA << "\t" << am.endPosA << "\n";
@@ -557,7 +556,7 @@ public:
                 else
                     s << "no";
                 
-		s << "\t" << infix(seqRead.seq, am.endPosA, am.endPosA + umiLength) << "\n";
+		s << "\t" << infix(seqReadTmp.seq, 0, std::min(10,(int)length(seqReadTmp.seq))) << "\n";
             }
 
 				if(i == qIndex_v.size() - 1 || !m_logEverything){
