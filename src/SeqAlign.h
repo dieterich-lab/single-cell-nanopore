@@ -3,7 +3,6 @@
 #ifndef FLEXBAR_SEQALIGN_H
 #define FLEXBAR_SEQALIGN_H
 
-#include <algorithm>
 #include <assert.h>
 
 tbb::mutex ouputMutex;
@@ -556,7 +555,10 @@ public:
                 else
                     s << "no";
                 
-		s << "\t" << infix(seqReadTmp.seq, m_keepbp, m_keepbp + std::min(10,(int)length(seqReadTmp.seq)-m_keepbp)) << "\n";
+                if(length(seqReadTmp.seq) >= m_keepbp + 10)
+                    s << "\t" << infix(seqReadTmp.seq, m_keepbp, m_keepbp + 10) << "\n";
+                else
+                    s << "\t" << "0\n";
             }
 
 				if(i == qIndex_v.size() - 1 || !m_logEverything){
