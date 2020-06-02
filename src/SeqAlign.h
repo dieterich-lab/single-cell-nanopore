@@ -556,7 +556,7 @@ public:
                 else
                     s << "no";
                 
-		s << "\t" << infix(seqReadTmp.seq, 0, std::min(10,(int)length(seqReadTmp.seq))) << "\n";
+		s << "\t" << infix(seqReadTmp.seq, m_keepbp, m_keepbp + std::min(10,(int)length(seqReadTmp.seq))) << "\n";
             }
 
 				if(i == qIndex_v.size() - 1 || !m_logEverything){
