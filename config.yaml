@@ -14,6 +14,9 @@ nanopore_fq: "Nanopore.fq"
 barcode: "barcodes.tsv.gz"
 adapter: "CTACACGACGCTCTTCCGATCT"
 polyTlength: 20
+cdnalength: 32
+umilength: 10
+barcodelength: 16
 numSimReads: 1000
 cutoff: 30
 threads: 8
