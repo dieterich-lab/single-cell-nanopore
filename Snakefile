@@ -13,6 +13,8 @@ ref_genome = config["reference_genome"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
+adapterlength = len(config["adapter"])
+simreadlength = adapterlength + config["barcodelength"] + config["umilength"] + config["polyTlength"] + config["cdnalength"]
 _nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
 fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
@@ -136,9 +138,11 @@ rule get_barcodes:
     fa_sim = dir_out + "genome.fa"
   output:
     barcode = dir_out + "sim_barcodes.txt"
+  params:
+    readlen = simreadlength,
   shell:
     """
-    perl -ne '$L=100;next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
+    perl -ne '$L={params.simreadlength};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
     perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,22,16),"\\n" unless /^>/' {input.sim}.fa > {output}
     """
