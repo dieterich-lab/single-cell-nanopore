@@ -99,10 +99,11 @@ rule build_genome:
     fa_sim = dir_out + "genome.fa"
   params:
     adapter = config["adapter"],
+    cdnalength = config["cdnalength"],
     polyTlength = config["polyTlength"]
   shell:
     """
-    samtools view {input} |perl -ne '@t=split(/\\t/);next if length($t[9])<32;print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/(TX|AN):Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,32),"\\n";$i++}' > {output}
+    samtools view {input} |perl -ne '@t=split(/\\t/);next if length($t[9])<{params.cdnalength};print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/(TX|AN):Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,{params.cdnalength}),"\\n";$i++}' > {output}
     samtools faidx {output}
     """
 
@@ -126,9 +127,12 @@ rule build_align:
   output:
     fa = dir_out + "sim_test.fa",
     bam = dir_out + "sim_test.bam"
+  params:
+    readlen = simreadlength,
+    cdnalength = config["cdnalength"]
   shell:
     """
-    perl pipelines/get_firstread.pl {input} > {output.fa}
+    perl -ne '$L={params.readlen};chomp;if (/^>/){$id=$_}else{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq "R"){$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}$s=substr($s,$d,$t[6]);print $id,"\\n",$t[6]>$L?substr($s,$L-$t[1]%$L,$L-{params.cdnalength}):$s,"\\n"}' {input} > {output.fa}
     perl pipelines/fa2sam.pl {output.fa}|samtools view -bS > {output.bam}
     """
 
@@ -139,10 +143,10 @@ rule get_barcodes:
   output:
     barcode = dir_out + "sim_barcodes.txt"
   params:
-    readlen = simreadlength,
+    readlen = simreadlength
   shell:
     """
-    perl -ne '$L={params.simreadlength};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
+    perl -ne '$L={params.readlen};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
     perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,22,16),"\\n" unless /^>/' {input.sim}.fa > {output}
     """
