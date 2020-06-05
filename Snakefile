@@ -13,8 +13,7 @@ ref_genome = config["reference_genome"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
-adapterlength = len(config["adapter"])
-simreadlength = adapterlength + config["barcodelength"] + config["umilength"] + config["polyTlength"] + config["cdnalength"]
+simreadlength = len(config["adapter"]) + config["barcodelength"] + config["umilength"] + config["polyTlength"] + config["cdnalength"]
 _nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
 fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
@@ -126,14 +125,16 @@ rule build_align:
     sim = dir_out + "sim_reads.fasta"
   output:
     fa = dir_out + "sim_test.fa",
+    fq = dir_out + "sim_test.fq",
     bam = dir_out + "sim_test.bam"
   params:
     readlen = simreadlength,
     cdnalength = config["cdnalength"]
   shell:
     """
-    perl -ne '$L={params.readlen};chomp;if (/^>/){$id=$_}else{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq "R"){$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}$s=substr($s,$d,$t[6]);print $id,"\\n",$t[6]>$L?substr($s,$L-$t[1]%$L,$L-{params.cdnalength}):$s,"\\n"}' {input} > {output.fa}
-    perl pipelines/fa2sam.pl {output.fa}|samtools view -bS > {output.bam}
+    perl -ne '$L={params.readlen};chomp;if (/^>/){{$id=$_}}else{{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq "R"){{$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}}$s=substr($s,$d,$t[6]);print $id,"\\n",$t[6]>$L?substr($s,$L-$t[1]%$L,$L):$s,"\\n"}}' {input} > {output.fa}
+    perl -ne 'chomp;print "\\@SQ\\tSN:1\\tLN:100\\n" unless defined $b;$b=/^>/;$l=length($_);$q="I"x$l;print substr($_,1),"\\t" if $b;print "0\\t1\\t21\\t31\\t${{l}}S\\t*\\t0\\t0\\t$_\\t$q\\n" unless $b' {output.fa}|samtools view -bS > {output.bam}
+    perl -ne 'if(/^>/){{print "@",substr($_,1)}}else{{chomp;print "$_\\n+\\n","I"x length($_),"\\n"}}' {output.fa} > {output.fq}
     """
 
 rule get_barcodes:
@@ -141,14 +142,19 @@ rule get_barcodes:
     sim = dir_out + "sim_reads.fasta",
     fa_sim = dir_out + "genome.fa"
   output:
-    barcode = dir_out + "sim_barcodes.txt"
+    barcode = dir_out + "sim_barcodes.txt",
+    umi = dir_out + "sim_umi.txt"
   params:
-    readlen = simreadlength
+    readlen = simreadlength,
+    adapterlength = len(config["adapter"]),
+    umilength = config["umilength"],
+    barcodelength = config["barcodelength"]
   shell:
     """
     perl -ne '$L={params.readlen};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
-    perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,22,16),"\\n" unless /^>/' {input.sim}.fa > {output}
+    perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,{params.adapterlength},{params.barcodelength}),"\\n" unless /^>/' {input.sim}.fa > {output.barcode}
+    perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,{params.adapterlength}+{params.barcodelength},{params.umilength}),"\\n" unless /^>/' {input.sim}.fa > {output.umi}
     """
 
 rule run_pipe:
