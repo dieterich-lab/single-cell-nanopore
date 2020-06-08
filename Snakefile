@@ -48,7 +48,7 @@ rule get_cbfreq:
     reads_per_barcode = dir_out + "reads_per_barcode"
   shell:
     """
-    samtools view {input} | perl -ne 'print "$1\\n" if /GN:Z:.*CB:Z:([ACGT]+)/' | sort | uniq -c > {output}
+    perl -ne 'print "$1\\n" if /GN:Z:.*CB:Z:([ACGT]+)/' {input} | sort | uniq -c > {output}
     """
 
 rule find_dist:
@@ -91,6 +91,21 @@ rule build_nanosim:
     read_analysis.py genome -i {input.fq} -ga {input.genome_alignment} -t {threads} -o {dir_out}nanosim_model/sim
     """
 
+rule build_illumina:
+  input:
+    barcode = dir_in + config["barcode"],
+    feature = dir_in + config["feature"],
+    matrix  = dir_in + config["matrix"],
+  output:
+    bam = dir_in + bam_illumina
+  params:
+    umilength = config["umilength"],
+    nreads = 1000000
+  shell:
+    """
+    python pipelines/simreads.py {input.barcode} {input.feature} {input.matrix} {params.nreads} {params.umilength}|samtools view -bS > {output}
+    """
+
 rule build_genome:
   input:
     bam = dir_in + bam_illumina
@@ -102,7 +117,7 @@ rule build_genome:
     polyTlength = config["polyTlength"]
   shell:
     """
-    samtools view {input} |perl -ne '@t=split(/\\t/);next if length($t[9])<{params.cdnalength};print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/(TX|AN):Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,{params.cdnalength}),"\\n";$i++}' > {output}
+    perl -ne '@t=split(/\\t/);next if length($t[9])<{params.cdnalength};print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/GN:Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,{params.cdnalength}),"\\n";$i++}' {input} > {output}
     samtools faidx {output}
     """
 
@@ -133,7 +148,7 @@ rule build_align:
   shell:
     """
     perl -ne '$L={params.readlen};chomp;if (/^>/){{$id=$_}}else{{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq "R"){{$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}}$s=substr($s,$d,$t[6]);print $id,"\\n",$t[6]>$L?substr($s,$L-$t[1]%$L,$L):$s,"\\n"}}' {input} > {output.fa}
-    perl -ne 'chomp;print "\\@SQ\\tSN:1\\tLN:100\\n" unless defined $b;$b=/^>/;$l=length($_);$q="I"x$l;print substr($_,1),"\\t" if $b;print "0\\t1\\t21\\t31\\t${{l}}S\\t*\\t0\\t0\\t$_\\t$q\\n" unless $b' {output.fa}|samtools view -bS > {output.bam}
+    perl -ne 'chomp;print "\\@SQ\\tSN:15\\tLN:101991189\\n" unless defined $b;$b=/^>/;$l=length($_);$q="I"x$l;$s=substr($_,1) if $b;$l2=$l-{params.cdnalength};print "$s\\t0\\t15\\t69452800\\t31\\t${{l2}}S{params.cdnalength}M\\t*\\t0\\t0\\t$_\\t$q\\n" if $l=={params.readlen} and !$b' {output.fa}|samtools view -bS > {output.bam}
     perl -ne 'if(/^>/){{print "@",substr($_,1)}}else{{chomp;print "$_\\n+\\n","I"x length($_),"\\n"}}' {output.fa} > {output.fq}
     """
 
