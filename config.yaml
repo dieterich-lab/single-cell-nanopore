@@ -9,9 +9,11 @@ pipeline: "Singlesquare"
 reference_genome: "GRCh38_90.fa"
 
 # Cell Ranger alignment ouput
+barcode: "barcodes.tsv.gz"
+feature: "features.tsv.gz"
+matrix:  "matrix.mtx.gz"
 illumina_bam: "possorted_genome_bam.bam"
 nanopore_fq: "Nanopore.fq"
-barcode: "barcodes.tsv.gz"
 adapter: "CTACACGACGCTCTTCCGATCT"
 polyTlength: 20
 cdnalength: 32
@@ -20,4 +22,4 @@ barcodelength: 16
 numSimReads: 1000
 cutoff: 30
 threads: 8
-
+cdnaseq: "GCCTGGCTTGTTTGCAAAGGCCCTGGCCAACGTCAACATTGGGAGCCTCATCTGCAATGTAGGGGCCGGTGGACCTGCTCCAGCAGCTGG"
