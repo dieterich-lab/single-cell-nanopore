@@ -114,10 +114,11 @@ rule build_genome:
   params:
     adapter = config["adapter"],
     cdnalength = config["cdnalength"],
+    cdnaseq = config["cdnaseq"][:config["cdnalength"]],
     polyTlength = config["polyTlength"]
   shell:
     """
-    perl -ne '@t=split(/\\t/);next if length($t[9])<{params.cdnalength};print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/GN:Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){print "{params.adapter}$3$4","T"x{params.polyTlength},substr($t[9],0,{params.cdnalength}),"\\n";$i++}' {input} > {output}
+    perl -ne '@t=split(/\\t/);print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/GN:Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){{print "{params.adapter}$2$3","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' {input} > {output}
     samtools faidx {output}
     """
 
