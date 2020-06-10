@@ -12,6 +12,7 @@ col = ind[1]
 v = len(ind[0])
 n = int(sys.argv[4])
 l = int(sys.argv[5])
+s = sys.argv[6]
 
 name_file = gzip.open(sys.argv[1], 'rt')
 cell_names = name_file.read()
@@ -29,4 +30,5 @@ i = np.random.choice(np.arange(v), n, replace=False, p=mat.data/sum(mat.data))
 c = np.array('ATGC', dtype='c')
 d = np.random.rand(n,l)*4
 umi = [a.tostring().decode("utf-8") for a in c[d.astype(int)]]
-pd.DataFrame({'GN':[a for a in features[row[i]]],'CB':[a for a in cell_names[col[i]]],'UB':['UB:Z:'+(a) for a in umi]}).to_csv(sys.argv[6], header=False, index=False, sep="\t")
+print('\t'.join(['@SQ','SN:15','LN:101991189']))
+pd.DataFrame({'QNAME':list(range(n)), 'FLAG':[0]*n, 'RNAME':[15]*n, 'POS':[69453703]*n, 'MAPQ':[255]*n, 'CIGAR':[len(s)+'M']*n, 'RNEXT':['*']*n, 'PNEXT':[0]*n, 'TLEN':[0]*n, 'SEQ':[s]*n, 'QUAL':['F'*len(s)]*n, 'GN':[a for a in features[row[i]]],'CB':[a for a in cell_names[col[i]]],'UB':['UB:Z:'+(a) for a in umi]}).to_csv(sys.stdout, header=False, index=False, sep="\t")
