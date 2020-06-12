@@ -16,7 +16,7 @@ feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "ba
 
 # Simulated reads
 ## Benchmarking
-```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=6}
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=6}
 v = seq(0,100)
 t1=read.table(args$sim_barcodes)
 m =read.table(args$sim_pred, header=TRUE)
@@ -48,7 +48,7 @@ ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scal
 
 # Nanopore reads
 ## Feature distributions
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
 x=read.table(args$real_pred,header=TRUE)
 df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>30)+1],melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
