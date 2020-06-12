@@ -137,41 +137,49 @@ rule sim_reads:
     cat {dir_out}sim_aligned_reads.fasta {dir_out}sim_unaligned_reads.fasta > {output}
     """
 
-rule build_align:
+rule build_test:
   input:
     sim = dir_out + "sim_reads.fasta"
   output:
-    fa = dir_out + "sim_test.fa",
-    fq = dir_out + "sim_test.fq",
-    bam = dir_out + "sim_test.bam"
+    fa = dir_out + "sim_test.fa"
   params:
     readlen = simreadlength,
     cdnalength = config["cdnalength"]
   shell:
     """
     perl -ne '$L={params.readlen};chomp;if (/^>/){{$id=$_}}else{{@t=split(/_/,$id);$s=$_;$d=$t[5];if ($t[4] eq "R"){{$s=reverse $s;$s=~tr/ATGCatgc/TACGtacg/;$d=$t[7]}}$s=substr($s,$d,$t[6]);print $id,"\\n",$t[6]>$L?substr($s,$L-$t[1]%$L,$L):$s,"\\n"}}' {input} > {output.fa}
-    perl -ne 'chomp;print "\\@SQ\\tSN:15\\tLN:101991189\\n" unless defined $b;$b=/^>/;$l=length($_);$q="I"x$l;$s=substr($_,1) if $b;$l2=$l-{params.cdnalength};print "$s\\t0\\t15\\t69452800\\t31\\t${{l2}}S{params.cdnalength}M\\t*\\t0\\t0\\t$_\\t$q\\n" if $l=={params.readlen} and !$b' {output.fa} | samtools view -bS > {output.bam}
-    perl -ne 'if(/^>/){{print "@",substr($_,1)}}else{{chomp;print "$_\\n+\\n","I"x length($_),"\\n"}}' {output.fa} > {output.fq}
+    """
+
+rule build_align:
+  input:
+    sim = dir_out + "sim_test.fa",
+    barcode = dir_out + "sim_barcodes.txt"
+  output:
+    bam = dir_out + "sim_test.bam"
+  params:
+    readlen = simreadlength,
+    cdnalength = config["cdnalength"]
+  shell:
+    """
+    perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} | samtools view -bS > {output}
     """
 
 rule get_barcodes:
   input:
+    bam = dir_in + bam_illumina,
     sim = dir_out + "sim_reads.fasta",
     fa_sim = dir_out + "genome.fa"
   output:
-    barcode = dir_out + "sim_barcodes.txt",
-    umi = dir_out + "sim_umi.txt"
+    barcode = dir_out + "sim_barcodes.txt"
   params:
     readlen = simreadlength,
     adapterlength = len(config["adapter"]),
-    umilength = config["umilength"],
-    barcodelength = config["barcodelength"]
+    barumilength = config["barcodelength"] + config["umilength"]
   shell:
     """
     perl -ne '$L={params.readlen};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
-    perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,{params.adapterlength},{params.barcodelength}),"\\n" unless /^>/' {input.sim}.fa > {output.barcode}
-    perl -ne 'print "$1\\t" if /^>(\\w+):/;print substr($_,{params.adapterlength}+{params.barcodelength},{params.umilength}),"\\n" unless /^>/' {input.sim}.fa > {output.umi}
+    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barumilength} {params.readlen} > {output}
     """
 
 rule run_pipe:
