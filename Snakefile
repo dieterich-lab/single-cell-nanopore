@@ -235,6 +235,18 @@ rule build_model:
     Rscript pipelines/build_model.r {input} {output}
     """
 
+rule sim_pred:
+  input:
+    model = dir_out + "sim.model.rda",
+    tab = dir_out + "sim.tab1",
+    reads_per_barcode = dir_out + "reads_per_barcode"
+  output:
+    prob = dir_out + "sim.prob"
+  shell:
+    """
+    Rscript pipelines/pred.r {input.model} {input.tab} {input.reads_per_barcode} {output}
+    """
+
 rule run_pred:
   input:
     model = dir_out + "sim.model.rda",
@@ -257,4 +269,16 @@ rule filter_pred:
   shell:
     """
     awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
+    """
+
+rule report:
+  input:
+    sprob = dir_out + "sim.prob",
+    rprob = dir_out + "real.prob",
+    barcode = dir_out + "sim_barcodes.txt"
+  output:
+    file = dir_out + "report.pdf"
+  shell:
+    """
+    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.sprob} ../{input.rprob}
     """
