@@ -31,4 +31,4 @@ c = np.array('ATGC', dtype='c')
 d = np.random.rand(n,l)*4
 umi = [a.tostring().decode("utf-8") for a in c[d.astype(int)]]
 print('\t'.join(['@SQ','SN:15','LN:101991189']))
-pd.DataFrame({'QNAME':list(range(n)), 'FLAG':[0]*n, 'RNAME':[15]*n, 'POS':[69453703]*n, 'MAPQ':[255]*n, 'CIGAR':[str(len(s))+'M']*n, 'RNEXT':['*']*n, 'PNEXT':[0]*n, 'TLEN':[0]*n, 'SEQ':[s]*n, 'QUAL':[s]*n, 'GN':[a for a in features[row[i]]],'CB':[a for a in cell_names[col[i]]],'UB':['UB:Z:'+(a) for a in umi]}).to_csv(sys.stdout, header=False, index=False, sep="\t")
+pd.DataFrame({'QNAME':list(range(n)), 'FLAG':[0]*n, 'RNAME':[15]*n, 'POS':[69453703]*n, 'MAPQ':[255]*n, 'CIGAR':['100M10I']*n, 'RNEXT':['*']*n, 'PNEXT':[0]*n, 'TLEN':[0]*n, 'SEQ':[s]*n, 'QUAL':[s]*n, 'CS':['CS:Z:*']*n, 'CQ':['CQ:Z:*']*n, 'GN':[a for a in features[row[i]]],'CB':[a for a in cell_names[col[i]]],'UB':['UB:Z:'+(a) for a in umi]}).to_csv(sys.stdout, header=False, index=False, sep="\t")
