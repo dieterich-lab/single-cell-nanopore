@@ -1,0 +1,55 @@
+---
+title: "ScNapBar results"
+output: pdf_document
+fontsize: 12pt
+---
+```{r global_options, include=FALSE}
+Sys.setlocale("LC_NUMERIC","C")
+options(stringsAsFactors = FALSE)
+args = commandArgs(trailingOnly=TRUE)
+library(reshape2)
+library(ggplot2)
+names(args)=c('sim_barcodes','sim_pred','real_pred')
+args = as.list(args)
+feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "barcode_mismatch", "umi_length", "polyT_length")
+```
+
+# Simulated reads
+## Benchmarking
+```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=6}
+v = seq(0,100)
+t1=read.table(args$sim_barcodes)
+m =read.table(args$sim_pred, header=TRUE)
+df=do.call(rbind,lapply(v,function(d) {
+t2=m[m[,15]>d,1:2]
+i=match(t1[,1], t2[,1])
+pred=as.integer(is.na(t2[i,2]))
+fal=t2[i,2]!=t1[,3]
+fal[is.na(fal)]=FALSE
+unal=grepl('_unal',t1[,1])
+gtruth=as.integer(unal | fal)
+res=caret::confusionMatrix(factor(pred), factor(gtruth))
+c(res$overall,res$byClass)[c(1,8,9,12,14)]
+}))
+rownames(df)=v
+df=df[!is.na(df[,4]),]
+df=melt(df)
+colnames(df)[2]='Measures'
+ggplot(df,aes(Var1,value,col=Measures))+geom_line()+geom_vline(xintercept=35, linetype=4)+
+labs(x='Predicted probability cutoff',y='Scores')
+```
+
+## Feature distributions
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
+x=read.table(args$sim_pred,header=TRUE)
+df=data.frame(assignment=c('wrong','correct')[as.integer(x$pred>30)+1],melt(x[,feat],id.vars=NULL))
+ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
+```
+
+# Nanopore reads
+## Feature distributions
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=5}
+x=read.table(args$real_pred,header=TRUE)
+df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>30)+1],melt(x[,feat],id.vars=NULL))
+ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
+```
