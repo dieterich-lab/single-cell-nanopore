@@ -10,7 +10,7 @@ args = commandArgs(trailingOnly=TRUE)
 library(reshape2)
 library(ggplot2)
 library(knitr)
-names(args)=c('sim_barcodes','sim_label','sim_prob','real_prob','cutoff','sis_pred')
+names(args)=c('sim_barcodes','sim_label','sim_prob','real_prob','real_log','cutoff','sis_pred')
 args = as.list(args)
 args$cutoff=as.integer(args$cutoff)
 feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "barcode_mismatch", "umi_length", "polyT_length")
@@ -48,7 +48,7 @@ unal=grepl('_unal',t1[,1])
 gtruth=as.integer(unal | fal)
 res=caret::confusionMatrix(factor(pred), factor(gtruth))
 colnames(res$table)=rownames(res$table)=c('P','N')
-kable(res$table, caption='Confusion matrix')
+kable(res$table, format = "pandoc", caption='Confusion matrix')
 ```
 
 ## Feature distributions
@@ -66,6 +66,16 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 ```
 
 # Nanopore reads
+## Number of reads each step
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=5}
+x=read.table(args$real_log,sep='\t')
+a=system('wc -l analysis/real.label',intern=TRUE)
+x[nrow(x)+1,]=c('Assigned to barcode', gsub('[^0-9]', '', a))
+x[,2]=as.integer(x[,2])
+x$Steps=factor(x[,1],levels=rev(x[,1]))
+p=ggplot(x, aes(x=Steps, y=V2)) + geom_bar(stat="identity", position=position_dodge(), fill = "#ffff99") +coord_flip()+ labs(x="Processing steps", y="Number of simulated reads")+geom_text(aes(label=V2), position=position_dodge(width=0.9), hjust=1)
+```
+
 ## Feature distributions
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6}
 x=read.table(args$real_prob,header=TRUE)
