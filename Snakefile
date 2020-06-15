@@ -203,14 +203,22 @@ rule run_pipe2:
     barcode = dir_out + 'whitelist.fa',
     bam = dir_out + _nanopore + '.bam'
   output:
-    tab = dir_out + "real.tab"
+    tab = dir_out + "real.tab",
+    log = dir_out + "real.log"
   params:
     adapter = config["adapter"],
+    barumilength = config["barcodelength"] + config["umilength"],
     prefix = "real"
   shell:
     """
-    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
-    awk '$2!="NA" || NR==1' {params.prefix}.tab > {output}
+    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb 3 -fl 100
+    awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
+    printf "Aligned to genome\t" > {output.log}
+    cut -f1 {params.prefix}.tab|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
+    printf "Aligned to adapter\t" >> {output.log}
+    awk '$3=="no"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
+    printf "Aligned to barcode\t" >> {output.log}
+    awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
     """
 
