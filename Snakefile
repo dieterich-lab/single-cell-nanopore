@@ -259,7 +259,19 @@ rule run_pred:
     Rscript pipelines/pred.r {input.model} {input.tab} {input.reads_per_barcode} {output}
     """
 
-rule filter_pred:
+rule filter_sim:
+  input:
+    prob = dir_out + "sim.prob"
+  output:
+    label = dir_out + "sim.label"
+  params:
+    cutoff = config["cutoff"],
+  shell:
+    """
+    awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
+    """
+
+    rule filter_pred:
   input:
     prob = dir_out + "real.prob"
   output:
@@ -273,6 +285,7 @@ rule filter_pred:
 
 rule report:
   input:
+    slabel= dir_out + "sim.label",
     sprob = dir_out + "sim.prob",
     rprob = dir_out + "real.prob",
     barcode = dir_out + "sim_barcodes.txt"
@@ -282,5 +295,5 @@ rule report:
     cutoff = config["cutoff"],
   shell:
     """
-    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.sprob} ../{input.rprob} {params.cutoff} null
+    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.slabel} ../{input.sprob} ../{input.rprob} {params.cutoff} null
     """
