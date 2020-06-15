@@ -11,7 +11,9 @@ library(reshape2)
 library(ggplot2)
 names(args)=c('sim_barcodes','sim_label','sim_prob','real_pred','cutoff','sis_pred')
 args = as.list(args)
+args$cutoff=as.integer(args$cutoff)
 feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "barcode_mismatch", "umi_length", "polyT_length")
+nfeat=length(feat)
 ```
 
 # Simulated reads
@@ -42,7 +44,7 @@ labs(x='Predicted probability cutoff',y='Scores')
 ## Feature distributions
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
 x=read.table(args$sim_prob,header=TRUE)
-df=data.frame(assignment=c('wrong','correct')[as.integer(x$pred>args$cutoff)+1],melt(x[,feat],id.vars=NULL))
+df=data.frame(assignment=rep(c('wrong','correct')[as.integer(x$pred>args$cutoff)+1],nfeat),melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
 
@@ -55,13 +57,13 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 
 # Nanopore reads
 ## Feature distributions
-```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, fig.width=8, fig.height=6}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6}
 x=read.table(args$real_pred,header=TRUE)
-df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>args$cutoff)+1],melt(x[,feat],id.vars=NULL))
+df=data.frame(assignment=rep(c('unassigned','assigned')[as.integer(x$pred>args$cutoff)+1],nfeat),melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
 
-```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, fig.width=8, fig.height=6}
+```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6}
 x=read.table(args$sis_pred,header=TRUE)
 df=data.frame(assignment=c('Not found by Sicelore','Same with Sicelore','Diff. with Sicelore')[x$X.1+2],melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")+ labs(x='Feature distributions compared with Sicelore')

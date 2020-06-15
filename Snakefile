@@ -295,5 +295,5 @@ rule report:
     cutoff = config["cutoff"],
   shell:
     """
-    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.slabel} ../{input.sprob} ../{input.rprob} {params.cutoff} null
+    Rscript -e 'rmarkdown::render("report.rmd",output_file="{output}")' {input.barcode} {input.slabel} {input.sprob} {input.rprob} {params.cutoff} null
     """
