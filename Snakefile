@@ -294,8 +294,10 @@ rule filter_pred:
 rule report:
   input:
     slabel= dir_out + "sim.label",
+    rlabel= dir_out + "real.label",
     sprob = dir_out + "sim.prob",
     rprob = dir_out + "real.prob",
+    rlog  = dir_out + "real.log",
     barcode = dir_out + "sim_barcodes.txt"
   output:
     file = dir_out + "report.pdf"
@@ -303,5 +305,5 @@ rule report:
     cutoff = config["cutoff"],
   shell:
     """
-    Rscript -e 'rmarkdown::render("report.rmd",output_file="{output}")' {input.barcode} {input.slabel} {input.sprob} {input.rprob} {params.cutoff} null
+    Rscript -e 'rmarkdown::render("report.rmd",output_file="{output}")' {input.barcode} {input.slabel} {input.sprob} {input.rlabel} {input.rprob} {input.rlog} {params.cutoff} null
     """
