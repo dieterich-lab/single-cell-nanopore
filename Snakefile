@@ -265,19 +265,19 @@ rule filter_sim:
   output:
     label = dir_out + "sim.label"
   params:
-    cutoff = config["cutoff"],
+    cutoff = config["cutoff"]
   shell:
     """
     awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
     """
 
-    rule filter_pred:
+rule filter_pred:
   input:
     prob = dir_out + "real.prob"
   output:
     label = dir_out + "real.label"
   params:
-    cutoff = config["cutoff"],
+    cutoff = config["cutoff"]
   shell:
     """
     awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2,15 > {output}
