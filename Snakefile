@@ -268,7 +268,7 @@ rule filter_pred:
     cutoff = config["cutoff"],
   shell:
     """
-    awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2 > {output}
+    awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2,15 > {output}
     """
 
 rule report:
@@ -282,5 +282,5 @@ rule report:
     cutoff = config["cutoff"],
   shell:
     """
-    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.sprob} ../{input.rprob} {params.cutoff}
+    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.sprob} ../{input.rprob} {params.cutoff} null
     """
