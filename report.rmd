@@ -67,7 +67,7 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 
 # Nanopore reads
 ## Number of reads each step
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=5}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=4}
 x=read.table(args$real_log,sep='\t')
 a=system(paste0('wc -l ',args$real_label),intern=TRUE)
 x[nrow(x)+1,]=c('Assigned to barcode', gsub('[^0-9]', '', a))
