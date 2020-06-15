@@ -278,7 +278,9 @@ rule report:
     barcode = dir_out + "sim_barcodes.txt"
   output:
     file = dir_out + "report.pdf"
+  params:
+    cutoff = config["cutoff"],
   shell:
     """
-    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.sprob} ../{input.rprob}
+    Rscript -e 'rmarkdown::render("pipelines/report.rmd",output_file="../{output}")' ../{input.barcode} ../{input.sprob} ../{input.rprob} {params.cutoff}
     """
