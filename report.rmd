@@ -10,7 +10,7 @@ args = commandArgs(trailingOnly=TRUE)
 library(reshape2)
 library(ggplot2)
 library(knitr)
-names(args)=c('sim_barcodes','sim_label','sim_prob','real_prob','real_log','cutoff','sis_pred')
+names(args)=c('sim_barcodes','sim_label','sim_prob','real_label','real_prob','real_log','cutoff','sis_pred')
 args = as.list(args)
 args$cutoff=as.integer(args$cutoff)
 feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "barcode_mismatch", "umi_length", "polyT_length")
@@ -69,7 +69,7 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 ## Number of reads each step
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=5}
 x=read.table(args$real_log,sep='\t')
-a=system('wc -l analysis/real.label',intern=TRUE)
+a=system(paste0('wc -l ',args$real_label),intern=TRUE)
 x[nrow(x)+1,]=c('Assigned to barcode', gsub('[^0-9]', '', a))
 x[,2]=as.integer(x[,2])
 x$Steps=factor(x[,1],levels=rev(x[,1]))
