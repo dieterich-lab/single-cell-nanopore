@@ -18,7 +18,7 @@ feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "ba
 
 # Simulated reads
 ## Benchmarking
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4}
+```{r, eval=TRUE, echo=FALSE, cache=TRUE, cache.lazy=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4}
 v = seq(0,100)
 t1=read.table(args$sim_barcodes)
 m =read.table(args$sim_label, header=TRUE)
@@ -48,7 +48,7 @@ unal=grepl('_unal',t1[,1])
 gtruth=as.integer(unal | fal)
 res=caret::confusionMatrix(factor(pred), factor(gtruth))
 colnames(res$table)=rownames(res$table)=c('P','N')
-kable(res$table, format = "pandoc", caption='Confusion matrix')
+kable(res$table, format='pandoc', caption='Confusion matrix')
 ```
 
 ## Feature distributions
@@ -73,7 +73,7 @@ a=system(paste0('wc -l ',args$real_label),intern=TRUE)
 x[nrow(x)+1,]=c('Assigned to barcode', gsub('[^0-9]', '', a))
 x[,2]=as.integer(x[,2])
 x$Steps=factor(x[,1],levels=rev(x[,1]))
-p=ggplot(x, aes(x=Steps, y=V2)) + geom_bar(stat="identity", position=position_dodge(), fill = "#ffff99") +coord_flip()+ labs(x="Processing steps", y="Number of simulated reads")+geom_text(aes(label=V2), position=position_dodge(width=0.9), hjust=1)
+ggplot(x, aes(x=Steps, y=V2)) + geom_bar(stat="identity", position=position_dodge(), fill = "#ffff99") +coord_flip()+ labs(x="Processing steps", y="Number of simulated reads")+geom_text(aes(label=V2), position=position_dodge(width=0.9), hjust=1)
 ```
 
 ## Feature distributions
