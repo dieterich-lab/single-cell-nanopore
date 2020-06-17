@@ -3,6 +3,7 @@ title: "ScNapBar results"
 output: pdf_document
 fontsize: 12pt
 ---
+
 ```{r global_options, include=FALSE}
 Sys.setlocale("LC_NUMERIC","C")
 options(stringsAsFactors = FALSE)
@@ -15,6 +16,7 @@ args = as.list(args)
 args$cutoff=as.integer(args$cutoff)
 feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "barcode_mismatch", "umi_length", "polyT_length")
 ```
+
 ScNapBar outputs the probability scores for each barcode alignment which allow user to select cutoffs according to their preferences on sensitivity and specificity. In Figure \ref{fig:simbench} we see the performance metrics of the simulated reads and the selected cutoff.
 
 # Simulated reads
@@ -51,6 +53,7 @@ res=caret::confusionMatrix(factor(pred), factor(gtruth))
 colnames(res$table)=rownames(res$table)=c('P','N')
 kable(res$table, format='pandoc', caption='Confusion matrix')
 ```
+
 ScNapBar does supervised learning using the features from adapter and barcode sequences alignments. We label them as correct or wrong assignment from the simulated reads (Figure \ref{fig:simfeat}), and train the model based on that. 
 
 ## Feature distributions
@@ -73,6 +76,7 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 ## Number of reads each step
 
 In Figure \ref{fig:realcount} we see the number of reads left in each step of ScNapBar.
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=5, fig.cap="\\label{fig:realcount}Number of Nanopore reads each step"}
 x=read.table(args$real_log,sep='\t')
 a=system(paste0('wc -l ',args$real_label),intern=TRUE)
@@ -92,6 +96,7 @@ ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scal
 ```
 
 In Figure \ref{fig:realcomp} we compared the features and scores of the Nanopore reads which have either assigned to a barcode by ScNapBar, or Sicelore, or both. 
+
 ```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realcomp}Features from the Nanopore reads"}
 x=read.table(args$sis_pred,header=TRUE)
 a=c('Not found by Sicelore','Same with Sicelore','Diff. with Sicelore')[x$X.1+2]
