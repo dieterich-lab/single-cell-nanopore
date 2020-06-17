@@ -10,15 +10,16 @@ args = commandArgs(trailingOnly=TRUE)
 library(reshape2)
 library(ggplot2)
 library(knitr)
-names(args)=c('sim_barcodes','sim_label','sim_prob','real_label','real_prob','real_log','cutoff','sis_pred')
+names(args)=c('sim_barcodes','sim_label','sim_prob','real_prob','real_log','cutoff','sis_pred')
 args = as.list(args)
 args$cutoff=as.integer(args$cutoff)
 feat = c("adaptor_score", "barcode_score", "barcode_indel", "barcode_start", "barcode_mismatch", "umi_length", "polyT_length")
 ```
+ScNapBar outputs the probability scores for each barcode alignment which allow user to select cutoffs according to their preferences on sensitivity and specificity. In Figure \ref{fig:simbench} we see the performance metrics of the simulated reads and the selected cutoff.
 
 # Simulated reads
 ## Benchmarking
-```{r, eval=TRUE, echo=FALSE, cache=TRUE, cache.lazy=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4}
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, fig.cap="\\label{fig:simbench}Performance metrics of the simulated reads"}
 v = seq(0,100)
 t1=read.table(args$sim_barcodes)
 m =read.table(args$sim_label, header=TRUE)
@@ -48,18 +49,21 @@ unal=grepl('_unal',t1[,1])
 gtruth=as.integer(unal | fal)
 res=caret::confusionMatrix(factor(pred), factor(gtruth))
 colnames(res$table)=rownames(res$table)=c('P','N')
-kable(res$table, format='pandoc', caption='Confusion matrix')
+kable(res$table, caption='Confusion matrix')
 ```
+ScNapBar does supervised learning using the features from adapter and barcode sequences alignments. We label them as correct or wrong assignment from the simulated reads (Figure \ref{fig:simfeat}), and train the model based on that. 
 
 ## Feature distributions
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:simfeat}Features from the simulated reads"}
 x=read.table(args$sim_prob,header=TRUE)
 df=data.frame(assignment=c('wrong','correct')[as.integer(x$pred>args$cutoff)+1],melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
 
+We apply the model to the simulated reads and output the score. Looking at the distribution of the scores, the scores of correct assignment are much higher than the wrong assignment (Figure \ref{fig:simscore}). User may choose a cutoff based on the distributions. 
+
 ## Assignment score distributions
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:simscore}Score distributions of the simulated reads"}
 df=read.table(args$sim_prob,header=TRUE)
 df$Assignment=c('correct','wrong')[df$label+1]
 ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignment))+ labs(x='Scores', y='Density')
@@ -67,23 +71,28 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 
 # Nanopore reads
 ## Number of reads each step
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=4}
+
+In Figure \ref{fig:realcount} we see the number of reads left in each step of ScNapBar.
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=5, fig.cap="\\label{fig:realcount}Number of Nanopore reads each step"}
 x=read.table(args$real_log,sep='\t')
-a=system(paste0('wc -l ',args$real_label),intern=TRUE)
+a=system('wc -l analysis/real.label',intern=TRUE)
 x[nrow(x)+1,]=c('Assigned to barcode', gsub('[^0-9]', '', a))
 x[,2]=as.integer(x[,2])
 x$Steps=factor(x[,1],levels=rev(x[,1]))
-ggplot(x, aes(x=Steps, y=V2)) + geom_bar(stat="identity", position=position_dodge(), fill = "#ffff99") +coord_flip()+ labs(x="Processing steps", y="Number of simulated reads")+geom_text(aes(label=V2), position=position_dodge(width=0.9), hjust=1)
+p=ggplot(x, aes(x=Steps, y=V2)) + geom_bar(stat="identity", position=position_dodge(), fill = "#ffff99") +coord_flip()+ labs(x="Processing steps", y="Number of simulated reads")+geom_text(aes(label=V2), position=position_dodge(width=0.9), hjust=1)
 ```
 
+In Figure \ref{fig:realfeat} we see the features from adapter and barcode sequences alignments of the Nanopore reads. We use the model trained on the simulated reads, and predict whether the barcode alignment is correct ('assigned') or wrong ('unassigned').  
+
 ## Feature distributions
-```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realfeat}Features from the Nanopore reads"}
 x=read.table(args$real_prob,header=TRUE)
 df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>args$cutoff)+1],melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
 
-```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6}
+In Figure \ref{fig:realcomp} we compared the features and scores of the Nanopore reads which have either assigned to a barcode by ScNapBar, or Sicelore, or both. 
+```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realcomp}Features from the Nanopore reads"}
 x=read.table(args$sis_pred,header=TRUE)
 a=c('Not found by Sicelore','Same with Sicelore','Diff. with Sicelore')[x$X.1+2]
 df=data.frame(assignment=a,melt(x[,feat],id.vars=NULL))
