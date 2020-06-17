@@ -95,13 +95,18 @@ df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>args$cutof
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
 
-In Figure \ref{fig:realcomp} we compared the features and scores of the Nanopore reads which have either assigned to a barcode by ScNapBar, or Sicelore, or both. 
+We compared the features (Figure \ref{fig:realcomp}) and scores (Figure \ref{fig:realcompscore}) of the Nanopore reads which have either assigned to a barcode by ScNapBar, or Sicelore, or both. 
 
-```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realcomp}Features from the Nanopore reads"}
+```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realcompfeat}Features from the Nanopore reads"}
 x=read.table(args$sis_pred,header=TRUE)
 a=c('Not found by Sicelore','Same with Sicelore','Diff. with Sicelore')[x$X.1+2]
 df=data.frame(assignment=a,melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")+ labs(title='Feature distributions compared with Sicelore')
+```
+
+```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realcompscore}Features from the Nanopore reads"}
+x=read.table(args$sis_pred,header=TRUE)
+a=c('Not found by Sicelore','Same with Sicelore','Diff. with Sicelore')[x$X.1+2]
 x$assignment=a
 ggplot(x, aes(x=pred, group=assignment)) + geom_density(aes(color=assignment))+ labs(title='Score distributions compared with Sicelore', x='Scores', y='Density')
 ```
