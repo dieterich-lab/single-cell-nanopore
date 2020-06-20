@@ -2,24 +2,24 @@ Sys.setlocale("LC_NUMERIC","C")
 options(stringsAsFactors = FALSE)
 library(reshape2)
 library(ggplot2)
-t1=read.table('gtruth.txt')
-t2=read.table('sicelore.txt')
+t1=read.table('analysis/sim_barcodes.txt')
+#samtools view analysis/sim_test.sis.bam|perl -F"\t" -ane 'print "$F[0]\t$1\n" if /BC:Z:(\w+)/' > analysis/sicelore.txtt2=read.table('analysis/sicelore.txt')
 i=match(t1[,1], t2[,1])
 pred=as.integer(is.na(t2[i,2]))
-fal=t2[i,2]!=t1[,2]
+fal=t2[i,2]!=t1[,3]
 fal[is.na(fal)]=FALSE
 unal=grepl('_unal',t1[,1])
 gtruth=as.integer(unal | fal)
 res=caret::confusionMatrix(factor(pred), factor(gtruth))
 ss=c(res$overall,res$byClass)[c(1,8,9,12,14)]
 v = seq(0,100)
-m= read.table('fc1.prob',header=TRUE)
+m= read.table('analysis/sim.label',header=TRUE)
 df=do.call(rbind,lapply(v,function(d) {
-t2=m[m[,16]>d,1:2]
+t2=m[m[,3]>d,1:2]
 #t2[,1]=substr(t2[,1],1,nchar(t2[,1])-5)
 i=match(t1[,1], t2[,1])
 pred=as.integer(is.na(t2[i,2]))
-fal=t2[i,2]!=t1[,2]
+fal=t2[i,2]!=t1[,3]
 fal[is.na(fal)]=FALSE
 unal=grepl('_unal',t1[,1])
 gtruth=as.integer(unal | fal)
