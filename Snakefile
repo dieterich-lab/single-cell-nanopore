@@ -276,7 +276,7 @@ rule filter_sim:
     cutoff = config["cutoff"]
   shell:
     """
-    awk 'NR>1 && $15>{params.cutoff}' {input} | sed 's/_end[1|2]//' | awk '{{a[$1]++;b[$1]=$0}}END{{for(i in a){{if(a[i]==1)print b[i]}}}}' | cut -f1-2,15 > {output}
+    awk 'NR>1' {input} | sed 's/_end[1|2]//' | cut -f1-2,15 | sort -k3,3rn | awk '!_[$1]++' > {output}
     """
 
 rule filter_pred:
