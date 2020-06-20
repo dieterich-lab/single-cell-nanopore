@@ -3,7 +3,8 @@ options(stringsAsFactors = FALSE)
 library(reshape2)
 library(ggplot2)
 t1=read.table('analysis/sim_barcodes.txt')
-#samtools view analysis/sim_test.sis.bam|perl -F"\t" -ane 'print "$F[0]\t$1\n" if /BC:Z:(\w+)/' > analysis/sicelore.txtt2=read.table('analysis/sicelore.txt')
+#samtools view analysis/sim_test.sis.bam|perl -F"\t" -ane 'print "$F[0]\t$1\n" if /BC:Z:(\w+)/' > analysis/sicelore.txt
+t2=read.table('analysis/sicelore.txt')
 i=match(t1[,1], t2[,1])
 pred=as.integer(is.na(t2[i,2]))
 fal=t2[i,2]!=t1[,3]
