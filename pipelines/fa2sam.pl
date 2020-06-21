@@ -2,6 +2,7 @@ $fa=shift;
 $tab=shift;
 $len=shift;
 $clen=shift;
+$gene=shift;
 
 open(F,"<$tab");
 while(<F>){chomp;
@@ -17,7 +18,8 @@ $b=/^>/;
 $l=length($_);
 $l2=$l-$clen;
 $q='F'x$l;
-$s=substr($_,1) if $b;
-print "$s\t0\t1\t21\t31\t${l2}S${clen}M\t*\t0\t0\t$_\t$q\t$h{$s}\tXF:Z:CODING\tUQ:Z:$q\tUS:Z:$_\n" if $l==$len and !$b
+$s = substr($_,1) if $b;
+$tg = defined $h{$s} ? $h{$s} : "GE:Z:$gene";
+print "$s\t0\t1\t21\t31\t${l2}S${clen}M\t*\t0\t0\t$_\t$q\t$tg\tXF:Z:CODING\tUQ:Z:$q\tUS:Z:$_\n" if $l==$len and !$b
 }
 close F

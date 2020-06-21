@@ -1,9 +1,8 @@
 import os
 import re
 import sys
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
-
-HTTP = HTTPRemoteProvider()
+import gzip
+import scipy.io
 
 configfile: "config.yaml"
 
@@ -16,6 +15,12 @@ fq_nanopore = config["nanopore_fq"]
 simreadlength = len(config["adapter"]) + config["barcodelength"] + config["umilength"] + config["polyTlength"] + config["cdnalength"]
 _nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
 fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
+
+def get_most_abundant_gene():
+    mat = (scipy.io.mmread(gzip.open(os.path.join(dir_in, config["matrix"]), 'r')))
+    features = gzip.open(os.path.join(dir_in, config["feature"]), 'rt').read().splitlines()
+    return features[mat.sum(axis=1).argmax()].split('\t')[1]
+
 
 localrules: all, unzip_fq, get_cbc, build_genome, build_align
 
@@ -175,10 +180,11 @@ rule build_align:
     bam = dir_out + "sim_test.bam"
   params:
     readlen = simreadlength,
+    gene = get_most_abundant_gene(),
     cdnalength = config["cdnalength"]
   shell:
     """
-    perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} | samtools view -bS > {output}
+    perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} {params.gene} | samtools view -bS > {output}
     """
 
 rule get_barcodes:

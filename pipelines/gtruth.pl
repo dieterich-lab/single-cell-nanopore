@@ -11,6 +11,6 @@ open(F,"<$fa");
 while(<F>){
 $b=/^>/;
 $s=$1 if /^>(\w+):/;
-print $1,"\t",$h{substr($_,$alen,$blen)},"\n" unless $b
+print $1,"\t",$h{substr($_,$alen,$blen)},"\n" if !$b and defined $h{substr($_,$alen,$blen)}
 }
 close F

@@ -20,7 +20,7 @@ polyTlength: 20
 cdnalength: 32
 umilength: 10
 barcodelength: 16
-numSimReads: 1000000
+numSimReads: 10000
 numIlmReads: 1000000
 cutoff: 30
 percent_raw: 0.2
