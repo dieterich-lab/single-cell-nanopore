@@ -11,6 +11,11 @@ while(<>){
 $h{"$2$3"}="$1\t$2\t$3" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/
 }
 
+open(F,"<$gene");
+$gene=<F>;
+close F;
+chomp $gene;
+
 open(F,"<$fa");
 while(<F>){
 $b=/^>/; 
@@ -19,4 +24,4 @@ $d = defined $h{substr($_,$alen,$bulen)} ? $h{substr($_,$alen,$bulen)} : "$gene\
 print "$1\t$d\n" unless $b
 }
 close F
-~      
+      
