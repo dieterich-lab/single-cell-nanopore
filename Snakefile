@@ -147,10 +147,11 @@ rule sim_reads:
     sim = dir_out + "sim_reads.fasta"
   params:
     num = config["numSimReads"],
+    num2 = int(config["numSimReads"]*1.35)
   shell:
     """
-    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num}
-    mv {dir_out}sim_aligned_reads.fasta > {output}
+    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2}
+    perl -ne '$i++ if /^>/;print if $i<={params.num}' {dir_out}sim_aligned_reads.fasta > {output}
     """
 
 rule build_test:
