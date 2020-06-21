@@ -150,7 +150,7 @@ rule sim_reads:
   shell:
     """
     simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num}
-    cat {dir_out}sim_aligned_reads.fasta {dir_out}sim_unaligned_reads.fasta > {output}
+    mv {dir_out}sim_aligned_reads.fasta > {output}
     """
 
 rule build_test:
