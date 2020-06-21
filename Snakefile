@@ -180,11 +180,10 @@ rule build_align:
     bam = dir_out + "sim_test.bam"
   params:
     readlen = simreadlength,
-    gene = get_most_abundant_gene(),
     cdnalength = config["cdnalength"]
   shell:
     """
-    perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} {params.gene} | samtools view -bS > {output}
+    perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} | samtools view -bS > {output}
     """
 
 rule get_barcodes:
@@ -196,13 +195,15 @@ rule get_barcodes:
     barcode = dir_out + "sim_barcodes.txt"
   params:
     readlen = simreadlength,
+    gene = get_most_abundant_gene(),
     adapterlength = len(config["adapter"]),
-    barumilength = config["barcodelength"] + config["umilength"]
+    barcodelength = config["barcodelength"],
+    umilength = config["umilength"]
   shell:
     """
     perl -ne '$L={params.readlen};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
-    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barumilength} {params.readlen} > {output}
+    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barcodelength} {params.umilength} {params.gene} > {output}
     """
 
 rule run_pipe:
