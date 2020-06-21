@@ -16,11 +16,12 @@ simreadlength = len(config["adapter"]) + config["barcodelength"] + config["umile
 _nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
 fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
 
-def get_most_abundant_gene():
-    mat = (scipy.io.mmread(gzip.open(os.path.join(dir_in, config["matrix"]), 'r')))
-    features = gzip.open(os.path.join(dir_in, config["feature"]), 'rt').read().splitlines()
-    return features[mat.sum(axis=1).argmax()].split('\t')[1]
-
+def get_most_abundant_gene(mtx_file, feature_file, output_file):
+    mat = (scipy.io.mmread(gzip.open(mtx_file, 'r')))
+    features = gzip.open(feature_file, 'rt').read().splitlines()
+    with open(output_file, 'w') as f:
+        f.write(features[mat.sum(axis=1).argmax()].split('\t')[1])
+    return ""
 
 localrules: all, unzip_fq, get_cbc, build_genome, build_align
 
@@ -36,6 +37,15 @@ rule unzip_fq:
     file = dir_in + fq_nanopore
   run:
     shell("gunzip -c {input} > {output}")
+
+rule get_a_gene:
+  input:
+    feature = dir_in + config["feature"],
+    matrix  = dir_in + config["matrix"]
+  output:
+    file = dir_out + 'gene'
+  run:
+    get_most_abundant_gene(input.matrix, input.feature, output.file)
 
 rule get_cbc:
   input:
@@ -190,12 +200,12 @@ rule get_barcodes:
   input:
     bam = dir_in + bam_illumina,
     sim = dir_out + "sim_reads.fasta",
-    fa_sim = dir_out + "genome.fa"
+    fa_sim = dir_out + "genome.fa",
+    gene = dir_out + 'gene'
   output:
     barcode = dir_out + "sim_barcodes.txt"
   params:
     readlen = simreadlength,
-    gene = get_most_abundant_gene(),
     adapterlength = len(config["adapter"]),
     barcodelength = config["barcodelength"],
     umilength = config["umilength"]
@@ -203,7 +213,7 @@ rule get_barcodes:
     """
     perl -ne '$L={params.readlen};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
-    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barcodelength} {params.umilength} {params.gene} > {output}
+    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barcodelength} {params.umilength} {input.gene} > {output}
     """
 
 rule run_pipe:
