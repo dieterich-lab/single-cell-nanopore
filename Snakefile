@@ -38,7 +38,7 @@ rule get_cbc:
     fa_barcode = dir_out + fa_barcode
   shell:
     """
-    zcat {input} | perl -ne 'print ">$1\\n$1\\n" if /^(\\w+)/' > {output}
+    gzip -dc {input} | perl -ne 'print ">$1\\n$1\\n" if /^(\\w+)/' > {output}
     """
 
 rule get_cbfreq:
@@ -101,26 +101,41 @@ rule build_illumina:
   params:
     cdnaseq = config["cdnaseq"],
     umilength = config["umilength"],
-    nreads = 1000000
+    num = config["numIlmReads"]
   shell:
     """
-    python pipelines/simreads.py {input.barcode} {input.feature} {input.matrix} {params.nreads} {params.umilength} {params.cdnaseq} | samtools view -bS > {output}
+    python pipelines/simreads.py {input.barcode} {input.feature} {input.matrix} {params.num} {params.umilength} {params.cdnaseq} | samtools view -bS > {output}
     """
 
 rule build_genome:
   input:
-    bam = dir_in + bam_illumina
+    bam = dir_in + bam_illumina,
+    bk_barcode = dir_out + "bk_barcodes.tsv.gz"
   output:
     fa_sim = dir_out + "genome.fa"
   params:
     adapter = config["adapter"],
     cdnalength = config["cdnalength"],
+    umilength = config["umilength"],
     cdnaseq = config["cdnaseq"][:config["cdnalength"]],
-    polyTlength = config["polyTlength"]
+    polyTlength = config["polyTlength"],
+    num = int(config["numIlmReads"]*config["percent_raw"])
   shell:
     """
-    samtools view {input} | perl -ne 'print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/GN:Z:(\\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){{print "{params.adapter}$2$3","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' > {output}
+    samtools view {input.bam} | perl -ne 'print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){{print "{params.adapter}$1$2","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' > {output}
+    gzip -dc {input.bk_barcode} | shuf -r -n {params.num} | perl -ne 'print ">chr",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/([ACGT]+)/){{$u="";$u.=[A,T,G,C]->[rand 4]for 1..{params.umilength};print "{params.adapter}$1$u","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' >> {output}
     samtools faidx {output}
+    """
+
+rule bk_barcodes:
+  input:
+    barcode = dir_in + config["barcode"],
+    raw_barcode = dir_in + config["barcode_raw"]
+  output:
+    bk_barcode = dir_out + "bk_barcodes.tsv.gz"
+  shell:
+    """
+    awk 'NR==FNR{a[$0];next}!($0 in a)' <(gzip -dc {input.barcode}) <(gzip -dc {input.raw_barcode}) | gzip > {output.bk_barcode}
     """
 
 rule sim_reads:
