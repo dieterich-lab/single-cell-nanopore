@@ -135,7 +135,7 @@ rule bk_barcodes:
     bk_barcode = dir_out + "bk_barcodes.tsv.gz"
   shell:
     """
-    awk 'NR==FNR{a[$0];next}!($0 in a)' <(gzip -dc {input.barcode}) <(gzip -dc {input.raw_barcode}) | gzip > {output.bk_barcode}
+    awk 'NR==FNR{{a[$0];next}}!($0 in a)' <(gzip -dc {input.barcode}) <(gzip -dc {input.raw_barcode}) | gzip > {output.bk_barcode}
     """
 
 rule sim_reads:
