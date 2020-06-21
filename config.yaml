@@ -1,6 +1,6 @@
 ---
 
-pipeline: "Singlesquare"
+pipeline: "ScNapBar"
 
 #reference_genome: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.4.fa.gz"
 #reference_cdna: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
@@ -10,6 +10,7 @@ reference_genome: "GRCh38_90.fa"
 
 # Cell Ranger alignment ouput
 barcode: "barcodes.tsv.gz"
+barcode_raw: "raw.tsv.gz"
 feature: "features.tsv.gz"
 matrix:  "matrix.mtx.gz"
 illumina_bam: "possorted_genome_bam.bam"
@@ -19,7 +20,9 @@ polyTlength: 20
 cdnalength: 32
 umilength: 10
 barcodelength: 16
-numSimReads: 1000
-cutoff: 50
+numSimReads: 1000000
+numIlmReads: 1000000
+cutoff: 30
+percent_raw: 0.2
 threads: 8
 cdnaseq: "GCCTGGCTTGTTTGCAAAGGCCCTGGCCAACGTCAACATTGGGAGCCTCATCTGCAATGTAGGGGCCGGTGGACCTGCTCCAGCAGCTGG"
