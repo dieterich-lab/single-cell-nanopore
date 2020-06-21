@@ -21,7 +21,8 @@ localrules: all, unzip_fq, get_cbc, build_genome, build_align
 
 rule all:
   input:
-    dir_out + "real.label"
+    sim  = dir_out + "sim.label",
+    real = dir_out + "real.label"
 
 rule unzip_fq:
   input:
