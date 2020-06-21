@@ -4,7 +4,7 @@ $blen=shift;
 $len=shift;
 
 while(<>){
-$h{"$2$3"}="$1\t$2\t$3" if /GN:Z:(\w+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/
+$h{"$2$3"}="$1\t$2\t$3" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/
 }
 
 open(F,"<$fa");
