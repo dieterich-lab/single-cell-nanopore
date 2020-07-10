@@ -216,35 +216,40 @@ rule get_barcodes:
     samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barcodelength} {params.umilength} {input.gene} > {output}
     """
 
-rule run_pipe:
+rule run_pipe_sim:
   input:
     barcode = dir_out + 'whitelist.fa',
     bam = dir_out + "sim_test.bam"
   output:
-    tab = dir_out + "sim.tab"
+    tab = dir_out + "sim.tab",
+    umi = dir_out + "sim_umi.fasta"
   params:
     adapter = config["adapter"],
     prefix = "sim"
   shell:
     """
+    rm umi.fasta
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
-    awk '$2!="NA" || NR==1' {params.prefix}.tab > {output}
+    awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
+    mv umi.fasta {output.umi}
     """
 
-rule run_pipe2:
+rule run_pipe_real:
   input:
     barcode = dir_out + 'whitelist.fa',
     bam = dir_out + _nanopore + '.bam'
   output:
     tab = dir_out + "real.tab",
-    log = dir_out + "real.log"
+    log = dir_out + "real.log",
+    umi = dir_out + "real_umi.fasta"
   params:
     adapter = config["adapter"],
     barumilength = config["barcodelength"] + config["umilength"],
     prefix = "real"
   shell:
     """
+    rm umi.fasta
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb 3 -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     printf "Aligned to genome\t" > {output.log}
@@ -254,6 +259,7 @@ rule run_pipe2:
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
+    mv umi.fasta {output.umi}
     """
 
 rule add_label:
