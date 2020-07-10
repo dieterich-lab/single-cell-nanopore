@@ -513,9 +513,9 @@ public:
                     s << am.alString;
                 s << seqReadTmp.id   << "\t";
 
+                seqan::Dna5String barcode = m_queries->at(qIndex).seq;
                 if(trimEnd == RTAIL  || trimEnd == RIGHT)
                 {
-                    seqan::Dna5String barcode = m_queries->at(qIndex).seq;
                     seqan::reverseComplement(barcode);
                     PScore::iterator it = res.rightTailScores.find(seqReadTmp.id);
                     if(it != res.rightTailScores.end())
@@ -562,7 +562,7 @@ public:
                     s << "no";
                 
                 if(length(seqReadTmp.seq) >= m_keepbp + 15)
-                    umi_out << ">" << seqReadTmp.id << std::endl << infix(seqReadTmp.seq, m_keepbp, m_keepbp + 15) << std::endl;
+                    umi_out << ">" << seqReadTmp.id << "\t" << barcode << std::endl << infix(seqReadTmp.seq, m_keepbp, m_keepbp + 15) << std::endl;
                 
 		s << "\t" << "0\n";
             }
