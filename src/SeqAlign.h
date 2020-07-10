@@ -40,6 +40,7 @@ private:
 	tbb::concurrent_vector<unsigned long> m_rmOverlaps;
 
 	std::ostream *m_out;
+	std::ofstream umi_out;
     AlignmentResults & res;
 /*
     typedef std::map<seqan::CharString, short>  PScore;
@@ -74,6 +75,7 @@ public:
 			m_strictRegion(! o.relaxRegion),
 			m_bundleSize(o.bundleSize),
 			m_out(o.out),
+			umi_out("umi.fasta", std::ios::app),
 			m_nPreShortReads(0),
 			m_modified(0),
 			m_barcode_umi_length(o.barcodeUmiLength),
@@ -91,6 +93,10 @@ public:
 		m_rmOverlaps = tbb::concurrent_vector<unsigned long>(flexbar::MAX_READLENGTH + 1, 0);
 	};
 
+	virtual ~SeqAlign(){
+		umi_out.close();
+	};
+	
 	int alignSeqRead(flexbar::TSeqRead* sr, const bool performRemoval, flexbar::Alignments &alignments, flexbar::ComputeCycle &cycle, unsigned int &idxAl, const flexbar::AlignmentMode &alMode, const flexbar::TrimEnd trimEnd, const TSeqStr &addBarcode){
 
 		using namespace std;
@@ -555,10 +561,10 @@ public:
                 else
                     s << "no";
                 
-                if(length(seqReadTmp.seq) >= m_keepbp + 10)
-                    s << "\t" << infix(seqReadTmp.seq, m_keepbp, m_keepbp + 10) << "\n";
-                else
-                    s << "\t" << "0\n";
+                if(length(seqReadTmp.seq) >= m_keepbp + 15)
+                    umi_out << ">" << seqReadTmp.id << std::endl << infix(seqReadTmp.seq, m_keepbp, m_keepbp + 15) << std::endl;
+                
+		s << "\t" << "0\n";
             }
 
 				if(i == qIndex_v.size() - 1 || !m_logEverything){
