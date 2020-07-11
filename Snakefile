@@ -67,6 +67,19 @@ rule get_cbfreq:
     samtools view {input} | perl -ne 'print "$1\\n" if /GN:Z:.*CB:Z:([ACGT]+)/' | sort | uniq -c > {output}
     """
 
+rule get_gene_umi:
+  input:
+    bam = dir_in + bam_illumina
+  output:
+    umi = dir_out + "umis/umi"
+  shell:
+    """
+    if [ ! -d {dir_out}umis ]; then mkdir {dir_out}umis; fi
+    samtools view {input} | perl -ne 'print "$1\\t$2\\n" if /GN:Z:(\S+).*UB:Z:([ACGT]+)/' | sort -k1,1 | perl -F"\\t" -ane 'if ($F[0] ne $x){{close O;open O, ">{dir_out}umis/$F[0].txt"}}print O $F[1];$x=$F[0];END{{close O}}' > {output}
+    for f in {dir_out}umis/*.txt;do sort $f|uniq|perl -ne 'print ">$_$_"' > ${{f%.*}}.fa;done
+    rm {dir_out}umis/*.txt
+    """
+
 rule find_dist:
   input:
     reads_per_barcode = dir_out + "reads_per_barcode",
@@ -196,6 +209,21 @@ rule build_align:
     perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} | samtools view -bS > {output}
     """
 
+rule get_sim_umi_reads:
+  input:
+    umi = dir_out + "sim_umi.fasta",
+    genes = dir_out + "sim_genes.txt"
+  output:
+    bam = dir_out + "umis/bam"
+  params:
+    adapter = config["adapter"]
+  shell:
+    """
+    perl pipelines/fa2sams.pl {input.umi} {input.genes} {params.adapter} {dir_out}umis > {output}
+    for f in {dir_out}umis/*.txt;do samtools view -bS $f > ${{f%.*}}.bam;done
+    rm {dir_out}umis/*.txt
+    """
+
 rule get_barcodes:
   input:
     bam = dir_in + bam_illumina,
@@ -203,6 +231,7 @@ rule get_barcodes:
     fa_sim = dir_out + "genome.fa",
     gene = dir_out + 'gene'
   output:
+    genes = dir_out + "sim_genes.txt",
     barcode = dir_out + "sim_barcodes.txt"
   params:
     readlen = simreadlength,
@@ -213,7 +242,8 @@ rule get_barcodes:
     """
     perl -ne '$L={params.readlen};next unless /^>/;$_=substr($_,1);@t=split(/_/);$d=$t[1]+$L-$t[1]%$L;print "$t[0]\\t$d\\t",$d+$L,"\\t$_"' {input.sim}|sort -k1,1 -k2,2n > {input.sim}.bed
     bedtools getfasta -fi {input.fa_sim} -bed {input.sim}.bed -name > {input.sim}.fa
-    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barcodelength} {params.umilength} {input.gene} > {output}
+    samtools view {input.bam} | perl pipelines/gtruth.pl {input.sim}.fa {params.adapterlength} {params.barcodelength} {params.umilength} {input.gene} > {output.barcode}
+    cut -f1-2 {output.barcode} > {output.genes}
     """
 
 rule run_pipe_sim:
@@ -262,9 +292,35 @@ rule run_pipe_real:
     mv umi.fasta {output.umi}
     """
 
-rule add_label:
+rule run_umi_sim:
+  input:
+    bam = dir_out + "umis/bam",
+    umi = dir_out + "umis/umi"
+  output:
+    tab = dir_out + "sim_umi.tab"
+  params:
+    adapter = config["adapter"]
+  shell:
+    """
+    for f in $(ls -1 analysis/umis/*.bam);do bin/singleCellPipe -n {threads} -r $f -t $(basename ${{f%.*}}) -w ${{f%.*}}.fa -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100;done
+    cat *.tab|grep -v '^read_id' > {output}
+    rm *.tab *.fasta *parameterLog.log
+    """
+
+rule add_umiflag:
   input:
     tab = dir_out + "sim.tab",
+    umi = dir_out + "sim_umi.tab"
+  output:
+    tab = dir_out + "sim.tab0"
+  shell:
+    """
+    perl pipelines/add_umi.pl {input.tab} {input.umi} > {output}
+    """
+
+rule add_label:
+  input:
+    tab = dir_out + "sim.tab0",
     barcode = dir_out + "sim_barcodes.txt"
   output:
     tab = dir_out + "sim.tab1"
