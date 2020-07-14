@@ -521,11 +521,11 @@ public:
                     if(it != res.rightTailScores.end())
                     {
 
-                        s << barcode << "\tno\tright\t" << it->second << "\t";
+                        s << m_queries->at(qIndex).id << "\tno\tright\t" << it->second << "\t";
                     }
                     else
                     {
-                        s << barcode << "\tno\tright\tWARNING VALUE NOT FOUND\t";
+                        s << m_queries->at(qIndex).id << "\tno\tright\tWARNING VALUE NOT FOUND\t";
                         std::cerr << "WARNING NO PRIMER ALIGNMENT SCORE FOR READID" << seqReadTmp.id << "FOUND\n";
                     }
                 }
@@ -534,11 +534,11 @@ public:
                     PScore::iterator it = res.leftTailScores.find(seqReadTmp.id);
                     if(it != res.leftTailScores.end())
                     {
-                        s << m_queries->at(qIndex).seq << "\tno\tleft\t" << it->second << "\t";
+                        s << m_queries->at(qIndex).id << "\tno\tleft\t" << it->second << "\t";
                     }
                     else
                     {
-                        s << m_queries->at(qIndex).seq << "\tno\tleft\tWARNING VALUE NOT FOUND\t";
+                        s << m_queries->at(qIndex).id << "\tno\tleft\tWARNING VALUE NOT FOUND\t";
                         std::cerr << "WARNING NO PRIMER ALIGNMENT SCORE FOR READID" << seqReadTmp.id << "FOUND\n";
                     }
                 }
