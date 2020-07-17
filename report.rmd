@@ -31,7 +31,7 @@ i=match(t1[,1], t2[,1])
 pred=as.integer(is.na(t2[i,2]))
 fal=t2[i,2]!=t1[,3]
 fal[is.na(fal)]=FALSE
-unal=grepl('_unal',t1[,1])
+unal=grepl('^chr',t1[,1])
 gtruth=as.integer(unal | fal)
 res=caret::confusionMatrix(factor(pred), factor(gtruth))
 c(res$overall,res$byClass)[c(1,8,9,12,14)]
@@ -47,7 +47,7 @@ i=match(t1[,1], t2[,1])
 pred=as.integer(is.na(t2[i,2]))
 fal=t2[i,2]!=t1[,3]
 fal[is.na(fal)]=FALSE
-unal=grepl('_unal',t1[,1])
+unal=grepl('^chr',t1[,1])
 gtruth=as.integer(unal | fal)
 res=caret::confusionMatrix(factor(pred), factor(gtruth))
 colnames(res$table)=rownames(res$table)=c('P','N')
