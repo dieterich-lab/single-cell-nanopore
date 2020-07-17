@@ -75,8 +75,8 @@ rule get_gene_umi:
   shell:
     """
     if [ ! -d {dir_out}umis ]; then mkdir {dir_out}umis; fi
-    samtools view {input} | perl -ne 'print "$1\\t$2\\n" if /GN:Z:(\S+).*UB:Z:([ACGT]+)/' | sort -k1,1 | perl -F"\\t" -ane 'if ($F[0] ne $x){{close O;open O, ">{dir_out}umis/$F[0].txt"}}print O $F[1];$x=$F[0];END{{close O}}' > {output}
-    for f in {dir_out}umis/*.txt;do sort $f|uniq|perl -ne 'print ">$_$_"' > ${{f%.*}}.fa;done
+    samtools view {input} | perl -ne 'print "$1\\t$2\\t$3\\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' | sort -k1,1 | perl -F"\\t" -ane 'if ($F[0] ne $x){{close O;open O, ">{dir_out}umis/$F[0].txt"}}print O $F[1],"\t",$F[2];$x=$F[0];END{{close O}}' > {output}
+    for f in {dir_out}umis/*.txt;do sort $f|uniq|perl -F"\\t" -ane 'print ">$F[0]\\n$F[1]"' > ${{f%.*}}.fa;done
     rm {dir_out}umis/*.txt
     """
 
@@ -303,7 +303,7 @@ rule run_umi_sim:
   shell:
     """
     for f in $(ls -1 analysis/umis/*.bam);do bin/singleCellPipe -n {threads} -r $f -t $(basename ${{f%.*}}) -w ${{f%.*}}.fa -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100;done
-    cat *.tab|grep -v '^read_id' > {output}
+    cat *.tab|grep -v '^read_id'|perl -F"\\t|\\.\\." -ane 'print if $F[1] eq $F[2]' > {output}
     rm *.tab *.fasta *parameterLog.log
     """
 
@@ -315,7 +315,7 @@ rule add_umiflag:
     tab = dir_out + "sim.tab0"
   shell:
     """
-    perl pipelines/add_umi.pl {input.tab} {input.umi} > {output}
+    perl pipelines/add_umi.pl {input.tab} {input.umi}|cut -f1-13 > {output}
     """
 
 rule add_label:
