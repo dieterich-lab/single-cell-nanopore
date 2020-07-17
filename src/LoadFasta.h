@@ -73,7 +73,7 @@ public:
 					TString  id =  ids[i];
 					TSeqStr seq = seqs[i];
 					
-					append(id, "_rc");
+					//append(id, "_rc");
 					seqan::reverseComplement(seq);
 					
 					TBar barRC;
