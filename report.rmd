@@ -90,7 +90,7 @@ In Figure \ref{fig:realfeat} we see the features from adapter and barcode sequen
 
 ## Feature distributions
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realfeat}Features from the Nanopore reads"}
-x=read.table(args$real_prob,header=TRUE)
+x=read.table(args$real_prob,header=TRUE,nrow=1000000)
 df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>args$cutoff)+1],melt(x[,feat],id.vars=NULL))
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
