@@ -75,7 +75,7 @@ rule get_gene_umi:
   shell:
     """
     if [ ! -d {dir_out}umis ]; then mkdir {dir_out}umis; fi
-    samtools view {input} | perl -ne 'print "$1\\t$2\\t$3\\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' | sort -k1,1 | perl -F"\\t" -ane 'if ($F[0] ne $x){{close O;open O, ">{dir_out}umis/$F[0].txt"}}print O $F[1],"\t",$F[2];$x=$F[0];END{{close O}}' > {output}
+    samtools view {input} | perl -ne 'print "$1\\t$2\\t$3\\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' | sort -k1,1 | perl -F"\\t" -ane 'if ($F[0] ne $x){{close O;open O, ">{dir_out}umis/$F[0].txt"}}print O $F[1],"\\t",$F[2];$x=$F[0];END{{close O}}' > {output}
     for f in {dir_out}umis/*.txt;do sort $f|uniq|perl -F"\\t" -ane 'print ">$F[0]\\n$F[1]"' > ${{f%.*}}.fa;done
     rm {dir_out}umis/*.txt
     """
@@ -216,7 +216,7 @@ rule get_sim_umi_reads:
   output:
     bam = dir_out + "umis/bam"
   params:
-    adapter = config["adapter"]
+    adapter = 'AAA'
   shell:
     """
     perl pipelines/fa2sams.pl {input.umi} {input.genes} {params.adapter} {dir_out}umis > {output}
@@ -262,7 +262,7 @@ rule run_pipe_sim:
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
-    mv umi.fasta {output.umi}
+    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' umi.fasta > {output.umi}
     """
 
 rule run_pipe_real:
@@ -289,7 +289,7 @@ rule run_pipe_real:
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
-    mv umi.fasta {output.umi}
+    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' umi.fasta > {output.umi}
     """
 
 rule run_umi_sim:
@@ -299,10 +299,10 @@ rule run_umi_sim:
   output:
     tab = dir_out + "sim_umi.tab"
   params:
-    adapter = config["adapter"]
+    adapter = 'AAA'
   shell:
     """
-    for f in $(ls -1 analysis/umis/*.bam);do bin/singleCellPipe -n {threads} -r $f -t $(basename ${{f%.*}}) -w ${{f%.*}}.fa -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100;done
+    for f in $(ls -1 analysis/umis/*.bam);do bin/singleCellPipe -n {threads} -r $f -t $(basename ${{f%.*}}) -w ${{f%.*}}.fa -as {params.adapter} -ao 3 -ae 0 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100;done
     cat *.tab|grep -v '^read_id'|perl -F"\\t|\\.\\." -ane 'print if $F[1] eq $F[2]' > {output}
     rm *.tab *.fasta *parameterLog.log
     """
