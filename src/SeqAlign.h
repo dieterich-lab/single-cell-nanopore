@@ -561,8 +561,8 @@ public:
                 else
                     s << "no";
                 
-                if(length(seqReadTmp.seq) >= m_keepbp + 15)
-                    umi_out << ">" << seqReadTmp.id << "\t" << barcode << std::endl << infix(seqReadTmp.seq, m_keepbp, m_keepbp + 15) << std::endl;
+                //if(length(seqReadTmp.seq) >= m_keepbp + 15)
+                umi_out << ">" << seqReadTmp.id << "\t" << barcode << std::endl << seqReadTmp.seq << std::endl;
                 
 		s << "\t" << "0\n";
             }
