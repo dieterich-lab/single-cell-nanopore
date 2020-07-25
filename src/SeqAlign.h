@@ -74,7 +74,7 @@ public:
 			m_strictRegion(! o.relaxRegion),
 			m_bundleSize(o.bundleSize),
 			m_out(o.out),
-			umi_out(o.umiOut),
+			umi_out(o.umi_out),
 			m_nPreShortReads(0),
 			m_modified(0),
 			m_barcode_umi_length(o.barcodeUmiLength),
