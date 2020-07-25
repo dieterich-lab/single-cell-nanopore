@@ -39,7 +39,7 @@ private:
 	tbb::concurrent_vector<flexbar::TBar> *m_queries;
 	tbb::concurrent_vector<unsigned long> m_rmOverlaps;
 
-	std::ostream *m_out, umi_out;
+	std::ostream *m_out, *umi_out;
     AlignmentResults & res;
 /*
     typedef std::map<seqan::CharString, short>  PScore;
