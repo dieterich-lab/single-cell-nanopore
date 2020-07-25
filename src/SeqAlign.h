@@ -557,7 +557,7 @@ public:
                     s << "no";
                 
                 //if(length(seqReadTmp.seq) >= m_keepbp + 15)
-                umi_out << ">" << seqReadTmp.id << "\t" << barcode << std::endl << seqReadTmp.seq << std::endl;
+                *umi_out << ">" << seqReadTmp.id << "\t" << barcode << std::endl << seqReadTmp.seq << std::endl;
                 
 		s << "\t" << "0\n";
             }
