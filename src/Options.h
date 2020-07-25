@@ -74,7 +74,7 @@ struct Options{
 
 	tbb::concurrent_vector<flexbar::TBar> barcodes, adapters, barcodes2, adapters2;
 
-	std::ostream *out;
+	std::ostream *out, *umi_out;
 	std::fstream fstrmOut, umiOut;
 
 	Options(){
@@ -655,7 +655,7 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
 		openOutputFile(o.umiOut, "umi.fasta");
 
 		o.out = &o.fstrmOut;
-		o.umiOut = &o.umiOut;
+		o.umi_out = &o.umiOut;
 		*o.out << endl;
 	}
 
