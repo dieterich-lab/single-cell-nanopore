@@ -76,6 +76,8 @@ Other intermediate files which contains the useful information in the model esti
 
 ## Parameters:
 
+### Parameters of the pipeline
+
 The parameters are set in the `config.yaml`. If the entry is a file, then it must be placed under the `data` folder. 
 
 * `reference_genome`: The reference genome sequences in FASTA format. 
@@ -104,6 +106,15 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 * `cdnaseq`: DNA sequences used to append to each entry in the artifical genome. 
 
+### Parameters of singleCellPipe
+
+singleCellPipe is modified from [flexbar](https://github.com/seqan/flexbar) which performs the adapter and barcode alignments. Most of the flexbar parameters are available in this program, yet there are a few distinctive parameters as follows:
+
+* `-ul`: Number of nucleotides of barcode and UMI sequences. E.g., the parameter should be 26 for an 16bp barcode and 10bp UMI library. 
+
+* `-kb`: Number of additional nucleotides to search after the adapter alignment. 
+
+* `-fl`: Number of nucleotides from both ends for searching the barcode sequences. 
 
 ## Quick run
 
@@ -111,20 +122,20 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 2. Run the **`snakemake`** command under the conda environment to perform the bioinformatics analysis on the specified sequence files. Several analysis steps can benefit from multiple computer cores; use the `-j` parameter to parallise the analysis (this document is assuming that 8 cores are available).
 ```
-    snakemake -j 8 all
+snakemake -j 8 all
 ```
 You can also submit the job via job schedulers. We have provided an example on the SLURM. Change the account settings in cluster.json before using it.
 ```
-    snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
+snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
 ```
 
-# Step-by-step instructions
+## Step-by-step instructions
 
 In this paragraph, we explain the use of each major job in the pipeline. 
 
-# Parameter estimation from Illumina data
+### Parameter estimation from Illumina data
 
-We use the filtered cellular barcodes ([barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)) detected from Cell Ranger pipeline, and produce a ([fasta file](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#get_cbcsh)) as barcode whitelist for the following barcode alignment. 
+* `build_illumina`: If Illumina bam file is not provided, we use the filtered cellular barcodes ([barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)) detected from Cell Ranger pipeline, and produce a Illumina bam file based on the frequencies in the matrices.  
 
 * `find_dist`: add some more background cellular barcodes into the cell barcode whitelist, to make sure we do not align the read to sub-optimal barcodes due to the absence of the real barcode sequences. It retrieves all the other barcodes within two edit-distances from the filtered cellular barcodes.
 
@@ -132,25 +143,29 @@ We use the filtered cellular barcodes ([barcodes.tsv.gz](https://support.10xgeno
 
 * `align_longreads`: We align the Nanopore reads to the reference genome using Minimap2 with [long-reads settings](https://github.com/lh3/minimap2#map-long-mrnacdna-reads).
 
-# Build predictive model
+### Build predictive model
 
-* `build_genome`: We generated an artifical "genome" which contains only the [cDNA primer from 10x Chromium Single Cell V3](https://kb.10xgenomics.com/hc/en-us/articles/217268786-How-do-I-design-a-custom-targeted-assay-for-Single-Cell-3-), cellular barcode and UMI sequences as the same counts as the Illumina library, followed by 20bp oligo-dT and 32bp cDNA sequences in our [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_genomesh), in order to estimate the likelihood of barcode mismatches and indels in our model.
+* `build_genome`: We generated an artifical "genome" which contains only the [cDNA primer from 10x Chromium Single Cell V3](https://kb.10xgenomics.com/hc/en-us/articles/217268786-How-do-I-design-a-custom-targeted-assay-for-Single-Cell-3-), cellular barcode and UMI sequences as the same counts as the Illumina library, followed by 20bp oligo-dT and 32bp cDNA sequences in our pipeline, in order to estimate the likelihood of barcode mismatches and indels in our model.
 
-* `build_nanosim`: The Nanopore error profile is produced using the ["read_analysis.py"](https://github.com/bcgsc/NanoSim#1-characterization-stage) from NanoSim. The following [step](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_nanosimsh) in our pipeline creates a directory containing the error profile. 
+* `build_nanosim`: The Nanopore error profile is produced using the ["read_analysis.py"](https://github.com/bcgsc/NanoSim#1-characterization-stage) from NanoSim, and creates a directory under the `analysis` folder that contains the error profile of the Nanopore reads. 
 
-* `sim_reads`: We generate [one million Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#sim_readssh) based on the artifical we built previously using NanoSim. 
+* `sim_reads`: We generate a number of Nanopore reads based on the artifical we built previously using NanoSim. 
 
-* `build_test`: The generated Nanopore reads were [trimmed to 100bp and wrote to a bam file](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_alignsh), and the ground truth barcode sequences can be known by looking into the corresponding genomic locations from the artifical genome in the [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#get_barcodessh). 
+* `build_test`: The generated Nanopore reads were trimmed to 100bp and wrote to a bam file, and the ground truth barcode sequences can be known by looking into the corresponding genomic locations from the artifical genome in the pipeline. 
 
-* `run_pipe_sim`: run the feature extraction [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#run_pipesh) on the bam file of simulated reads. 
+* `run_pipe_sim` and `run_pipe_real`: run the feature extraction pipeline on the bam file of the simulated and the real Nanopore reads, respectively. 
 
 * `add_label`: By comparing to our ground truth barcode sequences, we assign either 0 or 1 as labels to each barcode alignment, indicating whether the corresponding alignment is correct or not. 
 
-* `build_model`: build a [naive bayesian model](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_modelr) based on the label and previously extracted barcode alignment features. 
+* `build_model`: build a naive bayesian model based on the label and previously extracted barcode alignment features. 
 
-* `pred`: Use the naive bayesian model previously built and predict the likelihood given the alignment features from the other Nanopore reads sequenced from the same cDNA library. Then we use the bayesian theorem to calculated the posterior probabilities that the barcode alignment is correct among all potential barcodes. The [predicted probabilities](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#predr) allow us benchmarking our predictions with the other simulated reads, or do barcode assignment with the real Nanopore reads. 
+* `pred`: Use the naive bayesian model previously built and predict the likelihood given the alignment features from the other Nanopore reads sequenced from the same cDNA library. Then we use the bayesian theorem to calculated the posterior probabilities that the barcode alignment is correct among all potential barcodes. The predicted probabilities allow us benchmarking our predictions with the other simulated reads, or do barcode assignment with the real Nanopore reads. 
 
-* `filter_sim`: set a cutoff and select the highest from the predicted probabilities
+* `get_gene_umi`: create UMI whitelist for each gene based on the Illumina data. 
+
+* `run_umi_sim`: perform UMI alignment against the UMI whitelist of the same gene on the sequences that have the barcode trimmed.
+
+* `filter_sim` and `filter_pred`: output the reads which passed the cutoff of the predicted probabilities. 
 
 ## Authors
 
