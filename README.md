@@ -120,37 +120,37 @@ You can also submit the job via job schedulers. We have provided an example on t
 
 # Step-by-step instructions
 
-## Model estimation
+In this paragraph, we explain the use of each major job in the pipeline. 
 
-[1) Parameter estimation from Illumina data](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#illumina-library)
+# Parameter estimation from Illumina data
 
 We use the filtered cellular barcodes ([barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices)) detected from Cell Ranger pipeline, and produce a ([fasta file](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#get_cbcsh)) as barcode whitelist for the following barcode alignment. 
 
-In addtion to the filtered cellular barcodes, we also need to add some more unfiltered cellular barcodes into our whitelist, to make sure we do not align the read to sub-optimal barcodes due to the absence of the real barcode sequences. This step is done by a [R script](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#find_distr) which retrieves all the other barcodes within two edit-distances from the filtered cellular barcodes.
+* `find_dist`: add some more background cellular barcodes into the cell barcode whitelist, to make sure we do not align the read to sub-optimal barcodes due to the absence of the real barcode sequences. It retrieves all the other barcodes within two edit-distances from the filtered cellular barcodes.
 
-Next we need the read counts for each barcode as prior knowledge. The method is documented in the [10xgenomics website](https://kb.10xgenomics.com/hc/en-us/articles/360007068611-How-do-I-get-the-read-counts-for-each-barcode-) and our [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#get_cbfreqsh).
+* `get_cbfreq`: use the read counts for each barcode as prior knowledge in the bayesian model. 
 
-[2) Parameter estimation from Nanopore data](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#nanopore-library)
+* `align_longreads`: We align the Nanopore reads to the reference genome using Minimap2 with [long-reads settings](https://github.com/lh3/minimap2#map-long-mrnacdna-reads).
 
-The Nanopore reads should be aligned to the reference genome before the analyses. We recommend using Minimap2 with [long-reads settings](https://github.com/lh3/minimap2#map-long-mrnacdna-reads), also check out an example from the [pipelines](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#align_longreadssh).
+# Build predictive model
 
-[3) Build predictive model](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#nanopore-library)
+* `build_genome`: We generated an artifical "genome" which contains only the [cDNA primer from 10x Chromium Single Cell V3](https://kb.10xgenomics.com/hc/en-us/articles/217268786-How-do-I-design-a-custom-targeted-assay-for-Single-Cell-3-), cellular barcode and UMI sequences as the same counts as the Illumina library, followed by 20bp oligo-dT and 32bp cDNA sequences in our [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_genomesh), in order to estimate the likelihood of barcode mismatches and indels in our model.
 
-We generated an artifical "genome" which contains only the [cDNA primer from 10x Chromium Single Cell V3](https://kb.10xgenomics.com/hc/en-us/articles/217268786-How-do-I-design-a-custom-targeted-assay-for-Single-Cell-3-), cellular barcode and UMI sequences as the same counts as the Illumina library, followed by 20bp oligo-dT and 32bp cDNA sequences in our [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_genomesh), in order to estimate the likelihood of barcode mismatches and indels in our model.
+* `build_nanosim`: The Nanopore error profile is produced using the ["read_analysis.py"](https://github.com/bcgsc/NanoSim#1-characterization-stage) from NanoSim. The following [step](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_nanosimsh) in our pipeline creates a directory containing the error profile. 
 
-The Nanopore error profile is produced using the ["read_analysis.py"](https://github.com/bcgsc/NanoSim#1-characterization-stage) from NanoSim. The following [step](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_nanosimsh) in our pipeline creates a directory containing the error profile. Next we generate [one million Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#sim_readssh) based on the artifical we built previously using NanoSim. The generated Nanopore reads were [trimmed to 100bp and wrote to a bam file](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_alignsh), and the ground truth barcode sequences can be known by looking into the corresponding genomic locations from the artifical genome in the [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#get_barcodessh). 
+* `sim_reads`: We generate [one million Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#sim_readssh) based on the artifical we built previously using NanoSim. 
 
-In the next step, we run our feature extraction [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#run_pipesh) on the bam file of simulated reads. By comparing to our ground truth barcode sequences, we assign either 0 or 1 as labels to each barcode alignment, indicating whether the corresponding alignment is correct or not. Then we build a [naive bayesian model](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_modelr) based on the label and previously extracted barcode alignment features. 
+* `build_test`: The generated Nanopore reads were [trimmed to 100bp and wrote to a bam file](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_alignsh), and the ground truth barcode sequences can be known by looking into the corresponding genomic locations from the artifical genome in the [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#get_barcodessh). 
 
-Using the naive bayesian model built in the last step, we can predict the likelihood given the alignment features from the other Nanopore reads sequenced from the same cDNA library. Then we use the bayesian theorem to calculated the posterior probabilities that the barcode alignment is correct among all potential barcodes. The [predicted probabilities](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#predr) allow us benchmarking our predictions with the other simulated reads, or do barcode assignment with the real Nanopore reads. User may [set a cutoff and select the highest from these probabilities](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#filter_predsh)
+* `run_pipe_sim`: run the feature extraction [pipeline](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#run_pipesh) on the bam file of simulated reads. 
 
-## Benchmarking
-[1) Simulated Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore)
+* `add_label`: By comparing to our ground truth barcode sequences, we assign either 0 or 1 as labels to each barcode alignment, indicating whether the corresponding alignment is correct or not. 
 
-We have provided an [R script](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/sim_bench.r) that allows user to inspect the various metrics (accuracy, precision, sensitivity, specificity, and F1) along different cut-off thresholds on the predicted probabilities. User may also want to plot the [feature variances](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#feat_varr) and [feature importance](https://github.com/dieterich-lab/single-cell-nanopore/tree/master/pipelines#feat_statr) for a better understanding of the correct and false barcode assignments.
+* `build_model`: build a [naive bayesian model](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#build_modelr) based on the label and previously extracted barcode alignment features. 
 
-[2) Real Nanopore reads](https://github.com/dieterich-lab/single-cell-nanopore)
+* `pred`: Use the naive bayesian model previously built and predict the likelihood given the alignment features from the other Nanopore reads sequenced from the same cDNA library. Then we use the bayesian theorem to calculated the posterior probabilities that the barcode alignment is correct among all potential barcodes. The [predicted probabilities](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/pipelines/README.md#predr) allow us benchmarking our predictions with the other simulated reads, or do barcode assignment with the real Nanopore reads. 
 
+* `filter_sim`: set a cutoff and select the highest from the predicted probabilities
 
 ## Authors
 
