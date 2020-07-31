@@ -38,8 +38,6 @@ conda activate single-cell-nanopore
 
 ## Input files:
 
-* [barcodes.tsv.gz](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices).  
-
 * [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) in the `filtered_feature_bc_matrix` folder of Cell Ranger.
 
 * Background cell barcodes named as [`raw.tsv.gz`](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/), could be renamed from the `barcodes.tsv.gz` in the `raw_feature_bc_matrix` folder of Cell Ranger. 
