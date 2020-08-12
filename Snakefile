@@ -47,6 +47,17 @@ rule get_a_gene:
   run:
     get_most_abundant_gene(input.matrix, input.feature, output.file)
 
+rule assign_gene:
+  input:
+    bam = dir_out + _nanopore + '.bam',
+    annot  = dir_in + config["refFlat"]
+  output:
+    bam = dir_out + _nanopore + '.GE.bam'
+  shell:
+    """
+    java -jar -Xmx4g TagReadWithGeneExon.jar I={input.bam} O={output} ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
+    """
+
 rule get_cbc:
   input:
     barcode = dir_in + barcode
@@ -268,7 +279,7 @@ rule run_pipe_sim:
 rule run_pipe_real:
   input:
     barcode = dir_out + 'whitelist.fa',
-    bam = dir_out + _nanopore + '.bam'
+    bam = dir_out + _nanopore + '.GE.bam'
   output:
     tab = dir_out + "real.tab",
     log = dir_out + "real.log",
