@@ -640,8 +640,9 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
 	else{
 		string s;
 		getOptionValue(s, parser, "target");
+		openOutputFile(o.umiOut, s+"_umi.fasta");
 
-		s = s + "parameterLog.log";
+		s = s + "_paramLog.log";
 
 		if(isSet(parser, "output-log") && ! o.logStdout){
 			getOptionValue(o.outLogFile, parser, "output-log");
@@ -652,7 +653,6 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
                 }
 
 		openOutputFile(o.fstrmOut, s);
-		openOutputFile(o.umiOut, "umi.fasta");
 
 		o.out = &o.fstrmOut;
 		o.umi_out = &o.umiOut;
