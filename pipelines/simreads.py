@@ -26,7 +26,7 @@ if type(features) is bytes: features = features.decode('utf-8')
 features = features.splitlines()
 features = np.array(['GN:Z:'+(feature.split('\t')[1] if (len(feature.split('\t')) > 1) else feature) for feature in features])
 
-i = np.random.choice(np.arange(v), n, replace=False, p=mat.data/sum(mat.data))
+i = np.random.choice(np.arange(v), n, replace=True, p=mat.data/sum(mat.data))
 c = np.array('ATGC', dtype='c')
 d = np.random.rand(n,l)*4
 umi = [a.tostring().decode("utf-8") for a in c[d.astype(int)]]
