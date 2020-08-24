@@ -52,10 +52,12 @@ rule assign_gene:
     bam = dir_out + _nanopore + '.bam',
     annot  = dir_in + config["refFlat"]
   output:
-    bam = dir_out + _nanopore + '.GE.bam'
+    genes = dir_out + _nanopore + '_genes.txt'
   shell:
     """
-    java -jar -Xmx4g TagReadWithGeneExon.jar I={input.bam} O={output} ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
+    java -jar -Xmx4g TagReadWithGeneExon.jar I={input.bam} O=tmpge.bam ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
+    samtools view tmpge.bam |perl -F"\t" -ane 'print "$F[0]\t$1\n" if /GE:Z:(\w+)/' > {output}
+    rm tmpge.bam
     """
 
 rule get_cbc:
