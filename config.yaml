@@ -5,8 +5,10 @@ pipeline: "ScNapBar"
 #reference_genome: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.4.fa.gz"
 #reference_cdna: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
 #reference_geneset: "http://ftp.ensembl.org/pub/release-99/gff3/homo_sapiens/Homo_sapiens.GRCh38.99.gff3.gz"
+#refFlat: "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/refFlat.txt.gz"
 
 reference_genome: "GRCh38_90.fa"
+refFlat: "hg38.refFlat"
 
 # Cell Ranger alignment ouput
 barcode: "barcodes.tsv.gz"
