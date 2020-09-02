@@ -1,8 +1,10 @@
 import os
 import re
 import sys
+import csv
 import gzip
 import scipy.io
+import pandas as pd
 
 configfile: "config.yaml"
 
@@ -21,6 +23,12 @@ def get_most_abundant_gene(mtx_file, feature_file, output_file):
     features = gzip.open(feature_file, 'rt').read().splitlines()
     with open(output_file, 'w') as f:
         f.write(features[mat.sum(axis=1).argmax()].split('\t')[1])
+    return ""
+
+def get_reads_per_barcode(mtx_file, barcode_file, output_file):
+    mat = (scipy.io.mmread(gzip.open(mtx_file, 'r')))
+    barcodes = [row[0].split('-')[0] for row in csv.reader(gzip.open(barcode_file,'rt'), delimiter="\t")]
+    pd.DataFrame(barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
     return ""
 
 localrules: all, unzip_fq, get_cbc, build_genome, build_align
@@ -55,7 +63,7 @@ rule assign_gene:
     genes = dir_out + _nanopore + '_genes.txt'
   shell:
     """
-    java -jar -Xmx4g TagReadWithGeneExon.jar I={input.bam} O=tmpge.bam ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
+    java -jar -Xmx64g TagReadWithGeneExon.jar I={input.bam} O=tmpge.bam ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
     samtools view tmpge.bam |perl -F"\t" -ane 'print "$F[0]\t$1\n" if /GE:Z:(\w+)/' > {output}
     rm tmpge.bam
     """
@@ -72,26 +80,12 @@ rule get_cbc:
 
 rule get_cbfreq:
   input:
-    bam = dir_in + bam_illumina
+    barcode = dir_in + config["barcode"],
+    matrix  = dir_in + config["matrix"]
   output:
-    reads_per_barcode = dir_out + "reads_per_barcode"
-  shell:
-    """
-    samtools view {input} | perl -ne 'print "$1\\n" if /GN:Z:.*CB:Z:([ACGT]+)/' | sort | uniq -c > {output}
-    """
-
-rule get_gene_umi:
-  input:
-    bam = dir_in + bam_illumina
-  output:
-    umi = dir_out + "umis/umi"
-  shell:
-    """
-    if [ ! -d {dir_out}umis ]; then mkdir {dir_out}umis; fi
-    samtools view {input} | perl -ne 'print "$1\\t$2\\t$3\\n" if /GN:Z:(\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/' | sort -k1,1 | perl -F"\\t" -ane 'if ($F[0] ne $x){{close O;open O, ">{dir_out}umis/$F[0].txt"}}print O $F[1],"\\t",$F[2];$x=$F[0];END{{close O}}' > {output}
-    for f in {dir_out}umis/*.txt;do sort $f|uniq|perl -F"\\t" -ane 'print ">$F[0]$h{{$F[0]}}\\n$F[1]";$h{{$F[0]}}++' > ${{f%.*}}.fa;done
-    rm {dir_out}umis/*.txt
-    """
+    file = dir_out + "reads_per_barcode"
+  run:
+    get_reads_per_barcode(input.matrix, input.barcode, output.file)
 
 rule find_dist:
   input:
@@ -222,21 +216,6 @@ rule build_align:
     perl pipelines/fa2sam.pl {input.sim} {input.barcode} {params.readlen} {params.cdnalength} | samtools view -bS > {output}
     """
 
-rule get_sim_umi_reads:
-  input:
-    umi = dir_out + "sim_umi.fasta",
-    genes = dir_out + "sim_genes.txt"
-  output:
-    bam = dir_out + "umis/bam"
-  params:
-    adapter = 'AAA'
-  shell:
-    """
-    perl pipelines/fa2sams.pl {input.umi} {input.genes} {params.adapter} {dir_out}umis > {output}
-    for f in {dir_out}umis/*.txt;do samtools view -bS $f > ${{f%.*}}.bam;done
-    rm {dir_out}umis/*.txt
-    """
-
 rule get_barcodes:
   input:
     bam = dir_in + bam_illumina,
@@ -281,7 +260,7 @@ rule run_pipe_sim:
 rule run_pipe_real:
   input:
     barcode = dir_out + 'whitelist.fa',
-    bam = dir_out + _nanopore + '.GE.bam'
+    bam = dir_out + _nanopore + '.bam'
   output:
     tab = dir_out + "real.tab",
     log = dir_out + "real.log",
@@ -302,39 +281,12 @@ rule run_pipe_real:
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
-    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' umi.fasta > {output.umi}
-    """
-
-rule run_umi_sim:
-  input:
-    bam = dir_out + "umis/bam",
-    umi = dir_out + "umis/umi"
-  output:
-    tab = dir_out + "sim_umi.tab"
-  params:
-    adapter = 'AAA',
-    barcodelength = config["barcodelength"]
-  shell:
-    """
-    for f in $(ls -1 analysis/umis/*.bam);do bin/singleCellPipe -n {threads} -r $f -t $(basename ${{f%.*}}) -w ${{f%.*}}.fa -as {params.adapter} -ao 3 -ae 0 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100;done
-    cat *.tab|grep -v '^read_id'|perl -F"\\t|\\.\\." -ane 'print if $F[1] eq substr($F[2],0,{params.barcodelength})' > {output}
-    rm *.tab *.fasta *parameterLog.log
-    """
-
-rule add_umiflag:
-  input:
-    tab = dir_out + "sim.tab",
-    umi = dir_out + "sim_umi.tab"
-  output:
-    tab = dir_out + "sim.tab0"
-  shell:
-    """
-    perl pipelines/add_umi.pl {input.tab} {input.umi}|cut -f1-13 > {output}
+    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
     """
 
 rule add_label:
   input:
-    tab = dir_out + "sim.tab0",
+    tab = dir_out + "sim.tab",
     barcode = dir_out + "sim_barcodes.txt"
   output:
     tab = dir_out + "sim.tab1"
