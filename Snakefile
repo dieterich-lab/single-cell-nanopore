@@ -250,11 +250,11 @@ rule run_pipe_sim:
     prefix = "sim"
   shell:
     """
-    if [ -f umi.fasta ]; then rm umi.fasta; fi
+    if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
-    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' umi.fasta > {output.umi}
+    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
     """
 
 rule run_pipe_real:
@@ -271,7 +271,7 @@ rule run_pipe_real:
     prefix = "real"
   shell:
     """
-    if [ -f umi.fasta ]; then rm umi.fasta; fi
+    if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb 3 -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     printf "Aligned to genome\t" > {output.log}
