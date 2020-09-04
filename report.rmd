@@ -77,7 +77,7 @@ ggplot(df, aes(x = pred, group = Assignment)) + geom_density(aes(color = Assignm
 
 In Figure \ref{fig:realcount} we see the number of reads left in each step of ScNapBar.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=5, fig.height=5, fig.cap="\\label{fig:realcount}Number of Nanopore reads each step"}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.cap="\\label{fig:realcount}Number of Nanopore reads each step"}
 x=read.table(args$real_log,sep='\t')
 a=system(paste0('wc -l ',args$real_label),intern=TRUE)
 x[nrow(x)+1,]=c('Assigned to barcode', gsub('[^0-9]', '', a))
@@ -95,7 +95,6 @@ df=data.frame(assignment=c('unassigned','assigned')[as.integer(x$pred>args$cutof
 ggplot(df,aes(value,fill=assignment))+geom_histogram()+facet_wrap(~variable,scale="free")
 ```
 
-We compared the features (Figure \ref{fig:realcomp}) and scores (Figure \ref{fig:realcompscore}) of the Nanopore reads which have either assigned to a barcode by ScNapBar, or Sicelore, or both. 
 
 ```{r, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE, fig.width=8, fig.height=6, fig.cap="\\label{fig:realcompfeat}Features from the Nanopore reads"}
 x=read.table(args$sis_pred,header=TRUE)
