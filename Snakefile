@@ -31,6 +31,13 @@ def get_reads_per_barcode(mtx_file, barcode_file, output_file):
     pd.DataFrame(barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
     return ""
 
+def get_Illumina_genes(mtx_file, feature_file, barcode_file, output_file):
+    mat = (scipy.io.mmread(gzip.open(mtx_file, 'r')))
+    features = gzip.open(feature_file, 'rt').read().splitlines()
+    barcodes = [row[0].split('-')[0] for row in csv.reader(gzip.open(barcode_file,'rt'), delimiter="\t")]
+    pd.DataFrame(features, barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
+    return ""
+
 localrules: all, unzip_fq, get_cbc, build_genome, build_align
 
 rule all:
@@ -86,6 +93,16 @@ rule get_cbfreq:
     file = dir_out + "reads_per_barcode"
   run:
     get_reads_per_barcode(input.matrix, input.barcode, output.file)
+
+rule get_illu_ge:
+  input:
+    barcode = dir_in + config["barcode"],
+    feature = dir_in + config["feature"],
+    matrix  = dir_in + config["matrix"]
+  output:
+    file = dir_out + "Illu.ge"
+  run:
+    get_Illumina_genes(input.matrix, input.feature, input.barcode, output.file)
 
 rule find_dist:
   input:
@@ -282,6 +299,38 @@ rule run_pipe_real:
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
+    """
+
+rule get_nano_ge:
+  input:
+    bam = dir_out + _nanopore + '.bam'
+  output:
+    file = dir_out + "Nanopore.ge"
+  shell:
+    """
+    samtools view {input}|perl -F"\\t" -ane 'print "$F[0]\\t$1\\n" if /GE:Z:(\\w+)/' > {output}
+    """
+
+rule run_umi_gene:
+  input:
+    ge = dir_out + "Nanopore.ge",
+    umi = dir_out + "real_umi.fasta"
+  output:
+    file = dir_out + "Nanopore.geneumi"
+  shell:
+    """
+    perl pipelines/get_gene_umi.pl {input.umi} {input.ge} > {output}
+    """
+
+rule run_umi_seq:
+  input:
+    illu = dir_out + "Illu.ge",
+    nano = dir_out + "Nanopore.geneumi"
+  output:
+    file = dir_out + "real.umi"
+  shell:
+    """
+    perl pipelines/umialign.pl {input.illu} {input.nano} > {output}
     """
 
 rule add_label:
