@@ -320,6 +320,7 @@ rule run_umi_seq:
     umilength = config["umilength"]
   shell:
     """
+    mkdir tmpd
     perl pipelines/umialign.pl {input.illu} {input.nano} x {params.umilength} tmpd > {output}
     rm -fr tmpd
     """
