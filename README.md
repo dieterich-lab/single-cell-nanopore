@@ -63,7 +63,7 @@ conda activate single-cell-nanopore
 
 For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) dataset and rename the files according to the following naming convention.
 
-* [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) in the `filtered_feature_bc_matrix` folder of Cell Ranger.
+* [`possorted_genome_bam.bam`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) in the `filtered_feature_bc_matrix` folder of Cell Ranger.
 
 * Background cell barcodes named as [`raw.tsv.gz`](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/), could be renamed from the `barcodes.tsv.gz` in the `raw_feature_bc_matrix` folder of Cell Ranger. 
 
@@ -71,7 +71,7 @@ For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nl
 
 * Reference genome and transcriptome in FATSA format
 
-* Annotation file in ensemble GTF/GFF formats
+* Annotation file in [`refFlat`](http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/refFlat.txt.gz) formats and `.refFlat` filename extension.
 
 ## Output files:
 
