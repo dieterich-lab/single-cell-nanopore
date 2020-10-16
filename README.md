@@ -75,11 +75,11 @@ For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nl
 
 ## Output files:
 
-The output files are put in the `analysis` folder of the pipeline. The main target output files are `sim.label` and `real.label`. In addition, you will find the following files:
+The output files are put in the `analysis` folder of the pipeline. The main target output files are `sim.label` and `real.label` (three columns: read_id, barcode, score). In addition, you will find the following files:
 
 * `sim.label`: the barcode assignment from the simulated reads with scores. The scores range from 0-99, and larger scores indicate higher confidence for the assignment. Reads assigned to multiple barcodes only have the assignment with the highest score retained. 
 
-* `real.label`: the barcode assignment from the real Nanopore reads with scores. The scores range from 0 to the cutoff set in `config.yaml`. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
+* `real.label`: the barcode assignment from the real Nanopore reads with scores. The scores range from the cutoff set in `config.yaml` to 99. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
 
 * `real.umi`: The barcodes assignment of the Nanopore reads with matched Illumina UMIs from the same cell and the same gene.
 
