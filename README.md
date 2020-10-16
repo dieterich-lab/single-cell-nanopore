@@ -81,6 +81,8 @@ The output files are put in the `analysis` folder of the pipeline. The main targ
 
 * `real.label`: the barcode assignment from the real Nanopore reads with scores. The scores range from 0 to the cutoff set in `config.yaml`. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
 
+* `real.umi`: The barcodes assignment of the Nanopore reads with matched Illumina UMIs from the same cell and the same gene.
+
 * `sim.prob` and `real.prob`: The complete feature tables used to generate the probability scores of the simulated reads and the real Nanopore reads, respectively. 
 
 Other intermediate files which contain the useful information in the model estimation and benchmarking includes:
@@ -96,8 +98,6 @@ Other intermediate files which contain the useful information in the model estim
 * `sim_umi.fasta` and `real_umi.fasta`: The rest DNA sequences after removing the adapter and barcode sequences. 
 
 * `sim_umi.tab`: The barcodes assignment of the simulated reads with matched Illumina UMIs from the same cell and the same gene.
-
-* `real.umi`: The barcodes assignment of the real Nanopore reads with matched Illumina UMIs from the same cell and the same gene.
 
 ## Parameters:
 
