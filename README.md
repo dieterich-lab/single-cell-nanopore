@@ -18,9 +18,9 @@ snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.accou
 
 ## Two modes for the cell barcode assignment
 
-1. ScNapBar (option 1) uses a probabilistic model for barcode assignment by default, which performs very well in cases of low sequencing saturation. 
+1. ScNapBar `(option 1)` uses a probabilistic model for barcode assignment by default, which performs very well in cases of low sequencing saturation. 
 
-2. ScNapBar (option 2) assigns barcode based on matched Illumina UMIs without additional probabilistic modeling. Use the following command to start this mode: 
+2. ScNapBar `(option 2)` assigns barcode based on matched Illumina UMIs without additional probabilistic modeling. Use the following command to start this mode: 
 
 ```
 snakemake -j 8 --until run_umi_seq
@@ -101,7 +101,7 @@ Other intermediate files which contain the useful information in the model estim
 
 ## Parameters:
 
-### Parameters of the pipeline
+### Parameters of **`ScNapBar`**
 
 The parameters are set in the `config.yaml`. If the entry is a file, then it must be placed under the `data` folder. 
 
@@ -131,7 +131,7 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 * `cdnaseq`: DNA sequences used to append to each entry in the artificial genome. 
 
-### Parameters of singleCellPipe
+### Parameters of **`singleCellPipe`**
 
 singleCellPipe is modified from [flexbar](https://github.com/seqan/flexbar) which performs the adapter and barcode alignments. Most of the flexbar parameters are available in this program, yet there are a few distinctive parameters as follows:
 
