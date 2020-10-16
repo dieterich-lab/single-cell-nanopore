@@ -31,13 +31,6 @@ def get_reads_per_barcode(mtx_file, barcode_file, output_file):
     pd.DataFrame(barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
     return ""
 
-def get_Illumina_genes(mtx_file, feature_file, barcode_file, output_file):
-    mat = (scipy.io.mmread(gzip.open(mtx_file, 'r')))
-    features = gzip.open(feature_file, 'rt').read().splitlines()
-    barcodes = [row[0].split('-')[0] for row in csv.reader(gzip.open(barcode_file,'rt'), delimiter="\t")]
-    pd.DataFrame(features, barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
-    return ""
-
 localrules: all, unzip_fq, get_cbc, build_genome, build_align
 
 rule all:
@@ -67,11 +60,11 @@ rule assign_gene:
     bam = dir_out + _nanopore + '.bam',
     annot  = dir_in + config["refFlat"]
   output:
-    genes = dir_out + _nanopore + '_genes.txt'
+    genes = 'Nanopore.ge'
   shell:
     """
     java -jar -Xmx64g TagReadWithGeneExon.jar I={input.bam} O=tmpge.bam ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
-    samtools view tmpge.bam |perl -F"\t" -ane 'print "$F[0]\t$1\n" if /GE:Z:(\w+)/' > {output}
+    samtools view tmpge.bam |perl -F"\\t" -ane 'print "$F[0]\\t$1\\n" if /GE:Z:(\\w+)/' > {output}
     rm tmpge.bam
     """
 
@@ -96,13 +89,13 @@ rule get_cbfreq:
 
 rule get_illu_ge:
   input:
-    barcode = dir_in + config["barcode"],
-    feature = dir_in + config["feature"],
-    matrix  = dir_in + config["matrix"]
+    bam = dir_in + bam_illumina
   output:
     file = dir_out + "Illu.ge"
-  run:
-    get_Illumina_genes(input.matrix, input.feature, input.barcode, output.file)
+  shell:
+    """
+    samtools view {input}|perl -ne 'print "$2\\t$3\\t$1\\n" if /GN:Z:(\\S+).*CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/'|sort|uniq > {output}
+    """
 
 rule find_dist:
   input:
@@ -264,14 +257,17 @@ rule run_pipe_sim:
     umi = dir_out + "sim_umi.fasta"
   params:
     adapter = config["adapter"],
+    barumilength = config["barcodelength"] + config["umilength"],
+    len = config["umilength"] + config["polyTlength"],
+    keepbp = 3,
     prefix = "sim"
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
-    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul 26 -kb 3 -fl 100
+    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb {params.keepbp} -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
-    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
+    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
     """
 
 rule run_pipe_real:
@@ -285,11 +281,13 @@ rule run_pipe_real:
   params:
     adapter = config["adapter"],
     barumilength = config["barcodelength"] + config["umilength"],
+    len = config["umilength"] + config["polyTlength"],
+    keepbp = 3,
     prefix = "real"
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
-    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb 3 -fl 100
+    bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb {params.keepbp} -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
     printf "Aligned to genome\t" > {output.log}
     cut -f1 {params.prefix}.tab|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
@@ -298,17 +296,7 @@ rule run_pipe_real:
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
-    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,3,18),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
-    """
-
-rule get_nano_ge:
-  input:
-    bam = dir_out + _nanopore + '.bam'
-  output:
-    file = dir_out + "Nanopore.ge"
-  shell:
-    """
-    samtools view {input}|perl -F"\\t" -ane 'print "$F[0]\\t$1\\n" if /GE:Z:(\\w+)/' > {output}
+    perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
     """
 
 rule run_umi_gene:
@@ -328,9 +316,12 @@ rule run_umi_seq:
     nano = dir_out + "Nanopore.geneumi"
   output:
     file = dir_out + "real.umi"
+  params:
+    umilength = config["umilength"]
   shell:
     """
-    perl pipelines/umialign.pl {input.illu} {input.nano} > {output}
+    perl pipelines/umialign.pl {input.illu} {input.nano} x {params.umilength} tmpd > {output}
+    rm -fr tmpd
     """
 
 rule add_label:

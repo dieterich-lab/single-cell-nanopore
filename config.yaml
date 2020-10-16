@@ -25,7 +25,7 @@ umilength: 10
 barcodelength: 16
 numSimReads: 100000
 numIlmReads: 1000000
-cutoff: 30
+cutoff: 50
 percent_raw: 0.2
 threads: 8
 cdnaseq: "GCCTGGCTTGTTTGCAAAGGCCCTGGCCAACGTCAACATTGGGAGCCTCATCTGCAATGTAGGGGCCGGTGGACCTGCTCCAGCAGCTGG"
