@@ -1,10 +1,10 @@
 $illu=shift;
 $nano=shift;
+$n=shift; #file prefix
+$L=shift; #umi length
+$l=$L-3;  #max 3 mismatches allowed
 $dir=shift;
 $dir='.' unless defined $dir;
-$n=shift;
-$L=12;
-$l=$L-3;
 
 open(F,"<$illu");
 while(<F>){chomp;
@@ -34,7 +34,7 @@ close F;
 open(F,">$dir/q$n.fa")||die "$!";
 print F $h{$g};
 close F;
-system("/home/qwang/bin/mummer-4.0.0beta2/mummer q$n.fa s$n.fa -maxmatch -b -c -l $l -F > mm$n");
+system("mummer $dir/q$n.fa $dir/s$n.fa -maxmatch -b -c -l $l -F > $dir/mm$n");
 open(F,"<$dir/mm$n");
 while(<F>){
 $b=/^>/;
