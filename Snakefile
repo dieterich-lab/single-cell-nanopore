@@ -317,12 +317,13 @@ rule run_umi_seq:
   output:
     file = dir_out + "real.umi"
   params:
-    umilength = config["umilength"]
+    tmpdir = "tmpd",
+    umilength = config["umilength"],
   shell:
     """
-    mkdir tmpd
-    perl pipelines/umialign.pl {input.illu} {input.nano} x {params.umilength} tmpd > {output}
-    rm -fr tmpd
+    mkdir {params.tmpdir}
+    perl pipelines/umialign.pl {input.illu} {input.nano} x {params.umilength} {params.tmpdir} > {output}
+    rm -fr {params.tmpdir}
     """
 
 rule add_label:
