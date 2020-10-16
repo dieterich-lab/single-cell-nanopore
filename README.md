@@ -61,7 +61,7 @@ conda activate single-cell-nanopore
 
 ## Input files:
 
-We suggest downloading the [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) dataset and rename the files according to the following naming convention.
+For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) dataset and rename the files according to the following naming convention.
 
 * [possorted_genome_bam.bam](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) in the `filtered_feature_bc_matrix` folder of Cell Ranger.
 
