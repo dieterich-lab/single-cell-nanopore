@@ -18,7 +18,11 @@ snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.accou
 
 ## Two modes for the cell barcode assignment
 
-1. ScNapBar `(option 1)` uses a probabilistic model for barcode assignment by default, which performs very well in cases of low sequencing saturation. 
+1. ScNapBar `(option 1)` uses a probabilistic model for barcode assignment by default (see command below), which performs very well in cases of low sequencing saturation. 
+
+```
+snakemake -j 8
+```
 
 2. ScNapBar `(option 2)` assigns barcode based on matched Illumina UMIs without additional probabilistic modeling. Use the following command to start this mode: 
 
