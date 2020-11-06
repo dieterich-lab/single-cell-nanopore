@@ -3,6 +3,7 @@ $alen=shift;
 $blen=shift;
 $ulen=shift;
 $gene=shift;
+$ablen=$blen+$alen;
 $bulen=$blen+$ulen;
 $barcode='N'x$blen;
 $umi='N'x$ulen;
@@ -17,11 +18,12 @@ close F;
 chomp $gene;
 
 open(F,"<$fa");
-while(<F>){
-$b=/^>/; 
-$s=$1 if /^>(\w+):/;
+while(<F>){chomp;
+if (/^>(\w+):/){$s=$1
+}else{
+$barcode=substr($_,$alen,$blen);
+$umi=substr($_,$ablen,$ulen);
 $d = defined $h{substr($_,$alen,$bulen)} ? $h{substr($_,$alen,$bulen)} : "$gene\t$barcode\t$umi";
-print "$1\t$d\n" unless $b
+print "$1\t$d\n"}
 }
 close F
-      
