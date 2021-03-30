@@ -9,7 +9,7 @@ dependencies:
   - scikit-learn=0.22.1
   - samtools=1.10
   - minimap2=2.17
-  - mummer=4.0.0beta2
+  - mummer4=4.0.0beta2
   - nanosim=2.5.1
   - htseq=0.11.3
   - bedtools=2.29.2
@@ -17,4 +17,6 @@ dependencies:
   - r::r-stringdist=0.9.5.1
   - r::r-caret=6.0_83
   - r::r-e1071=1.7_1
-  - r::r-markdown=1.1
+  - r-markdown=1.1
+  - tbb=2020.3
+  - tbb-devel=2020.3
