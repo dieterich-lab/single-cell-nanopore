@@ -183,6 +183,16 @@ In this paragraph, we explain the use of each major job in the pipeline.
 
 * `filter_sim` and `filter_pred`: output the reads which passed the cutoff of the predicted probabilities. 
 
+## Installation troubleshooting
+
+Q: `fatal error: tbb/pipeline.h: No such file or directory` when compiling **`singleCellPipe`**.
+
+A: Please run `conda install tbb tbb-devel` to install the required **`TBB`** library. 
+
+Q: `fatal error: seqan/basic.h: No such file or directory` when compiling **`singleCellPipe`**.
+
+A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**:
+
 ## Authors
 
 * Qi Wang <[qwang.big@gmail.com](mailto:qwang.big@gmail.com)>
