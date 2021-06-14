@@ -60,7 +60,7 @@ rule assign_gene:
     bam = dir_out + _nanopore + '.bam',
     annot  = dir_in + config["refFlat"]
   output:
-    genes = 'Nanopore.ge'
+    genes = dir_out + 'Nanopore.ge'
   shell:
     """
     java -jar -Xmx64g TagReadWithGeneExon.jar I={input.bam} O=tmpge.bam ANNOTATIONS_FILE={input.annot} ALLOW_MULTI_GENE_READS=true USE_STRAND_INFO=true
@@ -266,7 +266,7 @@ rule run_pipe_sim:
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb {params.keepbp} -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
-    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_paramLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
     """
 
