@@ -71,9 +71,9 @@ For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nl
 
 * Background cell barcodes named as [`raw.tsv.gz`](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/), could be renamed from the `barcodes.tsv.gz` in the `raw_feature_bc_matrix` folder of Cell Ranger. 
 
-* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/)) in FATSQ format
+* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/)) in FASTQ format
 
-* Reference genome and transcriptome in FATSA format
+* Reference genome and transcriptome in FASTA format
 
 * Annotation file in [`refFlat`](http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/refFlat.txt.gz) formats and `.refFlat` filename extension.
 
