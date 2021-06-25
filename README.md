@@ -48,17 +48,23 @@ git clone https://github.com/nanoporetech/single-cell-nanopore.git single-cell-n
 ```
 cd single-cell-nanopore
 ```
+4. Put **`seqan`** library files into the empty `seqan` folder
+```
+wget https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz
+tar xJf seqan-library-2.4.0.tar.xz
+cp -r seqan-library-2.4.0/include single-cell-nanopore/seqan/
+```
 
-4. Use these commands for building **`ScNapBar`**: 
+5. Use these commands for building **`ScNapBar`**: 
 ```
 cmake .
 make
 ```
-5. Install conda software dependencies with
+6. Install conda software dependencies with
 ```
 conda env create --name single-cell-nanopore --file environment.yaml
 ```
-6. Initialise conda environment with 
+7. Initialise conda environment with 
 ```
 conda activate single-cell-nanopore
 ```
