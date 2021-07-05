@@ -295,7 +295,7 @@ rule run_pipe_real:
     awk '$3=="no"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
-    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}parameterLog.log
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_paramLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
     """
 
