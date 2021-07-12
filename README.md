@@ -32,41 +32,44 @@ snakemake -j 8 --until run_umi_seq
 
 ## Installation:
 
-1. Most software dependencies are managed using **`conda`**. Please install as described at  <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
+1. Software dependencies are managed using **`conda`**, for more information see <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 ```
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
-bash
-```
-2. Download the files into a folder named `single-cell-nanopore`. The program requires the **`NanoSim`** and **`tbb`** which should be installed first through **`conda`**
-```
-conda install -c bioconda nanosim
-conda install -c conda-forge tbb tbb-devel 
-git clone https://github.com/nanoporetech/single-cell-nanopore.git single-cell-nanopore
-```
-3. Change working directory into the new `single-cell-nanopore` folder 
-```
-cd single-cell-nanopore
-```
-4. Put **`seqan`** library files into the empty `seqan` folder
-```
-wget https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz
-tar xJf seqan-library-2.4.0.tar.xz
-cp -r seqan-library-2.4.0/include single-cell-nanopore/seqan/
+conda config --set auto_activate_base false
 ```
 
-5. Use these commands for building **`ScNapBar`**: 
+2. Install scNapBar. 
 ```
+# Clone repository, add --recursive to include the sequan submodule.
+git clone --recursive https://github.com/dieterich-lab/single-cell-nanopore.git
+cd single-cell-nanopore
+# Create environment...
+conda env create --name scNapBar --file environment.yaml
+conda activate scNapBar
+```
+
+**Note**: The latest **NanoSim** v3.0.1 introduced new features to deal with compressed (BAM) files and made minor bug fixes, but cannot currently be installed via conda. As a consequence, **NanoSim** is not currently listed as a dependency in `environment.yaml`, and is not installed by default. After installing **scNapBar**, we suggest to install the latest **NanoSim** as follows:
+
+
+```
+# First install missing packages from NanoSim requirements.txt and latest conda build 
+conda install joblib "scipy>=1.0.0" "six>=1.10.0" -n scNapBar-dev
+conda install -c bioconda "pybedtools>=0.7.10" "pysam>=0.13" -n scNapBar-dev
+# If still under single-cell-nanopore, cd .. or clone anywhere else
+git clone --depth 1 --branch V3.0.1 https://github.com/bcgsc/NanoSim.git
+# CONDA_PREFIX is the base location of the newly created conda environment
+cd NanoSim
+cp src/*.py $CONDA_PREFIX/bin/
+chmod 0755 "$CONDA_PREFIX/bin/read_analysis.py"
+chmod 0755 "$CONDA_PREFIX/bin/simulator.py"
+```
+
+3. Go back to `single-cell-nanopore` and build.
+```
+cd single-cell-nanopore
 cmake .
 make
-```
-6. Install conda software dependencies with
-```
-conda env create --name single-cell-nanopore --file environment.yaml
-```
-7. Initialise conda environment with 
-```
-conda activate single-cell-nanopore
 ```
 
 ## Input files:
@@ -193,11 +196,11 @@ In this paragraph, we explain the use of each major job in the pipeline.
 
 Q: `fatal error: tbb/pipeline.h: No such file or directory` when compiling **`singleCellPipe`**.
 
-A: Please run `conda install tbb tbb-devel` to install the required **`TBB`** library. 
+A: Please run `conda install [--name scNapBar -c conda-forge] tbb=2020.3 tbb-devel=2020.3` to install the required **`TBB`** libraries. 
 
 Q: `fatal error: seqan/basic.h: No such file or directory` when compiling **`singleCellPipe`**.
 
-A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**:
+A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**, or make sure wou clone the repository with the `--recursive` flag. If you forgot this flag, you can always `git submodule update --init` afterwards. 
 
 ## Authors
 
