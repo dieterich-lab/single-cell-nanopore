@@ -2,22 +2,34 @@
 
 pipeline: "ScNapBar"
 
-#reference_genome: "http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.4.fa.gz"
-#refFlat: "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/refFlat.txt.gz"
+# PATH TO INPUT DIRECTORY - all input files are relative to this directory
+dir_in: "data"
+# PATH TO OUTPUT DIRECTORY
+dir_out: "analysis"
+# TMP - temporary files
+tmp_dir: /scratch/global_tmp/ 
 
+# INPUT FILES - all files must be under dir_in
+# Avoid dots in the file names before the extension(s)
+
+# Annotations
 reference_genome: "GRCh38_90.fa"
-refFlat: "hg38.refFlat"
+refFlat: "hg38.refFlat" # not used with option 1
 
-# Cell Ranger outputs from filtered_feature_bc_matrix
+# Cell Ranger - filtered_feature_bc_matrix
 barcode: "barcodes.tsv.gz"
 feature: "features.tsv.gz"
 matrix:  "matrix.mtx.gz"
-
-# Cell Ranger output of raw_feature_bc_matrix/barcodes.tsv.gz
-barcode_raw: "raw.tsv.gz"
-
+# Cell Ranger - raw_feature_bc_matrix/barcodes.tsv.gz
+barcode_raw: "barcodes_raw.tsv.gz"
+# Cell Ranger - outs
+# ** Add the bam.bai index file to the same location
 illumina_bam: "possorted_genome_bam.bam"
-nanopore_fq: "Nanopore.fq"
+
+# Long reads 
+nanopore_fq: "Nanopore.fq.gz"
+
+# PARAMS
 adapter: "CTACACGACGCTCTTCCGATCT"
 polyTlength: 20
 cdnalength: 32
@@ -29,3 +41,8 @@ cutoff: 50
 percent_raw: 0.2
 threads: 8
 cdnaseq: "GCCTGGCTTGTTTGCAAAGGCCCTGGCCAACGTCAACATTGGGAGCCTCATCTGCAATGTAGGGGCCGGTGGACCTGCTCCAGCAGCTGG"
+
+nano_seed: 1984 # Manually seeds the pseudo-random number generator (NanoSim)
+
+
+

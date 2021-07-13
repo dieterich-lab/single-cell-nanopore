@@ -6,17 +6,22 @@ import gzip
 import scipy.io
 import pandas as pd
 
+from pathlib import Path
+
+
 configfile: "config.yaml"
 
-dir_in = "data/"
-dir_out = "analysis/"
+# TODO: use pathlib 
+dir_in = os.path.join(config["dir_in"], '')
+dir_out = os.path.join(config["dir_out"], '')
+
 ref_genome = config["reference_genome"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
 simreadlength = len(config["adapter"]) + config["barcodelength"] + config["umilength"] + config["polyTlength"] + config["cdnalength"]
-_nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
-fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
+_nanopore = Path(fq_nanopore).stem.split('.')[0]
+fa_barcode = Path(barcode).stem.split('.')[0] + '.fa'
 
 def get_most_abundant_gene(mtx_file, feature_file, output_file):
     mat = (scipy.io.mmread(gzip.open(mtx_file, 'r')))
@@ -37,14 +42,6 @@ rule all:
   input:
     sim  = dir_out + "sim.label",
     real = dir_out + "real.label"
-
-rule unzip_fq:
-  input:
-    file = dir_in + fq_nanopore + '.gz'
-  output:
-    file = dir_in + fq_nanopore
-  run:
-    shell("gunzip -c {input} > {output}")
 
 rule get_a_gene:
   input:
@@ -107,6 +104,7 @@ rule find_dist:
     """
     Rscript pipelines/find_dist.r {input.reads_per_barcode} {input.fa_barcode} {output}.tmp
     sort {output}.tmp|uniq|perl -ne 'print ">$_$_"' > {output}
+    rm {output}.tmp
     """
 
 rule align_longreads:
@@ -114,22 +112,19 @@ rule align_longreads:
     fq = dir_in + fq_nanopore,
     ref_genome = dir_in + ref_genome
   output:
-    sam = dir_out + _nanopore + '.sam',
     bam = dir_out + _nanopore + '.bam'
+  params:
+    tmp = config["tmp_dir"]
   shell:
     """
-    minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
-    grep '^@' {output.sam}.tmp |sort|uniq > {output.sam}.head
-    grep -v '^@' {output.sam}.tmp |sort -snk3 -k4|uniq > {output.sam}.body
-    cat {output.sam}.head {output.sam}.body > {output.sam}
-    samtools view -bS -o {output.bam} {output.sam}
-    rm {output.sam}.head {output.sam}.body {output.sam}.tmp
+    minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort - -@{threads} -T {params.tmp} -o {output.bam}
+    samtools index -@{threads} {output.bam}
     """
 
 rule build_nanosim:
   input:
     fq = dir_in + fq_nanopore,
-    genome_alignment = dir_out + _nanopore + '.sam'
+    genome_alignment = dir_out + _nanopore + '.bam'
   output:
     model = dir_out + "nanosim_model/sim_model_profile"
   shell:
@@ -193,9 +188,10 @@ rule sim_reads:
   params:
     num = config["numSimReads"],
     num2 = int(config["numSimReads"]*1.35)
+    seed = config["nano_seed"]
   shell:
     """
-    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2}
+    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2} -t {threads} --seed {params.seed}
     perl -ne '$i++ if /^>/;print if $i<={params.num}' {dir_out}sim_aligned_reads.fasta > {output}
     """
 
@@ -266,8 +262,8 @@ rule run_pipe_sim:
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb {params.keepbp} -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
-    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_paramLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_umi.fasta {params.prefix}_paramLog.log
     """
 
 rule run_pipe_real:
@@ -295,8 +291,8 @@ rule run_pipe_real:
     awk '$3=="no"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
-    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_paramLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_umi.fasta {params.prefix}_paramLog.log
     """
 
 rule run_umi_gene:
