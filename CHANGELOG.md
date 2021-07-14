@@ -6,16 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 ## [Unreleased]
 
 ### Changed
-- Updated **NanoSim** version 3.0.1 with fix.
+- Updated **NanoSim** version 3.0.1 with fix (`environment.yaml`, documentation).
 - Modify sort in `align_longreads`, and pipe output to BAM directly.
-- Move hard coded fields to config file, *etc.*
+- Minor changes: move hard coded fields to config file, adjust `cluster.json`, *etc.*
+- Updated documentation.
 
 ### Added
-- File ./gitignore to ignore build/temporary files
-- Seed to `sim_reads` (NanoSim `simulator.py`).
+- File ./gitignore to ignore build/temporary files.
+- Seed to `sim_reads` (NanoSim `simulator.py`), and `shuf` in `build_genome`.
 
 ### Fixed
-
+- Delete temporary files.
 
 ### Removed
 - Rule `unzip_fq`.

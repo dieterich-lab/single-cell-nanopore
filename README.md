@@ -3,34 +3,7 @@
 ScNapBar is designed for cell barcode assignment from Nanopore sequencing data.
 It requires bam files from both Nanopore and Illumina reads, then builds a model based on the parameters estimated from the two libraries.
 
-## Quick run
-
-1. *optional* edit the provided **`config.yaml`** file to match your own sequence files, reference genome and annotation. Update the adapter and polyT length that fit your libraries.
-
-2. Run the **`snakemake`** command under the conda environment to perform the bioinformatics analysis on the specified sequence files. Several analysis steps can benefit from multiple computer cores; use the `-j` parameter to parallelize the analysis (this document is assuming that 8 cores are available).
-```
-snakemake -j 8 all
-```
-You can also submit the job via job schedulers. We have provided an example on the SLURM. Change the account settings in cluster.json before using it.
-```
-snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
-```
-
-## Two modes for the cell barcode assignment
-
-1. ScNapBar `(option 1)` uses a probabilistic model for barcode assignment by default (see command below), which performs very well in cases of low sequencing saturation. 
-
-```
-snakemake -j 8
-```
-
-2. ScNapBar `(option 2)` assigns barcode based on matched Illumina UMIs without additional probabilistic modeling. Use the following command to start this mode: 
-
-```
-snakemake -j 8 --until run_umi_seq
-```
-
-## Installation:
+## Installation
 
 1. Software dependencies are managed using **`conda`**, for more information see <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 ```
@@ -72,23 +45,54 @@ cmake .
 make
 ```
 
+## Quick run
+
+1. Test **scNapBar** using the example data under *data*. Download the reference genome and place the file under *data*. Edit the provided **`config.yaml`** file by changing the paths to output and temporary directories, as well as the name of the reference genome.
+
+2. Run the **`snakemake`** command under the conda environment to perform the bioinformatics analysis on the specified sequence files. Several analysis steps can benefit from multiple computer cores; use the `-j` parameter to parallelize the analysis (this document is assuming that 12 cores are available).
+```
+snakemake -j 12 all
+```
+You can also submit the job via job schedulers. We have provided an example using SLURM. Adjust the **`cluster.json`** file, or use your own **`snakemake profile`**.
+```
+snakemake -j 12 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads} -p {cluster.partition}"
+```
+
+3. **scNapBar** general usage. Edit the provided **`config.yaml`** file to match your own sequence files, reference genome, annotations, *etc*. Update the adapter and polyT length that fit your libraries.
+
+
+## Two modes for the cell barcode assignment
+
+1. ScNapBar `(option 1 default)` uses a probabilistic model for barcode assignment, which performs very well in cases of low sequencing saturation. 
+
+2. ScNapBar `(option 2)` assigns barcode based on matched Illumina UMIs without additional probabilistic modeling. Use the following command to start this mode: 
+
+```
+snakemake --until run_umi_seq
+```
+
+
 ## Input files:
 
-For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) dataset or [PRJNA722142](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA722142)(which we have already extracted _chr17_ as the demo dataset in the `data` folder), and rename the files according to the following naming convention.
+For testing purposes, we suggest downloading [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) or [PRJNA722142](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA722142) ( we used _chr17_ as an example dataset in the *data* folder, see [Quick run](#quick-run)).
 
-* [`possorted_genome_bam.bam`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) in the `filtered_feature_bc_matrix` folder of Cell Ranger.
+We use the following naming convention:
 
-* Background cell barcodes named as [`raw.tsv.gz`](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/), could be renamed from the `barcodes.tsv.gz` in the `raw_feature_bc_matrix` folder of Cell Ranger. 
+* [`possorted_genome_bam.bam`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) from the `filtered_feature_bc_matrix` folder of Cell Ranger.
 
-* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/)) in FASTQ format
+* Background cell barcodes re-named as [`barcodes_raw.tsv.gz`](data/), from the `barcodes.tsv.gz` of the `raw_feature_bc_matrix` folder of Cell Ranger. 
 
-* Reference genome and transcriptome in FASTA format
+* Nanopore reads ([Nanopore.fq.gz](data/)) in FASTQ (compressed) format.
 
-* Annotation file in [`refFlat`](http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/refFlat.txt.gz) formats and `.refFlat` filename extension.
+* Reference genome in FASTA format.
+
+* Annotation file in [`refFlat`](data/) format (for option 2). Note: The file must have the `.refFlat` extension. If running on the example data, the file must first be uncompressed. See also the [UCSC genome annotation database](http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/refFlat.txt.gz).
 
 ## Output files:
 
-The output files are put in the `analysis` folder of the pipeline. The main target output files are `sim.label` and `real.label` (three columns: read_id, barcode, score). In addition, you will find the following files:
+The output files are put in the `analysis` folder of the pipeline, or any folder specified by `dir_out` in the `config.yaml` file. Example output files from the quick run using the example data are provided under *data_output*. 
+
+The main target output files are `sim.label` and `real.label` (three columns: read_id, barcode, score). In addition, you will find the following files:
 
 * `sim.label`: the barcode assignment from the simulated reads with scores. The scores range from 0-99, and larger scores indicate higher confidence for the assignment. Reads assigned to multiple barcodes only have the assignment with the highest score retained. 
 

@@ -36,7 +36,7 @@ def get_reads_per_barcode(mtx_file, barcode_file, output_file):
     pd.DataFrame(barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
     return ""
 
-localrules: all, unzip_fq, get_cbc, build_genome, build_align
+localrules: all, get_a_gene, get_cbc, bk_barcodes, build_genome, build_align, filter_sim, filter_pred, report
 
 rule all:
   input:
@@ -64,7 +64,7 @@ rule assign_gene:
     samtools view tmpge.bam |perl -F"\\t" -ane 'print "$F[0]\\t$1\\n" if /GE:Z:(\\w+)/' > {output}
     rm tmpge.bam
     """
-
+    
 rule get_cbc:
   input:
     barcode = dir_in + barcode
@@ -164,7 +164,7 @@ rule build_genome:
   shell:
     """
     samtools view {input.bam} | perl -ne 'print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){{print "{params.adapter}$1$2","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' > {output}
-    gzip -dc {input.bk_barcode} | shuf -r -n {params.num} | perl -ne 'print ">chr",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/([ACGT]+)/){{$u="";$u.=[A,T,G,C]->[rand 4]for 1..{params.umilength};print "{params.adapter}$1$u","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' >> {output}
+    gzip -dc {input.bk_barcode} | shuf -r -n {params.num} --random-source={input.bk_barcode} | perl -ne 'print ">chr",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/([ACGT]+)/){{$u="";$u.=[A,T,G,C]->[rand 4]for 1..{params.umilength};print "{params.adapter}$1$u","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' >> {output}
     samtools faidx {output}
     """
 

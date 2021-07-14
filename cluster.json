@@ -1,81 +1,39 @@
 {
     "__default__":
     {
-        "account": "qwang",
+        "account": "eboileau",
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "get_cbfreq":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "find_dist":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "24:0:0",
+        "threads": "12",
+        "partition" : "general"
     },
     "align_longreads":
     {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "mem": "120G",
+        "time": "96:0:0",
+        "threads": "24",
+        "partition" : "long"
     },
     "build_nanosim":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "24:0:0",
+        "threads": "24"
     },
     "sim_reads":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "24:0:0",
+        "threads": "24"
     },
-    "get_barcodes":
+    "run_pipe_real":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "run_pipe":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "run_pipe2":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "add_label":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "build_model":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "run_pred":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "filter_pred":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "96:0:0",
+        "threads": "24",
+	"partition": "long"
     }
 }
+
+
+
