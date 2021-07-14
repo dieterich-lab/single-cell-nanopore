@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ### Fixed
 - Delete temporary files.
+- Use threads.
 
 ### Removed
 - Rule `unzip_fq`.

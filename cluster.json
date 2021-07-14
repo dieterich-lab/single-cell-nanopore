@@ -11,7 +11,7 @@
     {
         "mem": "120G",
         "time": "96:0:0",
-        "threads": "24",
+        "threads": "36",
         "partition" : "long"
     },
     "build_nanosim":
@@ -25,6 +25,13 @@
         "mem": "80G",
         "time": "24:0:0",
         "threads": "24"
+    },
+    "run_pipe_sim":
+    {
+        "mem": "80G",
+        "time": "96:0:0",
+        "threads": "24",
+	"partition": "long"
     },
     "run_pipe_real":
     {

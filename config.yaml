@@ -14,7 +14,7 @@ tmp_dir: /scratch/global_tmp/
 
 # Annotations
 # For the example use http://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.17.fa.gz
-reference_genome: "GRCh38_90.fa"
+reference_genome: "Homo_sapiens.GRCh38.dna.chromosome.17.fa" 
 refFlat: "hg38.refFlat" # not used with option 1, otherwise make sure to uncompress the file!
 
 # Cell Ranger - filtered_feature_bc_matrix

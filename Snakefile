@@ -36,6 +36,12 @@ def get_reads_per_barcode(mtx_file, barcode_file, output_file):
     pd.DataFrame(barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
     return ""
 
+def get_threads(rule, default):
+    cluster_config = snakemake.workflow.cluster_config
+    if rule in cluster_config and "threads" in cluster_config[rule]:
+        return cluster_config[rule]["threads"]
+    return int(default)
+
 localrules: all, get_a_gene, get_cbc, bk_barcodes, build_genome, build_align, filter_sim, filter_pred, report
 
 rule all:
@@ -115,6 +121,7 @@ rule align_longreads:
     bam = dir_out + _nanopore + '.bam'
   params:
     tmp = config["tmp_dir"]
+  threads: 36 # get_threads("align_longreads", 1)
   shell:
     """
     minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort - -@{threads} -T {params.tmp} -o {output.bam}
@@ -127,6 +134,7 @@ rule build_nanosim:
     genome_alignment = dir_out + _nanopore + '.bam'
   output:
     model = dir_out + "nanosim_model/sim_model_profile"
+  threads: 24 # get_threads("build_nanosim", 1)
   shell:
     """
     read_analysis.py genome -i {input.fq} -ga {input.genome_alignment} -t {threads} -o {dir_out}nanosim_model/sim
@@ -187,8 +195,9 @@ rule sim_reads:
     sim = dir_out + "sim_reads.fasta"
   params:
     num = config["numSimReads"],
-    num2 = int(config["numSimReads"]*1.35)
+    num2 = int(config["numSimReads"]*1.35),
     seed = config["nano_seed"]
+  threads: 24 # get_threads("sim_reads", 1)
   shell:
     """
     simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2} -t {threads} --seed {params.seed}
@@ -257,6 +266,7 @@ rule run_pipe_sim:
     len = config["umilength"] + config["polyTlength"],
     keepbp = 3,
     prefix = "sim"
+  threads: 24 # get_threads("run_pipe_sim", 1)
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
@@ -280,6 +290,7 @@ rule run_pipe_real:
     len = config["umilength"] + config["polyTlength"],
     keepbp = 3,
     prefix = "real"
+  threads: 24 # get_threads("run_pipe_real", 1)
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
