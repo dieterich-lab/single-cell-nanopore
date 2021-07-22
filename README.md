@@ -30,7 +30,10 @@ conda activate scNapBar
 conda install joblib "scipy>=1.0.0" "six>=1.10.0" -n scNapBar-dev
 conda install -c bioconda "pybedtools>=0.7.10" "pysam>=0.13" -n scNapBar-dev
 # If still under single-cell-nanopore, cd .. or clone anywhere else
-git clone --depth 1 --branch V3.0.1 https://github.com/bcgsc/NanoSim.git
+# this will not work either...
+# git clone --depth 1 --branch V3.0.1 https://github.com/bcgsc/NanoSim.git
+# ...as of 22.07.2021, use master branch
+git clone https://github.com/bcgsc/NanoSim.git
 # CONDA_PREFIX is the base location of the newly created conda environment
 cd NanoSim
 cp src/*.py $CONDA_PREFIX/bin/

@@ -124,7 +124,7 @@ rule align_longreads:
   threads: 36 # get_threads("align_longreads", 1)
   shell:
     """
-    minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort - -@{threads} -T {params.tmp} -o {output.bam}
+    minimap2 -v1 -t {threads} -2 -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort - -@{threads} -T {params.tmp} -o {output.bam}
     samtools index -@{threads} {output.bam}
     """
 
@@ -201,6 +201,7 @@ rule sim_reads:
   shell:
     """
     simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2} -t {threads} --seed {params.seed}
+    sed -i 's/;/_/g' {dir_out}sim_aligned_reads.fasta
     perl -ne '$i++ if /^>/;print if $i<={params.num}' {dir_out}sim_aligned_reads.fasta > {output}
     """
 

@@ -5,7 +5,7 @@ pipeline: "ScNapBar"
 # PATH TO INPUT DIRECTORY - all input files are relative to this directory
 dir_in: "data"
 # PATH TO OUTPUT DIRECTORY
-dir_out: "analysis"
+dir_out: "results"
 # TMP - temporary files
 tmp_dir: /scratch/global_tmp/ 
 

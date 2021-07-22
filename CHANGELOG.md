@@ -6,18 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 ## [Unreleased]
 
 ### Changed
-- Updated **NanoSim** version 3.0.1 with fix (`environment.yaml`, documentation).
+- Updated **NanoSim** latest master branch with fix (`environment.yaml`, documentation). TODO: fix release as soon as available.
 - Modify sort in `align_longreads`, and pipe output to BAM directly.
 - Minor changes: move hard coded fields to config file, adjust `cluster.json`, *etc.*
 - Updated documentation.
+- Upgraded minimap2 to 2.21-r1071.
 
 ### Added
 - File ./gitignore to ignore build/temporary files.
 - Seed to `sim_reads` (NanoSim `simulator.py`), and `shuf` in `build_genome`.
+- I/O option to minimap2 call in `align_longreads`.
 
 ### Fixed
 - Delete temporary files.
 - Use threads.
+- Temporary fix in `sim_reads` due to https://github.com/bcgsc/NanoSim/issues/132. TODO: find solution.
 
 ### Removed
 - Rule `unzip_fq`.
