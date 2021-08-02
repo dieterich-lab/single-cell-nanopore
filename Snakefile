@@ -197,7 +197,7 @@ rule sim_reads:
     num = config["numSimReads"],
     num2 = int(config["numSimReads"]*1.35),
     seed = config["nano_seed"]
-  threads: 24 # get_threads("sim_reads", 1)
+  threads: 36 # get_threads("sim_reads", 1)
   shell:
     """
     simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2} -t {threads} --seed {params.seed}
@@ -267,7 +267,7 @@ rule run_pipe_sim:
     len = config["umilength"] + config["polyTlength"],
     keepbp = 3,
     prefix = "sim"
-  threads: 24 # get_threads("run_pipe_sim", 1)
+  threads: 36 # get_threads("run_pipe_sim", 1)
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
@@ -291,7 +291,7 @@ rule run_pipe_real:
     len = config["umilength"] + config["polyTlength"],
     keepbp = 3,
     prefix = "real"
-  threads: 24 # get_threads("run_pipe_real", 1)
+  threads: 36 # get_threads("run_pipe_real", 1)
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi

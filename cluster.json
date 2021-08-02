@@ -23,22 +23,23 @@
     "sim_reads":
     {
         "mem": "80G",
-        "time": "24:0:0",
-        "threads": "24"
+        "time": "96:0:0",
+        "threads": "36",
+        "partition": "long"
     },
     "run_pipe_sim":
     {
         "mem": "80G",
         "time": "96:0:0",
-        "threads": "24",
-	"partition": "long"
+        "threads": "36",
+        "partition": "long"
     },
     "run_pipe_real":
     {
         "mem": "80G",
         "time": "96:0:0",
-        "threads": "24",
-	"partition": "long"
+        "threads": "36",
+        "partition": "long"
     }
 }
 
