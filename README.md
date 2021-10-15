@@ -1,7 +1,13 @@
 # ScNapBar
 
-ScNapBar is designed for cell barcode assignment from Nanopore sequencing data.
+**ScNapBar** (single-cell Nanopore barcode demultiplexer) is a workflow to assign barcodes to long-read single-cell sequencing data.
+**ScNapBar** enables cell barcode assignment with high accuracy using unique molecular identifiers (UMI) or a Naïve Bayes probabilistic approach.
 It requires bam files from both Nanopore and Illumina reads, then builds a model based on the parameters estimated from the two libraries.
+
+If you use **ScNapBar**, please cite the following paper:
+
+Wang Q, Boenigk S, Boehm V, Gehring NH, Altmueller J, Dieterich C. Single cell transcriptome sequencing on the Nanopore platform with ScNapBar. RNA. 2021 Apr 27;27(7):763–70. [doi:10.1261/rna.078154.120](http://www.rnajournal.org/cgi/doi/10.1261/rna.078154.120).
+
 
 ## Installation
 
@@ -12,7 +18,7 @@ bash Miniconda3-latest-Linux-x86_64.sh
 conda config --set auto_activate_base false
 ```
 
-2. Install scNapBar. 
+2. Install **scNapBar**. 
 ```
 # Clone repository, add --recursive to include the sequan submodule.
 git clone --recursive https://github.com/dieterich-lab/single-cell-nanopore.git
@@ -20,48 +26,25 @@ cd single-cell-nanopore
 # Create environment...
 conda env create --name scNapBar --file environment.yaml
 conda activate scNapBar
-```
-
-**Note**: The latest **NanoSim** v3.0.1 introduced new features to deal with compressed (BAM) files and made minor bug fixes, but cannot currently be installed via conda. As a consequence, **NanoSim** is not currently listed as a dependency in `environment.yaml`, and is not installed by default. After installing **scNapBar**, we suggest to install the latest **NanoSim** as follows:
-
-
-```
-# First install missing packages from NanoSim requirements.txt and latest conda build 
-conda install joblib "scipy>=1.0.0" "six>=1.10.0" -n scNapBar-dev
-conda install -c bioconda "pybedtools>=0.7.10" "pysam>=0.13" -n scNapBar-dev
-# If still under single-cell-nanopore, cd .. or clone anywhere else
-# this will not work either...
-# git clone --depth 1 --branch V3.0.1 https://github.com/bcgsc/NanoSim.git
-# ...as of 22.07.2021, use master branch
-git clone https://github.com/bcgsc/NanoSim.git
-# CONDA_PREFIX is the base location of the newly created conda environment
-cd NanoSim
-cp src/*.py $CONDA_PREFIX/bin/
-chmod 0755 "$CONDA_PREFIX/bin/read_analysis.py"
-chmod 0755 "$CONDA_PREFIX/bin/simulator.py"
-```
-
-3. Go back to `single-cell-nanopore` and build.
-```
-cd single-cell-nanopore
 cmake .
 make
 ```
 
 ## Quick run
 
-1. Test **scNapBar** using the example data under *data*. Download the reference genome and place the file under *data*. Edit the provided **`config.yaml`** file by changing the paths to output and temporary directories, as well as the name of the reference genome.
+1. Test **scNapBar** using the example data under *data*. Download the reference genome and place the file under *data*. Edit the provided **`config.yaml`** file by changing the paths to output and temporary directories, as well as the name of the reference genome. Run the **`snakemake`** command under the conda environment. Use the `-j` parameter to specify the number of available cores.
 
-2. Run the **`snakemake`** command under the conda environment to perform the bioinformatics analysis on the specified sequence files. Several analysis steps can benefit from multiple computer cores; use the `-j` parameter to parallelize the analysis (this document is assuming that 12 cores are available).
 ```
-snakemake -j 12 all
+snakemake -j 12 --printshellcmds --verbose
 ```
+
 You can also submit the job via job schedulers. We have provided an example using SLURM. Adjust the **`cluster.json`** file, or use your own **`snakemake profile`**.
+
 ```
-snakemake -j 12 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads} -p {cluster.partition}"
+snakemake -j 12 --until run_umi_seq --printshellcmds --verbose --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads} -p {cluster.partition}"
 ```
 
-3. **scNapBar** general usage. Edit the provided **`config.yaml`** file to match your own sequence files, reference genome, annotations, *etc*. Update the adapter and polyT length that fit your libraries.
+2. **scNapBar** general usage. Edit the provided **`config.yaml`** file to match your own sequence files, reference genome, annotations, *etc*. Update the adapter and polyT length that fit your libraries. Run the **`snakemake`** command under the conda environment.
 
 
 ## Two modes for the cell barcode assignment
@@ -73,7 +56,6 @@ snakemake -j 12 --cluster-config cluster.json --cluster "sbatch -A {cluster.acco
 ```
 snakemake --until run_umi_seq
 ```
-
 
 ## Input files:
 
@@ -93,31 +75,31 @@ We use the following naming convention:
 
 ## Output files:
 
-The output files are put in the `analysis` folder of the pipeline, or any folder specified by `dir_out` in the `config.yaml` file. Example output files from the quick run using the example data are provided under *data_output*. 
+The output files are written to the *results* folder (this directory must exist before running the pipeline), or any folder specified by `dir_out` in the `config.yaml` file. Example output files from the quick run using the example data are provided under *analysis*. We also included SRSF2 isoforms 
+characterized by barcodes from the published manuscript (SRSF2.GFP+.bam and SRSF2.GFP-.bam).
 
-The main target output files are `sim.label` and `real.label` (three columns: read_id, barcode, score). In addition, you will find the following files:
+The main target output files are `real.label` (option 1) or `real.umi` (option 2): 
 
-* `sim.label`: the barcode assignment from the simulated reads with scores. The scores range from 0-99, and larger scores indicate higher confidence for the assignment. Reads assigned to multiple barcodes only have the assignment with the highest score retained. 
-
-* `real.label`: the barcode assignment from the real Nanopore reads with scores. The scores range from the cutoff set in `config.yaml` to 99. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
+* `real.label`: read_id, barcode, score. The barcode assignment from the real Nanopore reads with scores. The scores range from the cutoff set in `config.yaml` to 99. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
 
 * `real.umi`: The barcodes assignment of the Nanopore reads with matched Illumina UMIs from the same cell and the same gene.
 
-* `sim.prob` and `real.prob`: The complete feature tables used to generate the probability scores of the simulated reads and the real Nanopore reads, respectively. 
+Other files include:
 
-Other intermediate files which contain the useful information in the model estimation and benchmarking includes:
+* `Nanopore.bam`: The mapping of the real Nanopore reads generated by minimap2. **Note**: the name of this file is given by the basename value of the config key `nanopore_fq`. 
 
-* `sim_barcodes.txt`: The ground-truth of cell barcodes in the simulated reads. 
+* `sim.prob` and `real.prob`: The complete feature tables used to generate the probability scores of the simulated reads and the real Nanopore reads, respectively (option 1).
 
-* `sim.model.rda`: The naive bayes model trained from the simulated reads. 
+* `sim.label`: the barcode assignment from the simulated reads with scores. The scores range from 0-99, and larger scores indicate higher confidence for the assignment. Reads assigned to multiple barcodes only have the assignment with the highest score retained (option 1). 
 
-* `genome.fa`: The artificial genome inputted into NanoSim for generating the simulated reads. 
+* `sim_barcodes.txt`: The ground-truth of cell barcodes in the simulated reads (option 1). 
 
-* `Nanopore.bam`: The mapping of the real Nanopore reads generated by minimap2.
+* `sim.model.rda`: The naive bayes model trained from the simulated reads (option 1). 
+
+* `genome.fa`: The artificial genome used for generating the simulated reads (option 1). 
 
 * `sim_umi.fasta` and `real_umi.fasta`: The rest DNA sequences after removing the adapter and barcode sequences. 
 
-* `sim_umi.tab`: The barcodes assignment of the simulated reads with matched Illumina UMIs from the same cell and the same gene.
 
 ## Parameters:
 
@@ -127,7 +109,7 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 * `reference_genome`: The reference genome sequences in FASTA format. 
 
-* `nanopore_fq`: Nanopore reads you want to process in FASTQ format. 
+* `nanopore_fq`: Nanopore reads you want to process in FASTQ (compressed) format. 
 
 * `adapter`: 10x genomics P1 adapter sequences. 
  
@@ -147,9 +129,11 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 * `percent_raw`: A fraction number representing the percentage of additional simulated reads you want to use as true negatives. These reads contain the cell barcodes from the background rather than the whitelist. From our experience, there are about 20% reads do not contain the cell barcodes from the whitelist in the 10x genomics library. 
 
-* `threads`: Number of CPUs for the multiple-threaded jobs. 
+* `threads`: Number of CPUs for the multiple-threaded jobs. **Note**: See [Control the number of cores/threads per rule](https://github.com/dieterich-lab/single-cell-nanopore/issues/14)
 
 * `cdnaseq`: DNA sequences used to append to each entry in the artificial genome. 
+
+* `nano_seed`: Seed for the pseudo-random number generator (NanoSim).
 
 ### Parameters of **`singleCellPipe`**
 
@@ -207,7 +191,7 @@ A: Please run `conda install [--name scNapBar -c conda-forge] tbb=2020.3 tbb-dev
 
 Q: `fatal error: seqan/basic.h: No such file or directory` when compiling **`singleCellPipe`**.
 
-A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**, or make sure wou clone the repository with the `--recursive` flag. If you forgot this flag, you can always `git submodule update --init` afterwards. 
+A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**, or make sure you clone the repository with the `--recursive` flag. If you forgot this flag, you can always `git submodule update --init` afterwards. 
 
 ## Authors
 
@@ -216,3 +200,8 @@ A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqa
 * Sven Bönigk <[sven.boenigk@fu-berlin.de](mailto:sven.boenigk@fu-berlin.de)>
 
 * Christoph Dieterich
+
+
+Currently maintained by Etienne Boileau <[boileau@uni-heidelberg.de](mailto:boileau@uni-heidelberg.de)>
+
+

@@ -5,8 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ## [Unreleased]
 
+
+## [1.1.0] 15.10.2021
+
 ### Changed
-- Updated **NanoSim** latest master branch with fix (`environment.yaml`, documentation). TODO: fix release as soon as available.
+- Update **NanoSim** to latest version (environment.yaml), simplify install.
 - Modify sort in `align_longreads`, and pipe output to BAM directly.
 - Minor changes: move hard coded fields to config file, adjust `cluster.json`, *etc.*
 - Updated documentation.
@@ -19,8 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ### Fixed
 - Delete temporary files.
-- Use threads.
-- Temporary fix in `sim_reads` due to https://github.com/bcgsc/NanoSim/issues/132. TODO: find solution.
+- Use threads. TODO: see [Control the number of cores/threads per rule](https://github.com/dieterich-lab/single-cell-nanopore/issues/14).
+- Temporary fix in `sim_reads` due to [Breaking changes in format output from 3.0.0-beta](https://github.com/bcgsc/NanoSim/issues/132). TODO: modify pipeline.
 
 ### Removed
 - Rule `unzip_fq`.
