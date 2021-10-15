@@ -1,113 +1,105 @@
 # ScNapBar
 
-ScNapBar is designed for cell barcode assignment from Nanopore sequencing data.
+**ScNapBar** (single-cell Nanopore barcode demultiplexer) is a workflow to assign barcodes to long-read single-cell sequencing data.
+**ScNapBar** enables cell barcode assignment with high accuracy using unique molecular identifiers (UMI) or a Naïve Bayes probabilistic approach.
 It requires bam files from both Nanopore and Illumina reads, then builds a model based on the parameters estimated from the two libraries.
+
+If you use **ScNapBar**, please cite the following paper:
+
+Wang Q, Boenigk S, Boehm V, Gehring NH, Altmueller J, Dieterich C. Single cell transcriptome sequencing on the Nanopore platform with ScNapBar. RNA. 2021 Apr 27;27(7):763–70. [doi:10.1261/rna.078154.120](http://www.rnajournal.org/cgi/doi/10.1261/rna.078154.120).
+
+
+## Installation
+
+1. Software dependencies are managed using **`conda`**, for more information see <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
+```
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+conda config --set auto_activate_base false
+```
+
+2. Install **scNapBar**. 
+```
+# Clone repository, add --recursive to include the sequan submodule.
+git clone --recursive https://github.com/dieterich-lab/single-cell-nanopore.git
+cd single-cell-nanopore
+# Create environment...
+conda env create --name scNapBar --file environment.yaml
+conda activate scNapBar
+cmake .
+make
+```
 
 ## Quick run
 
-1. *optional* edit the provided **`config.yaml`** file to match your own sequence files, reference genome and annotation. Update the adapter and polyT length that fit your libraries.
+1. Test **scNapBar** using the example data under *data*. Download the reference genome and place the file under *data*. Edit the provided **`config.yaml`** file by changing the paths to output and temporary directories, as well as the name of the reference genome. Run the **`snakemake`** command under the conda environment. Use the `-j` parameter to specify the number of available cores.
 
-2. Run the **`snakemake`** command under the conda environment to perform the bioinformatics analysis on the specified sequence files. Several analysis steps can benefit from multiple computer cores; use the `-j` parameter to parallelize the analysis (this document is assuming that 8 cores are available).
 ```
-snakemake -j 8 all
+snakemake -j 12 --printshellcmds --verbose
 ```
-You can also submit the job via job schedulers. We have provided an example on the SLURM. Change the account settings in cluster.json before using it.
+
+You can also submit the job via job schedulers. We have provided an example using SLURM. Adjust the **`cluster.json`** file, or use your own **`snakemake profile`**.
+
 ```
-snakemake -j 8 --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads}"
+snakemake -j 12 --until run_umi_seq --printshellcmds --verbose --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads} -p {cluster.partition}"
 ```
+
+2. **scNapBar** general usage. Edit the provided **`config.yaml`** file to match your own sequence files, reference genome, annotations, *etc*. Update the adapter and polyT length that fit your libraries. Run the **`snakemake`** command under the conda environment.
+
 
 ## Two modes for the cell barcode assignment
 
-1. ScNapBar `(option 1)` uses a probabilistic model for barcode assignment by default (see command below), which performs very well in cases of low sequencing saturation. 
-
-```
-snakemake -j 8
-```
+1. ScNapBar `(option 1 default)` uses a probabilistic model for barcode assignment, which performs very well in cases of low sequencing saturation. 
 
 2. ScNapBar `(option 2)` assigns barcode based on matched Illumina UMIs without additional probabilistic modeling. Use the following command to start this mode: 
 
 ```
-snakemake -j 8 --until run_umi_seq
-```
-
-## Installation:
-
-1. Most software dependencies are managed using **`conda`**. Please install as described at  <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
-```
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-bash
-```
-2. Download the files into a folder named `single-cell-nanopore`. The program requires the **`NanoSim`** and **`tbb`** which should be installed first through **`conda`**
-```
-conda install -c bioconda nanosim
-conda install -c conda-forge tbb tbb-devel 
-git clone https://github.com/nanoporetech/single-cell-nanopore.git single-cell-nanopore
-```
-3. Change working directory into the new `single-cell-nanopore` folder 
-```
-cd single-cell-nanopore
-```
-4. Put **`seqan`** library files into the empty `seqan` folder
-```
-wget https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz
-tar xJf seqan-library-2.4.0.tar.xz
-cp -r seqan-library-2.4.0/include single-cell-nanopore/seqan/
-```
-
-5. Use these commands for building **`ScNapBar`**: 
-```
-cmake .
-make
-```
-6. Install conda software dependencies with
-```
-conda env create --name single-cell-nanopore --file environment.yaml
-```
-7. Initialise conda environment with 
-```
-conda activate single-cell-nanopore
+snakemake --until run_umi_seq
 ```
 
 ## Input files:
 
-For testing purposes, we suggest downloading the [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) dataset or [PRJNA722142](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA722142)(which we have already extracted _chr17_ as the demo dataset in the `data` folder), and rename the files according to the following naming convention.
+For testing purposes, we suggest downloading [GSE130708](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE130708) or [PRJNA722142](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA722142) ( we used _chr17_ as an example dataset in the *data* folder, see [Quick run](#quick-run)).
 
-* [`possorted_genome_bam.bam`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) in the `filtered_feature_bc_matrix` folder of Cell Ranger.
+We use the following naming convention:
 
-* Background cell barcodes named as [`raw.tsv.gz`](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/), could be renamed from the `barcodes.tsv.gz` in the `raw_feature_bc_matrix` folder of Cell Ranger. 
+* [`possorted_genome_bam.bam`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/overview) from Cell Ranger, **`or`** [`barcodes.tsv.gz`, `features.tsv.gz`, and `matrix.mtx.gz`](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices) from the `filtered_feature_bc_matrix` folder of Cell Ranger.
 
-* Nanopore reads ([sample](https://github.com/dieterich-lab/single-cell-nanopore/blob/master/data/)) in FASTQ format
+* Background cell barcodes re-named as [`barcodes_raw.tsv.gz`](data/), from the `barcodes.tsv.gz` of the `raw_feature_bc_matrix` folder of Cell Ranger. 
 
-* Reference genome and transcriptome in FASTA format
+* Nanopore reads ([Nanopore.fq.gz](data/)) in FASTQ (compressed) format.
 
-* Annotation file in [`refFlat`](http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/refFlat.txt.gz) formats and `.refFlat` filename extension.
+* Reference genome in FASTA format.
+
+* Annotation file in [`refFlat`](data/) format (for option 2). Note: The file must have the `.refFlat` extension. If running on the example data, the file must first be uncompressed. See also the [UCSC genome annotation database](http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/refFlat.txt.gz).
 
 ## Output files:
 
-The output files are put in the `analysis` folder of the pipeline. The main target output files are `sim.label` and `real.label` (three columns: read_id, barcode, score). In addition, you will find the following files:
+The output files are written to the *results* folder (this directory must exist before running the pipeline), or any folder specified by `dir_out` in the `config.yaml` file. Example output files from the quick run using the example data are provided under *analysis*. We also included SRSF2 isoforms 
+characterized by barcodes from the published manuscript (SRSF2.GFP+.bam and SRSF2.GFP-.bam).
 
-* `sim.label`: the barcode assignment from the simulated reads with scores. The scores range from 0-99, and larger scores indicate higher confidence for the assignment. Reads assigned to multiple barcodes only have the assignment with the highest score retained. 
+The main target output files are `real.label` (option 1) or `real.umi` (option 2): 
 
-* `real.label`: the barcode assignment from the real Nanopore reads with scores. The scores range from the cutoff set in `config.yaml` to 99. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
+* `real.label`: read_id, barcode, score. The barcode assignment from the real Nanopore reads with scores. The scores range from the cutoff set in `config.yaml` to 99. Reads assigned to multiple barcodes are removed if both are above the score cutoff. 
 
 * `real.umi`: The barcodes assignment of the Nanopore reads with matched Illumina UMIs from the same cell and the same gene.
 
-* `sim.prob` and `real.prob`: The complete feature tables used to generate the probability scores of the simulated reads and the real Nanopore reads, respectively. 
+Other files include:
 
-Other intermediate files which contain the useful information in the model estimation and benchmarking includes:
+* `Nanopore.bam`: The mapping of the real Nanopore reads generated by minimap2. **Note**: the name of this file is given by the basename value of the config key `nanopore_fq`. 
 
-* `sim_barcodes.txt`: The ground-truth of cell barcodes in the simulated reads. 
+* `sim.prob` and `real.prob`: The complete feature tables used to generate the probability scores of the simulated reads and the real Nanopore reads, respectively (option 1).
 
-* `sim.model.rda`: The naive bayes model trained from the simulated reads. 
+* `sim.label`: the barcode assignment from the simulated reads with scores. The scores range from 0-99, and larger scores indicate higher confidence for the assignment. Reads assigned to multiple barcodes only have the assignment with the highest score retained (option 1). 
 
-* `genome.fa`: The artificial genome inputted into NanoSim for generating the simulated reads. 
+* `sim_barcodes.txt`: The ground-truth of cell barcodes in the simulated reads (option 1). 
 
-* `Nanopore.bam`: The mapping of the real Nanopore reads generated by minimap2.
+* `sim.model.rda`: The naive bayes model trained from the simulated reads (option 1). 
+
+* `genome.fa`: The artificial genome used for generating the simulated reads (option 1). 
 
 * `sim_umi.fasta` and `real_umi.fasta`: The rest DNA sequences after removing the adapter and barcode sequences. 
 
-* `sim_umi.tab`: The barcodes assignment of the simulated reads with matched Illumina UMIs from the same cell and the same gene.
 
 ## Parameters:
 
@@ -117,7 +109,7 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 * `reference_genome`: The reference genome sequences in FASTA format. 
 
-* `nanopore_fq`: Nanopore reads you want to process in FASTQ format. 
+* `nanopore_fq`: Nanopore reads you want to process in FASTQ (compressed) format. 
 
 * `adapter`: 10x genomics P1 adapter sequences. 
  
@@ -137,9 +129,11 @@ The parameters are set in the `config.yaml`. If the entry is a file, then it mus
 
 * `percent_raw`: A fraction number representing the percentage of additional simulated reads you want to use as true negatives. These reads contain the cell barcodes from the background rather than the whitelist. From our experience, there are about 20% reads do not contain the cell barcodes from the whitelist in the 10x genomics library. 
 
-* `threads`: Number of CPUs for the multiple-threaded jobs. 
+* `threads`: Number of CPUs for the multiple-threaded jobs. **Note**: See [Control the number of cores/threads per rule](https://github.com/dieterich-lab/single-cell-nanopore/issues/14)
 
 * `cdnaseq`: DNA sequences used to append to each entry in the artificial genome. 
+
+* `nano_seed`: Seed for the pseudo-random number generator (NanoSim).
 
 ### Parameters of **`singleCellPipe`**
 
@@ -193,11 +187,11 @@ In this paragraph, we explain the use of each major job in the pipeline.
 
 Q: `fatal error: tbb/pipeline.h: No such file or directory` when compiling **`singleCellPipe`**.
 
-A: Please run `conda install tbb tbb-devel` to install the required **`TBB`** library. 
+A: Please run `conda install [--name scNapBar -c conda-forge] tbb=2020.3 tbb-devel=2020.3` to install the required **`TBB`** libraries. 
 
 Q: `fatal error: seqan/basic.h: No such file or directory` when compiling **`singleCellPipe`**.
 
-A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**:
+A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqan-v2.4.0/seqan-library-2.4.0.tar.xz) first and move the **`SeqAn`** include folder to **seqan**, or make sure you clone the repository with the `--recursive` flag. If you forgot this flag, you can always `git submodule update --init` afterwards. 
 
 ## Authors
 
@@ -206,3 +200,8 @@ A: Please download [SeqAn](https://github.com/seqan/seqan/releases/download/seqa
 * Sven Bönigk <[sven.boenigk@fu-berlin.de](mailto:sven.boenigk@fu-berlin.de)>
 
 * Christoph Dieterich
+
+
+Currently maintained by Etienne Boileau <[boileau@uni-heidelberg.de](mailto:boileau@uni-heidelberg.de)>
+
+

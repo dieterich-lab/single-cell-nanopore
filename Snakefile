@@ -6,17 +6,22 @@ import gzip
 import scipy.io
 import pandas as pd
 
+from pathlib import Path
+
+
 configfile: "config.yaml"
 
-dir_in = "data/"
-dir_out = "analysis/"
+# TODO: use pathlib 
+dir_in = os.path.join(config["dir_in"], '')
+dir_out = os.path.join(config["dir_out"], '')
+
 ref_genome = config["reference_genome"]
 barcode = config["barcode"]
 bam_illumina = config["illumina_bam"]
 fq_nanopore = config["nanopore_fq"]
 simreadlength = len(config["adapter"]) + config["barcodelength"] + config["umilength"] + config["polyTlength"] + config["cdnalength"]
-_nanopore = os.path.splitext(os.path.basename(fq_nanopore))[0]
-fa_barcode = os.path.splitext(os.path.basename(barcode))[0] + '.fa'
+_nanopore = Path(fq_nanopore).stem.split('.')[0]
+fa_barcode = Path(barcode).stem.split('.')[0] + '.fa'
 
 def get_most_abundant_gene(mtx_file, feature_file, output_file):
     mat = (scipy.io.mmread(gzip.open(mtx_file, 'r')))
@@ -31,20 +36,18 @@ def get_reads_per_barcode(mtx_file, barcode_file, output_file):
     pd.DataFrame(barcodes, mat.sum(0).A1).to_csv(output_file,sep=' ',header=False)
     return ""
 
-localrules: all, unzip_fq, get_cbc, build_genome, build_align
+def get_threads(rule, default):
+    cluster_config = snakemake.workflow.cluster_config
+    if rule in cluster_config and "threads" in cluster_config[rule]:
+        return cluster_config[rule]["threads"]
+    return int(default)
+
+localrules: all, get_a_gene, get_cbc, bk_barcodes, build_genome, build_align, filter_sim, filter_pred, report
 
 rule all:
   input:
     sim  = dir_out + "sim.label",
     real = dir_out + "real.label"
-
-rule unzip_fq:
-  input:
-    file = dir_in + fq_nanopore + '.gz'
-  output:
-    file = dir_in + fq_nanopore
-  run:
-    shell("gunzip -c {input} > {output}")
 
 rule get_a_gene:
   input:
@@ -67,7 +70,7 @@ rule assign_gene:
     samtools view tmpge.bam |perl -F"\\t" -ane 'print "$F[0]\\t$1\\n" if /GE:Z:(\\w+)/' > {output}
     rm tmpge.bam
     """
-
+    
 rule get_cbc:
   input:
     barcode = dir_in + barcode
@@ -107,6 +110,7 @@ rule find_dist:
     """
     Rscript pipelines/find_dist.r {input.reads_per_barcode} {input.fa_barcode} {output}.tmp
     sort {output}.tmp|uniq|perl -ne 'print ">$_$_"' > {output}
+    rm {output}.tmp
     """
 
 rule align_longreads:
@@ -114,24 +118,23 @@ rule align_longreads:
     fq = dir_in + fq_nanopore,
     ref_genome = dir_in + ref_genome
   output:
-    sam = dir_out + _nanopore + '.sam',
     bam = dir_out + _nanopore + '.bam'
+  params:
+    tmp = config["tmp_dir"]
+  threads: 36 # get_threads("align_longreads", 1)
   shell:
     """
-    minimap2 -v1 -t {threads} -ax splice --MD -ub {input.ref_genome} {input.fq} > {output.sam}.tmp
-    grep '^@' {output.sam}.tmp |sort|uniq > {output.sam}.head
-    grep -v '^@' {output.sam}.tmp |sort -snk3 -k4|uniq > {output.sam}.body
-    cat {output.sam}.head {output.sam}.body > {output.sam}
-    samtools view -bS -o {output.bam} {output.sam}
-    rm {output.sam}.head {output.sam}.body {output.sam}.tmp
+    minimap2 -v1 -t {threads} -2 -ax splice --MD -ub {input.ref_genome} {input.fq} | samtools sort - -@{threads} -T {params.tmp} -o {output.bam}
+    samtools index -@{threads} {output.bam}
     """
 
 rule build_nanosim:
   input:
     fq = dir_in + fq_nanopore,
-    genome_alignment = dir_out + _nanopore + '.sam'
+    genome_alignment = dir_out + _nanopore + '.bam'
   output:
     model = dir_out + "nanosim_model/sim_model_profile"
+  threads: 24 # get_threads("build_nanosim", 1)
   shell:
     """
     read_analysis.py genome -i {input.fq} -ga {input.genome_alignment} -t {threads} -o {dir_out}nanosim_model/sim
@@ -169,7 +172,7 @@ rule build_genome:
   shell:
     """
     samtools view {input.bam} | perl -ne 'print ">",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/CB:Z:([ACGT]+).*UB:Z:([ACGT]+)/){{print "{params.adapter}$1$2","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' > {output}
-    gzip -dc {input.bk_barcode} | shuf -r -n {params.num} | perl -ne 'print ">chr",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/([ACGT]+)/){{$u="";$u.=[A,T,G,C]->[rand 4]for 1..{params.umilength};print "{params.adapter}$1$u","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' >> {output}
+    gzip -dc {input.bk_barcode} | shuf -r -n {params.num} --random-source={input.bk_barcode} | perl -ne 'print ">chr",++$j,"\\n" if $i%25e5==25e5-1 or $j==0;if (/([ACGT]+)/){{$u="";$u.=[A,T,G,C]->[rand 4]for 1..{params.umilength};print "{params.adapter}$1$u","T"x{params.polyTlength},{params.cdnaseq},"\\n";$i++}}' >> {output}
     samtools faidx {output}
     """
 
@@ -192,10 +195,13 @@ rule sim_reads:
     sim = dir_out + "sim_reads.fasta"
   params:
     num = config["numSimReads"],
-    num2 = int(config["numSimReads"]*1.35)
+    num2 = int(config["numSimReads"]*1.35),
+    seed = config["nano_seed"]
+  threads: 36 # get_threads("sim_reads", 1)
   shell:
     """
-    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2}
+    simulator.py genome -rg {input.fa_sim} -c {dir_out}nanosim_model/sim -o {dir_out}sim -n {params.num2} -t {threads} --seed {params.seed}
+    sed -i 's/;/_/g' {dir_out}sim_aligned_reads.fasta
     perl -ne '$i++ if /^>/;print if $i<={params.num}' {dir_out}sim_aligned_reads.fasta > {output}
     """
 
@@ -261,13 +267,14 @@ rule run_pipe_sim:
     len = config["umilength"] + config["polyTlength"],
     keepbp = 3,
     prefix = "sim"
+  threads: 36 # get_threads("run_pipe_sim", 1)
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
     bin/singleCellPipe -n {threads} -r {input.bam} -t {params.prefix} -w {input.barcode} -as {params.adapter} -ao 10 -ae 0.3 -ag -2 -hr T -hi 10 -he 0.3 -bo 5 -be 0.2 -bg -2 -ul {params.barumilength} -kb {params.keepbp} -fl 100
     awk '$2!="NA" || NR==1' {params.prefix}.tab > {output.tab}
-    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_paramLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_umi.fasta {params.prefix}_paramLog.log
     """
 
 rule run_pipe_real:
@@ -284,6 +291,7 @@ rule run_pipe_real:
     len = config["umilength"] + config["polyTlength"],
     keepbp = 3,
     prefix = "real"
+  threads: 36 # get_threads("run_pipe_real", 1)
   shell:
     """
     if [ -f {params.prefix}_umi.fasta ]; then rm {params.prefix}_umi.fasta; fi
@@ -295,8 +303,8 @@ rule run_pipe_real:
     awk '$3=="no"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
     printf "Aligned to barcode\t" >> {output.log}
     awk '$2!="NA"' {params.prefix}.tab|cut -f1|perl -npe 's/_end[1|2]//'|sort|uniq|wc -l >> {output.log}
-    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_paramLog.log
     perl -ne 'if(/^>/){{print}}else{{chomp;print substr($_,{params.keepbp},{params.len}),"\\n"}}' {params.prefix}_umi.fasta > {output.umi}
+    rm {params.prefix}.tab {params.prefix}.fasta {params.prefix}_umi.fasta {params.prefix}_paramLog.log
     """
 
 rule run_umi_gene:

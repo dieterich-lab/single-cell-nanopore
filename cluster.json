@@ -1,81 +1,53 @@
 {
     "__default__":
     {
-        "account": "qwang",
+        "account": "eboileau",
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "get_cbfreq":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "find_dist":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "24:0:0",
+        "threads": "12",
+        "partition" : "general"
     },
     "align_longreads":
     {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "mem": "120G",
+        "time": "96:0:0",
+        "threads": "36",
+        "partition" : "long"
     },
     "build_nanosim":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "24:0:0",
+        "threads": "24"
     },
     "sim_reads":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "96:0:0",
+        "threads": "36",
+        "partition": "long"
     },
-    "get_barcodes":
+    "run_pipe_sim":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "96:0:0",
+        "threads": "36",
+        "partition": "long"
     },
-    "run_pipe":
+    "run_pipe_real":
     {
         "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "time": "96:0:0",
+        "threads": "36",
+        "partition": "long"
     },
-    "run_pipe2":
+    "run_umi_seq":
     {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "add_label":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "build_model":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "run_pred":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
-    },
-    "filter_pred":
-    {
-        "mem": "80G",
-        "time": "5:5:0",
-        "threads": "4"
+        "mem": "100G",
+        "time": "96:0:0",
+        "threads": "1",
+        "partition": "long"
     }
 }
+
+
