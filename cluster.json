@@ -40,8 +40,14 @@
         "time": "96:0:0",
         "threads": "36",
         "partition": "long"
+    },
+    "run_umi_seq":
+    {
+        "mem": "100G",
+        "time": "96:0:0",
+        "threads": "1",
+        "partition": "long"
     }
 }
-
 
 
