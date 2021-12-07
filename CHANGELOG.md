@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ## [Unreleased]
 
+### Fixed
+- Modify seed for `shuf` in `build_genome`. 
 
 ## [1.1.0] 15.10.2021
 
