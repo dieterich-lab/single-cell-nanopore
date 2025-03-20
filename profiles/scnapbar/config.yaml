@@ -1,0 +1,36 @@
+jobs: 40
+
+default-resources:
+    slurm_account: "eboileau"
+    slurm_partition: "general"
+    mem_mb: 80000
+    runtime: 1440
+    cpus_per_task: 12
+
+set-threads:
+    align_longreads: 36
+    build_nanosim: 24
+    sim_reads: 36
+    run_pipe_sim: 36
+    run_pipe_real: 36
+    
+set-resources:
+    align_longreads:
+        slurm_partition: "long"
+        mem_mb: 120000
+        runtime: 5760
+    build_nanosim:
+        mem_mb: 80000
+        runtime: 1440
+    sim_reads:
+        slurm_partition: "long"
+        mem_mb: 120000
+        runtime: 5760
+    run_pipe_sim:
+        slurm_partition: "long"
+        mem_mb: 120000
+        runtime: 5760
+    run_pipe_real:
+        slurm_partition: "long"
+        mem_mb: 250000
+        runtime: 5760

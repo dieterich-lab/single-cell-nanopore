@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ## [Unreleased]
 
+### Changed
+- Documentation: installation (temporary), dependencies, cluster profile.
+
 ### Fixed
 - Modify seed for `shuf` in `build_genome`. 
 

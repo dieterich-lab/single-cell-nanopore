@@ -1,22 +1,21 @@
 channels:
   - conda-forge
   - bioconda
-  - r
 dependencies:
-  - snakemake-minimal=5.15.0
-  - python=3.7.6
-  - numpy=1.18.1
-  - scikit-learn=0.22.1
-  - samtools=1.10
-  - minimap2=2.21
-  - mummer4=4.0.0beta2
-  - nanosim=3.0.2
-  - htseq=0.11.3
-  - bedtools=2.29.2
-  - r-base=3.6.3
-  - r::r-stringdist=0.9.5.1
-  - r::r-caret=6.0_83
-  - r::r-e1071=1.7_1
-  - r-markdown=1.1
-  - tbb=2020.3
-  - tbb-devel=2020.3
+  - snakemake-minimal
+  - python
+  - numpy
+  - scikit-learn
+  - samtools
+  - minimap2
+  - mummer4
+  - nanosim
+  - htseq
+  - bedtools
+  - r-base
+  - r-stringdist
+  - r-caret
+  - r-e1071
+  - r-markdown
+  - anaconda::tbb=2020.3
+  - anaconda::tbb-devel=2020.3

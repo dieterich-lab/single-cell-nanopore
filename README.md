@@ -9,6 +9,10 @@ If you use **ScNapBar**, please cite the following paper:
 Wang Q, Boenigk S, Boehm V, Gehring NH, Altmueller J, Dieterich C. Single cell transcriptome sequencing on the Nanopore platform with ScNapBar. RNA. 2021 Apr 27;27(7):763–70. [doi:10.1261/rna.078154.120](http://www.rnajournal.org/cgi/doi/10.1261/rna.078154.120).
 
 
+> **Important**\
+> How to use the unreleased version of **ScNapBar**. Installation only works with flexible channel policy. All dependencies are unpinned, except **TBB**. To ensure that the compiler uses the pinned version of **TTB** libraries, `CMAKE_CXX_FLAGS` need to be provided. The cluster configuration is deprecated. To use *e.g.* SLURM, the relevant Snakemake executor plugin must be installed. The documentation in this file has been modified to reflect the latest changes.
+
+
 ## Installation
 
 1. Software dependencies are managed using **`conda`**, for more information see <br> [https://docs.conda.io/projects/conda/en/latest/user-guide/install/](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
@@ -23,10 +27,16 @@ conda config --set auto_activate_base false
 # Clone repository, add --recursive to include the sequan submodule.
 git clone --recursive https://github.com/dieterich-lab/single-cell-nanopore.git
 cd single-cell-nanopore
+# Unreleased version
+git switch dev
 # Create environment...
+# flexible channel priority is required, you can change it back to e.g. strict after install
+conda config --set channel_priority flexible
 conda env create --name scNapBar --file environment.yaml
 conda activate scNapBar
-cmake .
+# the default path should look like $HOME/.mambaforge/envs/scNapBar/
+# if you created the environment with --name scNapBar
+cmake -DCMAKE_CXX_FLAGS='-I/path/to/scNapBar/include -L/path/to/scNapBar/lib' .
 make
 ```
 
@@ -38,11 +48,20 @@ make
 snakemake -j 12 --printshellcmds --verbose
 ```
 
-You can also submit the job via job schedulers. We have provided an example using SLURM. Adjust the **`cluster.json`** file, or use your own **`snakemake profile`**.
+You can also submit the job via job schedulers. We have provided an example using SLURM.
 
 ```
-snakemake -j 12 --until run_umi_seq --printshellcmds --verbose --cluster-config cluster.json --cluster "sbatch -A {cluster.account} --mem={cluster.mem} -t {cluster.time} -c {cluster.threads} -p {cluster.partition}"
+snakemake --executor slurm --workflow-profile profiles/scnapbar
 ```
+
+This requires the SLURM Snakemake executor plugin. You can install it with `pip install snakemake-executor-plugin-slurm`. Use the profile under `profiles/scnapbar`, or use a global profile.
+
+> **Warning**\
+> If `singleCellPipe` cannot load shared libraries at run time, it is most likely that the dynamic link loader does not know where to search for TBB. Set or update the dynamic shared library path *e.g.* `export LD_LIBRARY_PATH=/path/to/scNapBar/lib`. This path is most likely of the form `$HOME/.mambaforge/envs/scNapBar/lib`, see above.
+
+> **Note**\
+> Scheduler resources are also written in the Snakefile!
+
 
 2. **scNapBar** general usage. Edit the provided **`config.yaml`** file to match your own sequence files, reference genome, annotations, *etc*. Update the adapter and polyT length that fit your libraries. Run the **`snakemake`** command under the conda environment.
 
